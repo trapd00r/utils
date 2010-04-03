@@ -1,0 +1,25 @@
+#!/bin/sh
+# modded vimpager for nfo files
+
+
+file="$@"
+if [ -z "$file" ]; then file="-"; fi
+
+linux=1
+
+less_vim() {
+    vim -R \
+    -c 'let no_plugin_maps = 1' \
+    -c 'set scrolloff=999' \
+    -c 'runtime! macros/less.vim' \
+    -c 'set foldlevel=999' \
+    -c 'set nonumber' \
+    -c 'set ruler' \
+    -c 'set laststatus=2' \
+    -c 'set textwidth=80' \
+    -c 'set cursorline' \
+    -c 'set ft=config' \
+    "$@"
+}
+
+less_vim "$file"

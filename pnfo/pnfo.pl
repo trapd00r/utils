@@ -4,10 +4,8 @@ use strict;
 # NFO files are ASCII-art with the cp437 codepage
 # Lucida ConsoleP has support for all the cp437 chars
 
-
-my $term = "urxvt -name URxvt.shiva -fn xft:'Lucida ConsoleP'";
-my $viewer = "vimpager";
-#my $viewer = "vim -R -u \$HOME/.vimrc-nfo";
+my $term = "urxvt -fn xft:'Lucida ConsoleP' +sb -uc";
+my $viewer = "vimpager-nfo";
 if($ARGV[0] =~ /\.nfo$/) {
         system("$term -e $viewer $ARGV[0]");
 }
