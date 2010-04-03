@@ -1,0 +1,23 @@
+#!/bin/sh
+ftphost="user@host.tld"
+username="foo"
+password="bar"
+tempfile=$(mktemp)
+
+echo -e "debug\n open -u $username,$password $ftphost" > $tempfile
+
+if [ $# == 0 ]; then
+        echo -e "Usage: $0 [OPTION]... 
+        -a\t query artist
+        -al\t query album"
+fi
+
+if [ "$1" == "-a" ]; then
+        files=("$(mpc search artist "$2"|perl -pe 's/(.*\/.*\/).*/$1/')")
+elif [ "$1" == "-al" ]; then
+        files=("$(mpc search album "$2"|perl -pe 's/(.*\/.*\/).*/$1/')")
+fi
+for file in "${files[@]}"; do
+        echo "$file"|perl -pe 's/^/mirror -R \/mnt\/Music_1\//g' >> $tempfile
+done
+lftp -f $tempfile
