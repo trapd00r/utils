@@ -18,22 +18,33 @@ foreach(@releases) {
     }
 }
 
-printf("%25s\n",'DAGENS AVSNITT');
-print "-"x40, "\n";
+printf("%30s\n",'DAGENS AVSNITT');
+printf("%30s\n", "--------------" ); 
 foreach my $rel(sort(@episodes)) {
   chomp($rel);
-  $rel = "\033[38;5;114m$rel \033]0m" if $rel =~ /fringe/i;
-  $rel = "\033[38;5;121m$rel \033[0m" if $rel =~ /house/i;
-  $rel = "\033[38;5;126m$rel \033[0m" if $rel =~ /do(c|k?)u(ment.+)?|
-                                                          granskning|
-                                                          discovery/ix;
-  $rel = "\033[38;5;190m$rel \033[0m" if $rel =~ /SWE(DISH)?/i;
-  $rel = "\033[38;5;203m$rel \033[0m" if $rel =~ /mythbusters/i;
-  $rel = "\033[38;5;056m$rel \033[0m" if $rel =~ /the\.real\.hustle/i;
-  $rel = "\033[38;5;137m$rel \033[0m" if $rel =~ /simpsons/i;
-  $rel = "\033[38;5;119m$rel \033[0m" if $rel =~ /smallville/i;
-  $rel = "\033[38;5;242m$rel \033[0m" if $rel =~ /(WWE|UEFA|UFC).+/;
-  $rel = "\033[38;5;244m$rel \033[0m" if $rel =~ /letterman|ferguson/i;
-  $rel = "\033[38;5;108m$rel \033[0m" if $rel =~ /S[0-9]{2}E[0-9]{2}/i;
+ # $rel = "\033[38;5;077m$rel \033[0m" if $rel !~ /S[0-9]{2}E[0-9]{2}/i;
+ if($rel =~ /fringe|house|smallville|blasningen|the\.real\.hustle|
+             mythbusters|simpsons/ix) {
+   $rel = "\033[31m$rel\033[0m";
+ }
+  if($rel =~ /S01E01/i) {
+    $rel = "\033[38;5;196m  NEW\033[0m: $rel";
+  }
+  elsif($rel =~ /do(c|k?)u(ment.+)?|
+    (discovery|history)\.(channel)?|
+         national\.geographic/ix) {
+    $rel = "\033[38;5;154m DOCU\033[0m: $rel";
+  }
+  elsif($rel =~ /swedish/i) {
+    $rel = "\033[38;5;104m  SWE\033[0m: $rel";
+  }
+  elsif($rel =~ /EPL|WWE|UFC|UEFA|Rugby|La\.Liga/) {
+    $rel = "\033[38;5;245mSPORT\033[0m: $rel";
+  }
+  else {
+    $rel = "       $rel";
+  }
+
+
   print $rel, "\n";
 }
