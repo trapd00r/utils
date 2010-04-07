@@ -34,7 +34,7 @@ sub usage {
       -db decimal to binary
       -do decimal to octal
       -dh decimal to hexadecimal
-      -bd binary to decimal
+      -hd hexadecimal to decimal
       -od octal to decimal
       -bd binary to decimal
 
