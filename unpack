@@ -1,6 +1,6 @@
 #!/bin/sh
 # unpack script
-chmod 777 $(pwd)
+chmod +t,o+w $(pwd)
 find . -iname '*.rar' -execdir rar x {} $(pwd | perl -pe 's/^((?:\/[^\/]+){2}\/).*/$1/').temp/ \;
 mplayer -slave -input file=/home/scp1/.mplayer/fifo $(pwd | perl -pe 's/^((?:\/[^\/]+){2}\/).*/$1/').temp/* && rm $(pwd | perl -pe 's/^((?:\/[^\/]+){2}\/).*/$1/').temp/*
 # keep track of what I've seen
