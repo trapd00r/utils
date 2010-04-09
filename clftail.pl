@@ -1,39 +1,41 @@
 #!/usr/bin/perl 
 use strict;
-# clfpretty - prettity 
-# phailer
-# prettify the Common Log Format accesslogs.
-
 use File::Tail;
 
-my $log 	= $ARGV[0];
-my $dgreen	= "\033[32;1m";
-my $red		= "\033[31m";
-my $lred	= "\033[31;1m";
-my $blue	= "\033[34m";
-my $dblue	= "\033[34;1m";
-my $grey	= "\033[30;2m";
-my $nc		= "\033[0m";
-my $line	= "";
-my $tail 	= File::Tail->new(name=>$log, maxinterval=>3, adjustafter=>3, interval=>0, tail=>100);
+my $log   = shift;
+my $line  = "";
+my $tail  = File::Tail->new(name=>$log,
+                            maxinterval=>3,
+                            adjustafter=>3,
+                            interval=>0,
+                            tail=>100
+                            );
 while(defined($line=$tail->read)) {
-	my $e = "(.+?)";
-	$line =~ /^$e $e $e \[$e:$e $e\] "$e $e $e" $e $e/;
+  my $e = "(.+?)";
+  $line =~ /^$e $e $e \[$e:$e $e\] "$e $e $e" $e $e/;
 
-	my $ip		= $1;
-	my $ref		= $2;
-	my $name	= $3;
-	my $date	= $4;
-	my $time	= $5;
-	my $gmt		= $6;
-	my $request	= $7;
-	my $file	= $8;
-	my $ptcl	= $9;
-	my $code	= $10;
-	my $size	= $11;
+  my $ip      = $1;
+  my $ref     = $2;
+  my $name    = $3;
+  my $date    = $4;
+  my $time    = $5;
+  my $gmt     = $6;
+  my $request = $7;
+  my $file    = $8;
+  my $ptcl    = $9;
+  my $code    = $10;
+  my $size    = $11;
 
-	printf "%s %s %s %7s %s %s %s %s %s %s %s %-13s %s %80s %s\n",
-			$dgreen,$10,$grey,$7,$nc,$3,$blue,$4, $red,$5,$dblue,$1,$lred,$8,$nc;
-
+  $code = "\033[38;5;240m$code\033[0m" if $code == 404;
+  $code = "\033[38;5;155m$code\033[0m" if $code == 200;
+  $code = "\033[38;5;160m$code\033[0m" if $code == 501;
+  $code = "\033[38;5;208m$code\033[0m" if $code == 301;
+  $code = "\033[38;5;124m$code\033[0m" if $code == 403;
+  $code = "\033[38;5;113m$code\033[0m" if $code == 304;
+  $file = "" if $file =~ /^\/$/;
+  $file = "\033[38;5;160m$file\033[0m" if $file !~ /([A-Za-z0-9])+/;
+  $size = "\033[38;5;160m$size\033[0m" if $size > 5;
+  printf("%s %7s %s %s %60s\n",
+  $code, $request, $size, $ip, $file);
 }
 
