@@ -8,7 +8,7 @@ open(LOG,$flexlog) || die "$flexlog does not exist?!\n";
 my @releases = <LOG>;
 close(LOG);
 
-my @episodes;
+my (@episodes, @music);
 
 foreach(@releases) {
 	next unless (/Downloading:/);
@@ -16,7 +16,11 @@ foreach(@releases) {
 		if($_ =~ /(S[0-9]+)?(E[0-9]+)?(.*TV)/) {
 			push(@episodes, $_);
     }
+    else {
+      push(@music, $_);
+    }
 }
+
 
 printf("%30s\n",'DAGENS AVSNITT');
 printf("%30s\n", "--------------" ); 
@@ -38,13 +42,12 @@ foreach my $rel(sort(@episodes)) {
   elsif($rel =~ /swedish/i) {
     $rel = "\033[38;5;104m  SWE\033[0m: $rel";
   }
-  elsif($rel =~ /EPL|WWE|UFC|UEFA|Rugby|La\.Liga/) {
+  elsif($rel =~ /EPL|WWE|UFC|UEFA|Rugby|La\.Liga|Superleague/) {
     $rel = "\033[38;5;245mSPORT\033[0m: $rel";
   }
   else {
     $rel = "       $rel";
   }
-
 
   print $rel, "\n";
 }
