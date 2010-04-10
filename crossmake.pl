@@ -13,10 +13,12 @@ GetOptions('color!'   =>  \$color,
            'size=i'   =>  \$size,
            'help'     =>  \&help,
           );
+my @colors;
 
-my @colors = ("\033[31m", "\033[31;1m", "\033[32m", "\033[32;1m", "\033[33m",
-              "\033[33;1m", "\033[34m", "\033[34;1m", "\033[36m",
-              );
+for(my $i=0;$i<256;$i++) {
+    push(@colors, "\033[38;5;$i"."m");
+}
+
 my @chars = qw([♥] ♥ o O x X);
 my @space = ('▇', '▕', '#');
 @chars = shuffle(@chars);
