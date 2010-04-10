@@ -3,7 +3,17 @@ use strict;
 #mail
 use Getopt::Long;
 
-&interactive if !@ARGV;
+if(!@ARGV) {
+  print << "USAGE";
+  USAGE
+    $0 subject body recipient 
+    cmd|$0
+    $0
+
+USAGE
+
+&interactive;
+}
 our $opt_stdin;
 GetOptions(stdin  =>  \$opt_stdin);
 
