@@ -36,7 +36,8 @@ foreach my $rel(sort(@episodes)) {
   }
   elsif($rel =~ /do(c|k?)u(ment.+)?|
     (discovery|history)\.(channel)?|
-         national\.geographic/ix) {
+               national\.geographic|
+               colossal\./ix) {
     $rel = "\033[38;5;154m DOCU\033[0m: $rel";
   }
   elsif($rel =~ /swedish/i) {
