@@ -12,7 +12,7 @@ my (@episodes, @music);
 
 foreach my $release(@releases) {
   next unless($release =~ /Downloading:/);
-  $release =~ s/(?:\w+\s+){2}\w: //;
+  $release =~ s/(?:\w+\s+){2}\w+: //;
   push(@episodes, $release) if $release =~ /(S[0-9]+)?(E[0-9]+)?(.*TV)/;
 }
 
