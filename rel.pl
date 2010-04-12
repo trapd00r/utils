@@ -10,17 +10,11 @@ close(LOG);
 
 my (@episodes, @music);
 
-foreach(@releases) {
-	next unless (/Downloading:/);
-	s/\w+\s+\w+\s+\w+: //;
-		if($_ =~ /(S[0-9]+)?(E[0-9]+)?(.*TV)/) {
-			push(@episodes, $_);
-    }
-    else {
-      push(@music, $_);
-    }
+foreach my $release(@releases) {
+  next unless($release =~ /Downloading:/);
+  $release =~ s/(?:\w+\s+){2}\w: //;
+  push(@episodes, $release) if $release =~ /(S[0-9]+)?(E[0-9]+)?(.*TV)/;
 }
-
 
 printf("%30s\n",'DAGENS AVSNITT');
 printf("%30s\n", "--------------" ); 
