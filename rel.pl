@@ -8,12 +8,13 @@ open(LOG,$flexlog) || die "$flexlog does not exist?!\n";
 my @releases = <LOG>;
 close(LOG);
 
-my (@episodes, @music);
+my (@episodes, @floss);
 
 foreach my $release(@releases) {
   next unless($release =~ /Downloading:/);
   $release =~ s/(?:\w+\s+){2}\w+: //;
   push(@episodes, $release) if $release =~ /(S[0-9]+)?(E[0-9]+)?(.*TV)/;
+  push(@floss, $release) if $release =~ /FLOSS/;
 }
 
 printf("%30s\n",'DAGENS AVSNITT');
@@ -45,4 +46,12 @@ foreach my $rel(sort(@episodes)) {
   }
 
   print $rel, "\n";
+}
+print "\n";
+if(@floss) {
+  printf("%30s\n", 'DAGENS FLOSS');
+  printf("%30s\n", '------------');
+  foreach my $floss(@floss) {
+    printf("       %s", $floss);
+  }
 }
