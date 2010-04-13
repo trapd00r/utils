@@ -4,9 +4,6 @@
 use strict;
 my $xsels = "/home/scp1/temp/xsels";
 my $xclip = `xclip -o`;
-open(XSEL_WA, ">>", $xsels) or die "$!\n";
-print XSEL_WA "$xclip\n";
-close XSEL_WA;
-open(XSEL_R, "<", $xsels) or die "Reading: $!\n";
-my @lines = <XSEL_R>;
-system("printf \$(\\cat $xsels|dmenu)|xclip -i -l 1|xclip -o");
+my $f     = '-*-fixed-*-*-*-*-15-*-*-*-*-*-*-*';
+my $dmenu = 'dmenu -i -b -nb \#1c1c1c -nf \#d7005f -sb \#252525';
+system("printf \$(\\cat $xsels|$dmenu -fn $f -p xsel)|xclip -i -l 1|xclip -o");
