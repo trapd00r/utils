@@ -1,0 +1,11 @@
+#!/usr/bin/perl
+# np
+use strict;
+use Audio::MPD;
+my $m = Audio::MPD->new;
+my $c = $m->current;
+my $out = sprintf("np> %s: %s (%s) \@ %skbps \{%s\}",
+                  $c->artist, $c->title, $c->album, $m->status->bitrate,
+                  $c->genre);
+                
+system("printf \"$out\"|xclip");
