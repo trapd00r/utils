@@ -1,5 +1,33 @@
-#!/bin/sh
-# dmenuclip helper script, run in cron to sync
-printf "%s\n" $(/usr/bin/xclip -o --selection primary -o) >> /home/scp1/.config/dmenuclip/xsel 
-printf "%s\n" $(/usr/bin/xclip -o --selection secondary -o) >> /home/scp1/.config/dmenuclip/xsel 
+#!/usr/bin/perl
+# dmenuclip-sync
+# dmenuclip helper script for syncing the X selections
+use strict;
 
+my $xsel = "/home/scp1/.config/dmenuclip/xsel";
+my $xprim = `/usr/bin/xclip -o --selection primary -o`;
+
+open(XSEL,"<", $xsel) or die "Cannot open $xsel for reading: $!";
+my @lines = <XSEL>;
+close XSEL;
+
+
+sub syncPrim {
+  system("/usr/bin/xclip -o --selection primary -o) >> $xsel&&printf \"\n\" >> $xsel");
+}
+sub syncSec {
+  system("/usr/bin/xclip -o --selection secondary -o >> $xsel && printf \"\n\" >> $xsel");
+}
+
+if($xsel eq "") {
+  exit 1;
+}
+elsif($xsel =~ /\s+/) {
+  exit 1;
+}
+foreach my $line(@lines) {
+  if($line =~ $xsel) {
+    exit 1;
+  }
+}
+
+&syncSec;
