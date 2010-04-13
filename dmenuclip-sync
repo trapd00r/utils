@@ -1,0 +1,5 @@
+#!/bin/sh
+# dmenuclip helper script, run in cron to sync
+printf "%s\n" $(/usr/bin/xclip -o --selection primary -o) >> /home/scp1/.config/dmenuclip/xsel 
+printf "%s\n" $(/usr/bin/xclip -o --selection secondary -o) >> /home/scp1/.config/dmenuclip/xsel 
+
