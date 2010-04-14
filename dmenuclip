@@ -8,4 +8,4 @@ my $dmenu = 'dmenu -i -b -nb \#1c1c1c -nf \#d7005f -sb \#252525';
 
 
 
-system("printf \$(\\cat $xsels|$dmenu -fn $f -p xsel)|xclip -i -l 1|xclip -o");
+system("printf \"\$(\\cat $xsels|$dmenu -fn $f -p xsel)\"|xclip -i -l 0|xclip -o");
