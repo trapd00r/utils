@@ -3,13 +3,10 @@
 # Daemon that collects the X selections and saves them in a plaintext file
 # for future use with dmenuclip
 # dmenuclip helper scriptfor syncing the X selections
-# NOTE: xclip sucks?! For some reason, xclip somehow transforms the
-# selection in some retarded way... all external commands except xclip's
-# work as values in $currentSel.
-# From here on, going with xsel... 
 use strict;
 use Proc::Daemon;
 my $xsel = "$ENV{'HOME'}/.config/dmenuclip/xsel";
+#use Data::Dumper;
 
 sub syncIt {
   print "Daemonizing...\n";
@@ -17,8 +14,11 @@ sub syncIt {
   while(1) {
     open(XSEL,"<", $xsel) or die "Cant open $xsel for reading: $!";
     my @lines = <XSEL>;
+    chomp @lines;
     close XSEL;
-    my $currentSel = `xsel -o`;
+    my $currentSel = `/usr/bin/xclip -o`;
+    chomp($currentSel);
+    #print Dumper($currentSel);
     if($currentSel ~~ @lines) {
       &syncSec(0);
     }
