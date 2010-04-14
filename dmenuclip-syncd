@@ -1,12 +1,11 @@
 #!/usr/bin/perl
-# dmenuclip-syncd
-# Daemon that collects the X selections and saves them in a plaintext file
-# for future use with dmenuclip
-# dmenuclip helper scriptfor syncing the X selections
 use strict;
+# dmenuclip-syncd - daemon that saves all X selections for use with dmenuclip
+# Copyright (C) 2010 Magnus Woldrich <trapd00r@trapd00r.se>
 use Proc::Daemon;
-my $xsel = "$ENV{'HOME'}/.config/dmenuclip/xsel";
 #use Data::Dumper;
+
+my $xsel = "$ENV{'HOME'}/.config/dmenuclip/xsel";
 
 sub syncIt {
   print "Daemonizing...\n";
@@ -16,9 +15,10 @@ sub syncIt {
     my @lines = <XSEL>;
     chomp @lines;
     close XSEL;
-    my $currentSel = `/usr/bin/xclip -o`;
+    my $currentSel = `/usr/bin/xsel -o`;
     chomp($currentSel);
-    #print Dumper($currentSel);
+    $currentSel =~ s/\n/ /g; #temporary (?) fix for the newline hassle
+    print Dumper($currentSel);
     if($currentSel ~~ @lines) {
       &syncSec(0);
     }
@@ -33,7 +33,7 @@ sub syncIt {
 
 &syncIt;
 
-# Those are deprecated, but left here for reference
+# Those are deprecated, but left here for reference (and the dummy call)
 sub syncPrim {
   system("/usr/bin/xclip -o --selection primary -o) >> $xsel&&printf \"\n\" >> $xsel");
 }
