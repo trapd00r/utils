@@ -9,7 +9,7 @@ my $xsel = "$ENV{'HOME'}/.config/dmenuclip/xsel";
 
 sub syncIt {
   print "Daemonizing...\n";
-  Proc::Daemon::Init;
+  #Proc::Daemon::Init;
   while(1) {
     open(XSEL,"<", $xsel) or die "Cant open $xsel for reading: $!";
     my @lines = <XSEL>;
@@ -18,7 +18,7 @@ sub syncIt {
     my $currentSel = `/usr/bin/xsel -o`;
     chomp($currentSel);
     $currentSel =~ s/\n/ /g; #temporary (?) fix for the newline hassle
-    print Dumper($currentSel);
+    #print Dumper($currentSel);
     if($currentSel ~~ @lines) {
       &syncSec(0);
     }
