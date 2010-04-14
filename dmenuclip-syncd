@@ -1,0 +1,45 @@
+#!/usr/bin/perl
+# dmenuclip-syncd
+# Daemon that collects the X selections and saves them in a plaintext file
+# for future use with dmenuclip
+# dmenuclip helper scriptfor syncing the X selections
+# NOTE: xclip sucks?! For some reason, xclip somehow transforms the
+# selection in some retarded way... all external commands except xclip's
+# work as values in $currentSel.
+# From here on, going with xsel... 
+use strict;
+use Proc::Daemon;
+my $xsel = "$ENV{'HOME'}/.config/dmenuclip/xsel";
+
+sub syncIt {
+  print "Daemonizing...\n";
+  Proc::Daemon::Init;
+  while(1) {
+    open(XSEL,"<", $xsel) or die "Cant open $xsel for reading: $!";
+    my @lines = <XSEL>;
+    close XSEL;
+    my $currentSel = `xsel -o`;
+    if($currentSel ~~ @lines) {
+      &syncSec(0);
+    }
+    else {
+      open(XSEL_W, ">>", $xsel) or die "Cant open $xsel for writing: $!";
+      print XSEL_W "$currentSel\n";
+      close XSEL_W;
+    }
+    sleep 2;
+  }
+}
+
+&syncIt;
+
+# Those are deprecated, but left here for reference
+sub syncPrim {
+  system("/usr/bin/xclip -o --selection primary -o) >> $xsel&&printf \"\n\" >> $xsel");
+}
+sub syncSec {
+  my $c = shift;
+  unless($c == 0) {
+    system("/usr/bin/xclip -o >> $xsel"); #&& printf \"\n\" >> $xsel");
+  }
+}
