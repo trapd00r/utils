@@ -35,11 +35,12 @@ foreach my $rel(sort(@episodes)) {
                colossal\./ix) {
     $rel = "\033[38;5;154m DOCU\033[0m: $rel";
   }
+  elsif($rel =~ /EPL|WWE|UFC|UEFA|Rugby|La\.Liga|Superleague|
+                 Allsvenskan|Formula\.Ford/i) {
+    $rel = "\033[38;5;245mSPORT\033[0m: $rel";
+  }
   elsif($rel =~ /swedish/i) {
     $rel = "\033[38;5;104m  SWE\033[0m: $rel";
-  }
-  elsif($rel =~ /EPL|WWE|UFC|UEFA|Rugby|La\.Liga|Superleague/) {
-    $rel = "\033[38;5;245mSPORT\033[0m: $rel";
   }
   else {
     $rel = "       $rel";
