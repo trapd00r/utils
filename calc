@@ -8,5 +8,6 @@ while (1) {
   chomp(my $cmd = <STDIN>);
   exit if ($cmd =~ /^\s*:q\s*/);
   my $i = eval $cmd;
-  printf("%d 0x%x 0%o %b %f \n", $i, $i, $i, $i, $i);
+  printf("%d 0x%x 0%o %b %f %s \n", $i, $i, $i, $i, $i, $i);
 }
+
