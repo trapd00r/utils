@@ -7,5 +7,5 @@ my $c = $m->current;
 my $out = sprintf("np> %s: %s (%s) \@ %skbps \{%s\}",
                   $c->artist, $c->title, $c->album, $m->status->bitrate,
                   $c->genre);
-                
+print $out, "\n";                
 system("printf \"$out\"|xclip");
