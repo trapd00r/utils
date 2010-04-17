@@ -17,14 +17,15 @@ foreach my $release(@releases) {
   push(@floss, $release) if $release =~ /FLOSS/;
 }
 
-printf("%30s\n",'DAGENS AVSNITT');
-printf("%30s\n", "--------------" ); 
+printf("%30s\n",'TV TODAY');
+printf("%30s\n", "--------" ); 
 foreach my $rel(sort(@episodes)) {
+
   chomp($rel);
- # $rel = "\033[38;5;077m$rel \033[0m" if $rel !~ /S[0-9]{2}E[0-9]{2}/i;
- if($rel =~ /fringe|house|smallville|blasningen|the\.real\.hustle|
-             mythbusters|simpsons/ix) {
-   $rel = "\033[31m$rel\033[0m";
+  $rel = "\033[38;5;249m$rel \033[0m" if $rel !~ /S[0-9]{2}E[0-9]{2}/i;
+  if($rel =~ /fringe|house|smallville|blasningen|the\.real\.hustle|
+             mythbusters|simpsons|talang/ix) {
+   $rel = "\033[38;5;208m$rel\033[0m";
  }
   if($rel =~ /S01E01/i) {
     $rel = "\033[38;5;196m  NEW\033[0m: $rel";
@@ -50,7 +51,7 @@ foreach my $rel(sort(@episodes)) {
 }
 print "\n";
 if(@floss) {
-  printf("%30s\n", 'DAGENS FLOSS');
+  printf("%30s\n", 'FLOSS WEEKLY');
   printf("%30s\n", '------------');
   foreach my $floss(@floss) {
     printf("       %s", $floss);
