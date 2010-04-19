@@ -22,8 +22,8 @@ printf("%30s\n", "--------" );
 foreach my $rel(sort(@episodes)) {
 
   chomp($rel);
-  $rel = "\033[38;5;249m$rel \033[0m" if $rel !~ /S[0-9]{2}E[0-9]{2}/i;
-  if($rel =~ /fringe|house|smallville|blasningen|the\.real\.hustle|
+  $rel = "\033[38;5;190m$rel \033[0m" if $rel !~ /S[0-9]{2}E[0-9]{2}/i;
+  if($rel =~ /fringe|house$|smallville|blasningen|the\.real\.hustle|
              mythbusters|simpsons|talang/ix) {
    $rel = "\033[38;5;208m$rel\033[0m";
  }
