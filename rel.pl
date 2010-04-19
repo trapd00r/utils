@@ -32,12 +32,12 @@ printf("%30s\n", "--------" );
 foreach my $rel(sort(@episodes)) {
 
   chomp($rel);
-  $rel = "\033[38;5;190m$rel \033[0m" if $rel =~ /$reRecurring/i;
   $rel = "\033[38;5;196m$rel \033[0m" if $rel =~ /$reNew/;
   $rel = "\033[38;5;114m       $rel\033[0m" if $rel =~ /$reDocu/i;
   $rel = "\033[38;5;245mSPORT\033[0m: $rel" if $rel =~ /$reSport/i;
   $rel = "\033[38;5;104m  SWE\033[0m: $rel" if $rel =~ /$reSwe/i;
   $rel = "\033[38;5;208m$rel\033[0m" if $rel =~ /$reWanted/i;
+  $rel = "\033[38;5;131m$rel \033[0m" if $rel !~ /$reRecurring/i;
   $rel = "       $rel" if $rel !~ /$reNew|$reDocu|$reSport|$reSwe/i;
 
   print $rel, "\n";
