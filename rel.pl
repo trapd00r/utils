@@ -17,35 +17,28 @@ foreach my $release(@releases) {
   push(@floss, $release) if $release =~ /FLOSS/;
 }
 
+my $reRecurring = 'S[0-9]{2}E[0-9]{2}';
+my $reWanted    = 'fringe|house$|smallville|blasningen|the\.real\.hustle|
+                   |mythbusters|simpsons|talang';
+my $reNew       = 'S01E01';
+my $reDocu      = 'do(c|k?)u(ment.+)?|(discovery|history)\.(channel)?
+                   |national\.geographic|colossal\..+';
+my $reSport     = 'EPL|WWE|UFC|UEFA|Rugby|La\.Liga|Superleague
+                   |Allsvenskan|Formula\.Ford';
+my $reSwe       = 'swedish';
+
 printf("%30s\n",'TV TODAY');
 printf("%30s\n", "--------" ); 
 foreach my $rel(sort(@episodes)) {
 
   chomp($rel);
-  $rel = "\033[38;5;190m$rel \033[0m" if $rel !~ /S[0-9]{2}E[0-9]{2}/i;
-  if($rel =~ /fringe|house$|smallville|blasningen|the\.real\.hustle|
-             mythbusters|simpsons|talang/ix) {
-   $rel = "\033[38;5;208m$rel\033[0m";
- }
-  if($rel =~ /S01E01/i) {
-    $rel = "\033[38;5;196m  NEW\033[0m: $rel";
-  }
-  elsif($rel =~ /do(c|k?)u(ment.+)?|
-    (discovery|history)\.(channel)?|
-               national\.geographic|
-               colossal\./ix) {
-    $rel = "\033[38;5;154m DOCU\033[0m: $rel";
-  }
-  elsif($rel =~ /EPL|WWE|UFC|UEFA|Rugby|La\.Liga|Superleague|
-                 Allsvenskan|Formula\.Ford/i) {
-    $rel = "\033[38;5;245mSPORT\033[0m: $rel";
-  }
-  elsif($rel =~ /swedish/i) {
-    $rel = "\033[38;5;104m  SWE\033[0m: $rel";
-  }
-  else {
-    $rel = "       $rel";
-  }
+  $rel = "\033[38;5;190m$rel \033[0m" if $rel =~ /$reRecurring/i;
+  $rel = "\033[38;5;196m$rel \033[0m" if $rel =~ /$reNew/;
+  $rel = "\033[38;5;114m       $rel\033[0m" if $rel =~ /$reDocu/i;
+  $rel = "\033[38;5;245mSPORT\033[0m: $rel" if $rel =~ /$reSport/i;
+  $rel = "\033[38;5;104m  SWE\033[0m: $rel" if $rel =~ /$reSwe/i;
+  $rel = "\033[38;5;208m$rel\033[0m" if $rel =~ /$reWanted/i;
+  $rel = "       $rel" if $rel !~ /$reNew|$reDocu|$reSport|$reSwe/i;
 
   print $rel, "\n";
 }
