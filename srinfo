@@ -1,0 +1,65 @@
+#!/usr/bin/perl
+# srif - Sveriges Radio Info fetcher
+use XML::Simple;
+use LWP::Simple;
+use Data::Dumper;
+use Getopt::Long;
+
+our ($optList,$optChan);
+$optChan = 2576;  # 1606 => P3 Street
+                  # 2576 => Din Gata
+if(!@ARGV) {
+  print << "USAGE";
+  $0 [OPTIONS]
+  OPTIONS
+    -np  show now playing for \$chanID
+     -c  channel id
+     -l  show playback history
+
+USAGE
+  print printAll(), "\n";
+}
+GetOptions('list'   =>  \$optList,
+           'chan:s' =>  \$optChan,
+           'np'     =>  sub {print printAll(), "\n";},
+         );
+                                 # 1606 => P3 Street
+listOld()  if $optList;
+
+sub listOld {
+  my $url = "http://api.sr.se/api/playlist/playlist.aspx?programid=$optChan";
+  my $oldInfoC = get($url) or die;
+  my $x2 = XML::Simple->new;
+  my $oldXML = $x2->XMLin($oldInfoC);
+
+  while(my ($c, $d) = each %$oldXML) {
+    while(my ($id,$songInfo) = each %$d) {
+      while(my($infoTag,$infoData) = each %$songInfo) {
+        printf("%9s: %s\n", $infoTag, $infoData);
+      }
+    }
+  }
+  exit 0;
+}
+
+sub printAll {
+  my $url = "http://api.sr.se/api/rightnowinfo/Rightnowinfo.aspx?unit=$optChan";
+  my $content = get($url) or die;
+  my $x = XML::Simple->new;
+  my $np = $x->XMLin($content);
+
+  my $artist = $np->{Channel}->{Artist} // 'unknown';
+  my $title  = $np->{Channel}->{SongTitle} // 'unknown';
+  my $next   = $np->{Channel}->{NextSong} // 'unknown';
+  my $chan   = $np->{Channel}->{Name} // 'unknown';
+  my $output;
+  if(!$artist and !$title) {
+    $output = $np->{Channel}->{Song} // 'No info';
+    return $output;
+  }
+  $output = sprintf("np: %s - %s | Next: %s (%s)",
+                    $artist, $title, $next, $chan);
+  return $output;
+  exit 0;
+}
+
