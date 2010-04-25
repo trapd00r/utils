@@ -9,22 +9,28 @@ our ($optList,$optChan);
 $optChan = 2576;  # 1606 => P3 Street
                   # 2576 => Din Gata
 if(!@ARGV) {
-  print << "USAGE";
-  $0 [OPTIONS]
-  OPTIONS
-    -np  show now playing for \$chanID
-     -c  channel id
-     -l  show playback history
-
-USAGE
   print printAll(), "\n";
 }
+
 GetOptions('list'   =>  \$optList,
            'chan:s' =>  \$optChan,
+           'help'   =>  \$help,
            'np'     =>  sub {print printAll(), "\n";},
          );
                                  # 1606 => P3 Street
 listOld()  if $optList;
+
+if($help) {
+  print << "USAGE";
+$0 [OPTIONS]
+  OPTIONS
+    -np  show now playing for \$chanID
+     -c  channel id
+     -l  show playback history
+     -h  show this help
+
+USAGE
+}
 
 sub listOld {
   my $url = "http://api.sr.se/api/playlist/playlist.aspx?programid=$optChan";
