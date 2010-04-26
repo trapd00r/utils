@@ -11,7 +11,7 @@ my $cmd = 'mplayer -slave -input file=$HOME/.mplayer/fifo';
 print "Daemonizing...\n";
 daemonize();
 foreach my $file(@files) {
-  system("$cmd $file");
+  system("$cmd \"$file\"");
 }
 
 sub usage {
