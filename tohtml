@@ -1,2 +1,3 @@
 #!/bin/bash
+#tohtml
 vim $@ -c TOhtml -c :w -c :q! -c :q!
