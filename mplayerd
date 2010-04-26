@@ -1,0 +1,29 @@
+#!/usr/bin/perl
+# mplayerd
+use strict;
+use Getopt::Long;
+use App::Daemon qw(daemonize);
+
+GetOptions(help =>  \&usage);
+my @files = @ARGV or die 'Need files';
+my $cmd = 'mplayer -slave -input file=$HOME/.mplayer/fifo';
+
+print "Daemonizing...\n";
+daemonize();
+foreach my $file(@files) {
+  system("$cmd $file");
+}
+
+sub usage {
+  print << "USAGE";
+  $0 (start|stop|status)
+  $0 [OPTIONS]
+  OPTIONS
+    -X  run in foreground
+    -l  log to file
+    -u  run as user
+    -p  pid file location
+
+USAGE
+exit 0;
+}
