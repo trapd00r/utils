@@ -9,7 +9,7 @@ my @files = @ARGV or die 'Need files';
 my $cmd = 'mplayer -slave -input file=$HOME/.mplayer/fifo';
 
 print "Daemonizing...\n";
-#daemonize();
+daemonize();
 system("$cmd \"$_\"") for @files;
 
 sub usage {
