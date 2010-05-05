@@ -26,7 +26,7 @@ foreach my $release(@releases) {
 
 my $reRecurring = 'S[0-9]{2}E[0-9]{2}';
 my $reWanted    = 'fringe|house$|smallville|blasningen|the\.real\.hustle|
-                   |mythbusters|simpsons|talang';
+                   |mythbusters|simpsons|talang|uppdrag\.granskning';
 my $reNew       = 'S01E01';
 my $reDocu      = 'do(c|k?)u(ment.+)?|(discovery|history)\.(channel)?
                    |national\.geographic|colossal\..+';
@@ -35,7 +35,7 @@ my $reSport     = 'EPL|WWE|UFC|UEFA|Rugby|La\.Liga|Superleague
 my $reSwe       = 'swedish';
 
 my $rePsy       = 'PsyCZ|MYCEL|UPE|HiEM|PSi';
-my $reRap       = '.+-(H3X|wAx|CMS|BFHMP3|WHOA|RNS|C4|UMT)$';
+my $reRap       = '.+-(H3X|wAx|CMS|BFHMP3|WHOA|RNS|C4|UMT|0MNi.+)$';
 my $reRock      = 'LzY|qF';
 my $reHS        = 'TALiON|HB';
 my $reVA        = 'VA(-|_-_).+';
