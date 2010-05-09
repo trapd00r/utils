@@ -25,8 +25,9 @@ foreach my $release(@releases) {
 }
 
 my $reRecurring = 'S[0-9]{2}E[0-9]{2}';
-my $reWanted    = 'fringe|house$|smallville|blasningen|the\.real\.hustle|
-                   |mythbusters|simpsons|talang|uppdrag\.granskning';
+my $reWanted    = 'fringe|house$|smallville|blasningen|the\.real\.hustle
+                   |mythbusters|simpsons|talang|uppdrag\.granskning
+                   |parkaour';
 my $reNew       = 'S01E01';
 my $reDocu      = 'do(c|k?)u(ment.+)?|(discovery|history)\.(channel)?
                    |national\.geographic|colossal\..+';
@@ -80,7 +81,7 @@ foreach my $rel(sort(@episodes)) {
   $rel = sprintf("%s $suffixSwe", $rel) if $rel =~ /$reSwe/ix;
   $rel = sprintf("%s $suffixSport", $rel) if $rel =~ /$reSport/ix;
   $rel = sprintf("%s $suffixNew", $rel) if $rel =~ /$reNew/ix;
-  $rel = sprintf("$colorWanted%s$colorNone",$rel) if $rel =~ /$reWanted/i;
+  $rel = sprintf("$colorWanted%s$colorNone",$rel) if $rel =~ /$reWanted/xi;
 
 
   print $rel, "\n";
