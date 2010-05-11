@@ -1,27 +1,17 @@
 #!/usr/bin/perl
 # mplayerd
 use strict;
-use Getopt::Long;
 use App::Daemon qw(daemonize);
 
-GetOptions(help =>  \&usage);
 my @files = @ARGV or die 'Need files';
-my $cmd = 'mplayer -slave -input file=$HOME/.mplayer/fifo';
+my $cmd = "mplayer -slave -input file=\$HOME/.mplayer/mplayerd.fifo";
 
-print "Daemonizing...\n";
+unless(-p "$ENV{HOME}/.mplayer/mplayerd.fifo") {
+  use POSIX;
+  mkfifo("$ENV{HOME}/.mplayer/mplayerd.fifo", 0666) or die $!;
+}
+
+print "Daemonizing. PID=$$\n";
 daemonize();
 system("$cmd \"$_\"") for @files;
 
-sub usage {
-  print << "USAGE";
-  $0 (start|stop|status)
-  $0 [OPTIONS]
-  OPTIONS
-    -X  run in foreground
-    -l  log to file
-    -u  run as user
-    -p  pid file location
-
-USAGE
-exit 0;
-}
