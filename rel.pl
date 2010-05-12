@@ -8,7 +8,7 @@ open(LOG,$flexlog) || die "$flexlog does not exist?!\n";
 my @releases = <LOG>;
 close(LOG);
 
-my (@episodes, @floss, @music);
+my (@episodes, @floss, @music, @mvids);
 
 foreach my $release(@releases) {
   next unless($release =~ /Downloading:/);
@@ -19,6 +19,9 @@ foreach my $release(@releases) {
   elsif($release =~ /FLOSS/) {
     push(@floss, $release);
   }
+  elsif($release =~ /.+(_|-|-_-|_-_)+x264-[0-9]{4}/) {
+    push(@mvids, $release);
+  }
   else {
     push(@music, $release);
   }
@@ -26,18 +29,19 @@ foreach my $release(@releases) {
 
 my $reRecurring = 'S[0-9]{2}E[0-9]{2}';
 my $reWanted    = 'fringe|house$|smallville|blasningen|the\.real\.hustle
-                   |mythbusters|simpsons|talang|uppdrag\.granskning
-                   |parkaour';
+                  |mythbusters|simpsons|talang|uppdrag\.granskning
+                  |parkaour';
 my $reNew       = 'S01E01';
 my $reDocu      = 'do(c|k?)u(ment.+)?|(discovery|history)\.(channel)?
-                   |national\.geographic|colossal\..+';
+                  |national\.geographic|colossal\..+';
 my $reSport     = 'EPL|WWE|UFC|UEFA|Rugby|La\.Liga|Superleague
-                   |Allsvenskan|Formula\.Ford';
+                  |Allsvenskan|Formula\.Ford';
 my $reSwe       = 'swedish';
 
 my $rePsy       = 'PsyCZ|MYCEL|UPE|HiEM|PSi';
-my $reRap       = '.+-(H3X|wAx|CMS|BFHMP3|WHOA|RNS|C4|UMT|0MNi.+)$';
-my $reRock      = 'LzY|qF';
+my $reRap       = '.+-(H3X|wAx|CMS|BFHMP3|WHOA|RNS|C4|UMT|0MNi(.+)?
+                  |FRAY(.+)?)$';
+my $reRock      = 'LzY|qF|SRP|NiF';
 my $reHS        = 'TALiON|HB';
 my $reVA        = 'VA(-|_-_).+';
 my $reWEB       = '.+(-WEB-)';
@@ -47,7 +51,7 @@ my $reCDA       = '.+(-CDA-)';
 my $reDAB       = '.+(-DAB-)';
 my $reVLS       = '.+(-VLS-)';
 my $reCABLE     = '.+(-CABLE-)';
-my $reLIVE      = 'Live_(on|at)';
+my $reLIVE      = 'Live_(on|at|in)';
 
 my $colorNone   = "\033[0m";
 my $colorWanted = "\033[38;5;202m";
@@ -71,7 +75,7 @@ my $suffixVLS   = "\033[38;5;220mVinyl\033[0m";
 my $suffixCABLE = "\033[38;5;130mCable\033[0m";
 my $suffixLIVE  = "\033[38;5;79mLive\033[0m";
 
-printf("\033[38;5;154m%40s\033[0m\n",'TV TODAY');
+#printf("\033[38;5;154m%40s\033[0m\n",'TV TODAY') unless !@episodes;
 foreach my $rel(sort(@episodes)) {
   chomp($rel);
   $rel = sprintf("%60s", $rel);
@@ -83,31 +87,53 @@ foreach my $rel(sort(@episodes)) {
   $rel = sprintf("%s $suffixNew", $rel) if $rel =~ /$reNew/ix;
   $rel = sprintf("$colorWanted%s$colorNone",$rel) if $rel =~ /$reWanted/xi;
 
-
-  print $rel, "\n";
+  printf("\033[38;5;196mTV\033[0m %s\n", $rel);
 }
-print '=' x 80, "\n";
-printf("\033[38;5;154m%40s\033[0m\n", "MUSIC TODAY");
+#printf("\033[38;5;154m%40s\033[0m\n", "MUSIC TODAY") unless !@music;
+printf("%40s\n", '-'); unless !@episodes;
 foreach my $rel(@music) {
   chomp($rel);
   $rel = sprintf("%60s", $rel);
   $rel = sprintf("%.60s", $rel);
-  $rel = sprintf("%s $suffixPsy", $rel)   if $rel =~ /$rePsy/;
-  $rel = sprintf("%s $suffixRap", $rel)   if $rel =~ /$reRap/;
-  $rel = sprintf("%s $suffixRock", $rel)  if $rel =~ /$reRock/;
-  $rel = sprintf("%s $suffixHS", $rel)    if $rel =~ /$reHS/;
-  $rel = sprintf("%s $suffixVA", $rel)    if $rel =~ /$reVA/;
-  $rel = sprintf("%s $suffixWEB", $rel)   if $rel =~ /$reWEB/;
-  $rel = sprintf("%s $suffixCDS", $rel)   if $rel =~ /$reCDS/;
-  $rel = sprintf("%s $suffixCDM", $rel)   if $rel =~ /$reCDM/;
-  $rel = sprintf("%s $suffixCDA", $rel)   if $rel =~ /$reCDA/;
-  $rel = sprintf("%s $suffixDAB", $rel)   if $rel =~ /$reDAB/;
-  $rel = sprintf("%s $suffixVLS", $rel)   if $rel =~ /$reVLS/;
-  $rel = sprintf("%s $suffixCABLE", $rel) if $rel =~ /$reCABLE/;
-  $rel = sprintf("%s $suffixLIVE", $rel)  if $rel =~ /$reLIVE/;
+  $rel = sprintf("%s $suffixPsy", $rel)   if $rel =~ /$rePsy/x;
+  $rel = sprintf("%s $suffixRap", $rel)   if $rel =~ /$reRap/x;
+  $rel = sprintf("%s $suffixRock", $rel)  if $rel =~ /$reRock/x;
+  $rel = sprintf("%s $suffixHS", $rel)    if $rel =~ /$reHS/x;
+  $rel = sprintf("%s $suffixVA", $rel)    if $rel =~ /$reVA/x;
+  $rel = sprintf("%s $suffixWEB", $rel)   if $rel =~ /$reWEB/x;
+  $rel = sprintf("%s $suffixCDS", $rel)   if $rel =~ /$reCDS/x;
+  $rel = sprintf("%s $suffixCDM", $rel)   if $rel =~ /$reCDM/x;
+  $rel = sprintf("%s $suffixCDA", $rel)   if $rel =~ /$reCDA/x;
+  $rel = sprintf("%s $suffixDAB", $rel)   if $rel =~ /$reDAB/x;
+  $rel = sprintf("%s $suffixVLS", $rel)   if $rel =~ /$reVLS/x;
+  $rel = sprintf("%s $suffixCABLE", $rel) if $rel =~ /$reCABLE/x;
+  $rel = sprintf("%s $suffixLIVE", $rel)  if $rel =~ /$reLIVE/x;
 
+  printf("\033[38;5;197mMU\033[0m %s\n", $rel);
 
-  print "$rel\n";
+}
+
+#printf("\033[38;5;100m%40s\033[0m\n", "MVIDS TODAY") unless !@mvids;
+printf("%40s\n", '-') unless !@music;
+foreach my $rel(@mvids) {
+  chomp($rel);
+  $rel = sprintf("%60s", $rel);
+  $rel = sprintf("%.60s", $rel);
+  $rel = sprintf("%s $suffixPsy", $rel)   if $rel =~ /$rePsy/x;
+  $rel = sprintf("%s $suffixRap", $rel)   if $rel =~ /$reRap/x;
+  $rel = sprintf("%s $suffixRock", $rel)  if $rel =~ /$reRock/x;
+  $rel = sprintf("%s $suffixHS", $rel)    if $rel =~ /$reHS/x;
+  $rel = sprintf("%s $suffixVA", $rel)    if $rel =~ /$reVA/x;
+  $rel = sprintf("%s $suffixWEB", $rel)   if $rel =~ /$reWEB/x;
+  $rel = sprintf("%s $suffixCDS", $rel)   if $rel =~ /$reCDS/x;
+  $rel = sprintf("%s $suffixCDM", $rel)   if $rel =~ /$reCDM/x;
+  $rel = sprintf("%s $suffixCDA", $rel)   if $rel =~ /$reCDA/x;
+  $rel = sprintf("%s $suffixDAB", $rel)   if $rel =~ /$reDAB/x;
+  $rel = sprintf("%s $suffixVLS", $rel)   if $rel =~ /$reVLS/x;
+  $rel = sprintf("%s $suffixCABLE", $rel) if $rel =~ /$reCABLE/x;
+  $rel = sprintf("%s $suffixLIVE", $rel)  if $rel =~ /$reLIVE/x;
+
+  printf("\033[38;5;226mMV\033[0m %s\n", $rel);
 }
 print "\n";
 if(@floss) {
