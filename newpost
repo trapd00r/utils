@@ -1,0 +1,42 @@
+#!/usr/bin/perl
+# newpost
+use strict;
+
+chomp(my $date = `date +%Y-%m-%d`);
+
+my $dir = "$ENV{HOME}/httpd/NEWtrapd00r.se/all";
+my @categories = grep{!/_site/} glob("$dir/*");
+
+print "Categories available:\n";
+print "$_\n" for basename(@categories);
+print "Category: ";
+chomp(my $newpostcat = <STDIN>);
+print "\n";
+print "Available posts in $newpostcat:\n";
+
+my @postsincat = glob("$dir/$newpostcat/_posts/*");
+print "$_\n" for basename(@postsincat);
+print "\n\n";
+
+print "New post: ";
+chomp(my $newpostname = <STDIN>);
+newpost($newpostname);
+
+
+sub newpost {
+  my $filename = shift;
+  $filename =~ s/\s/-/g;
+  $filename =~ s/-{1,}/-/g;
+  my $fullpath = "$dir/$newpostcat/_posts/$date-$filename";
+  system("vim", "$fullpath.textile");
+}
+
+
+sub basename {
+  my @cat = @_;
+  for my $cat(@cat) {
+    $cat =~ s/.+\/(.+$)/$1/;
+  }
+  return @cat;
+}
+
