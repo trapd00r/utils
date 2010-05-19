@@ -2,6 +2,6 @@
 # unpack script
 chmod +t,o+w $(pwd)
 find . -iname '*.rar' -execdir rar x {} $(pwd | perl -pe 's/^((?:\/[^\/]+){2}\/).*/$1/').temp/ \;
-mplayer -slave -input file=/home/scp1/.mplayer/fifo $(pwd | perl -pe 's/^((?:\/[^\/]+){2}\/).*/$1/').temp/* && rm $(pwd | perl -pe 's/^((?:\/[^\/]+){2}\/).*/$1/').temp/*
+mplayer -msgcolor -slave -input file=/home/scp1/.mplayer/fifo $(pwd | perl -pe 's/^((?:\/[^\/]+){2}\/).*/$1/').temp/* && rm $(pwd | perl -pe 's/^((?:\/[^\/]+){2}\/).*/$1/').temp/*
 # keep track of what I've seen
 echo $(basename $(pwd)) >> /mnt/Movies_1/.seen
