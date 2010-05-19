@@ -1,6 +1,8 @@
 #!/usr/bin/perl
 # newpost
 use strict;
+use Carp;
+use Data::Dumper;
 
 chomp(my $date = `date +%Y-%m-%d`);
 
@@ -8,9 +10,20 @@ my $dir = "$ENV{HOME}/httpd/NEWtrapd00r.se/all";
 my @categories = grep{!/_site/} glob("$dir/*");
 
 print "Categories available:\n";
-print "$_\n" for basename(@categories);
+print "$_\n" for basename(@categories); # os,perl,sex
 print "Category: ";
 chomp(my $newpostcat = <STDIN>);
+
+
+
+
+
+
+#  mkdir("$dir/$newpostcat", 0777) 
+#    or croak "Cant mkdir $dir/$newpostcat :$!";
+#  mkdir("$dir/$newpostcat/_posts", 0777) 
+#    or croak "Cant mkdir $dir/$newpostcat/_posts : $!";
+#}
 print "\n";
 print "Available posts in $newpostcat:\n";
 
@@ -20,14 +33,27 @@ print "\n\n";
 
 print "New post: ";
 chomp(my $newpostname = <STDIN>);
-newpost($newpostname);
+unless($newpostname eq "" or !$newpostname) {
+  newpost($newpostname);
+}
 
 
 sub newpost {
-  my $filename = shift;
+  my $title = shift;
+  my $filename = $title;
   $filename =~ s/\s/-/g;
   $filename =~ s/-{1,}/-/g;
   my $fullpath = "$dir/$newpostcat/_posts/$date-$filename";
+  open(my $fh, '>>', "$fullpath.textile")
+    or croak "Cant open $fullpath.textile : $!";
+
+  chomp(my $friendlydate = `date '+%d %B %Y'`);
+  print $fh "# vim: ft=html textwidth=120 nowrap:\n\n";
+  print $fh "---\nlayout: post\ntitle: $title\n---\n";
+  print $fh "h2. {{ page.title }}\n";
+  print $fh "p(publish_date) . $friendlydate\n\n<p>\n";
+
+  close $fh;
   system("vim", "$fullpath.textile");
 }
 
