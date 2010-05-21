@@ -48,10 +48,11 @@ sub newpost {
     or croak "Cant open $fullpath.textile : $!";
 
   chomp(my $friendlydate = `date '+%d %B %Y'`);
+  print $fh "---\nlayout: post\ntitle: \"$title\"\n---\n\n";
+  print $fh "h2. {{ page.title }}\n\n";
+  print $fh "p(publish_date). $friendlydate\n\n<p>\n";
+
   print $fh "# vim: ft=html textwidth=120 nowrap:\n\n";
-  print $fh "---\nlayout: post\ntitle: $title\n---\n";
-  print $fh "h2. {{ page.title }}\n";
-  print $fh "p(publish_date) . $friendlydate\n\n<p>\n";
 
   close $fh;
   system("vim", "$fullpath.textile");
