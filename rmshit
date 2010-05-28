@@ -1,0 +1,65 @@
+#!/usr/bin/perl
+# rmshit
+# instantly deletes the cocksucking good for nothing motherfucking piece of
+# shitty files that firefox/gtk/gconf/etc stupid apps creates
+use strict;
+use Linux::Inotify2;
+use Data::Dumper;
+
+my $inotify = Linux::Inotify2->new;
+my $file = shift or die "Need file to watch";
+
+$inotify->watch($file, IN_CREATE) or die;
+
+my %inotifyEvents = (
+  '1'          => 'IN_ACCESS',       # file was accessed
+  '2'          => 'IN_MODIFY',       # file was modified
+  '4'          => 'IN_ATTRIB',       # metadata has changed
+  '8'          => 'IN_CLOSE_WRITE',  # writeable file was closed
+  '16'         => 'IN_CLOSE_NOWRITE',# unwriteable file was closed
+  '32'         => 'IN_OPEN',         # file was opened
+  '64'         => 'IN_MOVED_FROM',   # file was moved from X
+  '128'        => 'IN_MOVED_TO',     # file was moved to Y
+  '256'        => 'IN_CREATE',       # subfile was created
+  '512'        => 'IN_DELETE',       # subfile was deleted
+  '1024'       => 'IN_DELETE_SELF',  # self/dir was deleted
+  '2048'       => 'IN_MOVE_SELF',    # self was moved
+  '8192'       => 'IN_UNMOUNT',      # fs was unmounted
+  '16384'      => 'IN_O_OVERFLOW',   # Even queued overflowed
+  '32768'      => 'IN_IGNORED',      # file was ignored
+  '1073741824' => 'IN_ISDIR',        # event occurred against dir
+
+);
+
+my @shittyfiles = qw(.dbus
+                     .gconf
+                     .gconfd
+                     .links
+                     .lynx
+                     .local
+                     .Xauthority
+                     .dmenu_cache
+                     .fmenu_cache
+                     .esd_auth
+                     .fehrc
+                     .xsel.log
+                     Desktop
+                     );
+
+
+while () {
+  my @events = $inotify->read;
+  unless (@events > 0) {
+    print "read error: $!";
+    last;
+  }
+  foreach my $event(@events) {
+    foreach my $shitfile(@shittyfiles) {
+      if($shitfile eq $event->name) { # remove the stupid piece of shit
+        print $shitfile, " => ", $event->name;
+        unlink($shitfile);
+      }
+    }
+  }
+}
+
