@@ -7,7 +7,7 @@ use Linux::Inotify2;
 use Data::Dumper;
 
 my $inotify = Linux::Inotify2->new;
-my $file = shift or die "Need file to watch";
+my $file = shift // "$ENV{HOME}/";
 
 $inotify->watch($file, IN_CREATE) or die;
 
@@ -28,7 +28,6 @@ my %inotifyEvents = (
   '16384'      => 'IN_O_OVERFLOW',   # Even queued overflowed
   '32768'      => 'IN_IGNORED',      # file was ignored
   '1073741824' => 'IN_ISDIR',        # event occurred against dir
-
 );
 
 my @shittyfiles = qw(.dbus
@@ -45,7 +44,6 @@ my @shittyfiles = qw(.dbus
                      .xsel.log
                      Desktop
                      );
-
 
 while () {
   my @events = $inotify->read;
