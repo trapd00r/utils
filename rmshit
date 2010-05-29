@@ -49,6 +49,8 @@ my @shittyfiles = qw(.dbus
                      .xsel.log
                      .ncmpcpp
                      Desktop
+                     .adobe
+                     .macromedia
                      );
 sub daemonize {
   my $daemon = Working::Daemon->new;
