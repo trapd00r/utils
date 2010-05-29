@@ -1,13 +1,18 @@
 #!/usr/bin/perl
-# rmshit
-# instantly deletes the cocksucking good for nothing motherfucking piece of
-# shitty files that firefox/gtk/gconf/etc stupid apps creates
+=rmshit
+  rmshit
+  instantly deletes the cocksucking good for nothing motherfucking piece of
+  shitty files that firefox/gtk/gconf/etc stupid apps creates
+=cut
+
 use strict;
 use Linux::Inotify2;
+use Working::Daemon;
 use Data::Dumper;
 
 my $inotify = Linux::Inotify2->new;
 my $file = shift // "$ENV{HOME}/";
+my $log = "$ENV{HOME}/rmshit.log"; # yeah, lets clobber $HOME!!
 
 $inotify->watch($file, IN_CREATE) or die;
 
@@ -42,8 +47,17 @@ my @shittyfiles = qw(.dbus
                      .esd_auth
                      .fehrc
                      .xsel.log
+                     .ncmpcpp
                      Desktop
                      );
+sub daemonize {
+  my $daemon = Working::Daemon->new;
+  $daemon->name('rmshit');
+  $daemon->do_action;
+}
+
+print "Daemonizing; check $log for deleted objects\n";
+daemonize();
 
 while () {
   my @events = $inotify->read;
@@ -54,7 +68,9 @@ while () {
   foreach my $event(@events) {
     foreach my $shitfile(@shittyfiles) {
       if($shitfile eq $event->name) { # remove the stupid piece of shit
-        print $shitfile, " => ", $event->name;
+        open(my $fh, '>>', $log);     # I'll let it freak out for now
+        print $fh "@{[scalar(localtime)]}: $shitfile\n";
+        close $fh;
         unlink($shitfile);
       }
     }
