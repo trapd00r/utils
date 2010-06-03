@@ -1,0 +1,30 @@
+#!/usr/bin/perl
+use strict;
+use Carp;
+
+my $f = shift;
+
+my %filetypes = (
+  pl      => 'perl',
+  sh      => 'bash',
+  py      => 'python',
+  rb      => 'ruby',
+);
+
+my $t;
+if($f =~ /\.(.+)$/) {
+  $t = $1; #pl
+  $t = $filetypes{$t};
+}
+else {
+  open(my $fh, '<', $f) or die;
+  my @foo = <$fh>;
+  close $fh;
+
+  if($foo[0] =~ m;#!/.+/(.+)?/?(.+)?;) {
+    $t = $1; #perl
+  }
+}
+
+system("source-highlight -o STDOUT -f esc -s $t -i $f") == 0
+  or croak 'diediedie';
