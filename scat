@@ -1,0 +1,51 @@
+#!/usr/bin/perl
+=scat
+A cat with syntax highlighting powers
+
+scat is a wrapper around GNU Source Highlight that might figure out
+what kind of syntax highlighting you'd want by looking at the extension OR
+the shebang, if any. If all fails, it'll use the --infer-lang option that
+might or might not succeed.
+=cut
+
+use strict;
+use Carp;
+
+print "I need a file to scat!\n" and exit(1) unless @ARGV;
+
+my $f = shift;
+
+sub whatlang {
+  my $file = shift;
+  my $ext;
+  chomp(my @supported = lc(`source-highlight --lang-list`));
+  if($file =~ /.*\.(.+)$/) { #foo.(pl)
+    $ext = $1;
+  }
+  else {
+    open(my $fh,'<',$file) or croak "Cant open $file: $!";
+    my @foo = <$fh>;
+    if($foo[0] =~ /(?:[A-Za-z0-9]+)\/([A-Za-z0-9]+)\//i) { # /usr/bin/(perl)
+      $ext = $'; # everything after /usr/bin/
+    }
+    elsif($foo[0] =~ /(?:[A-Za-z0-9]+)\//) { # /bin/(sh)
+      $ext = $';
+    }
+  }
+
+  for my $ft(@supported) {
+    if($ft =~ /^(.+)\s=/) {
+      $ft = $1;
+    }
+  }
+  if($ext ~~ @supported) {
+    system("source-highlight -o STDOUT -f esc -n -s $ext -i $file") == 0 
+      or croak("Dont do like that!");
+  }
+  else {
+    system("source-highlight -o STDOUT -f esc  -n --infer-lang -i $file") == 0
+      or croak("That didnt went very well, dear sir...");
+  }
+}
+
+whatlang($f);
