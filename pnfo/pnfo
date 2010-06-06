@@ -17,5 +17,5 @@ unless(@nfos) {
 }
 
 
-system("$term -e $viewer @nfos") == 0 or croak "Whoops! $!";
+system("$term -e $viewer \"@nfos\"") == 0 or croak "Whoops! $!";
 
