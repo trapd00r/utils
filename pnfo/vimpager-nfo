@@ -1,11 +1,10 @@
 #!/bin/sh
 # modded vimpager for nfo files
+# colorscheme is at http://github.com/trapd00r/neverland-vim-theme
 
 
 file="$@"
 if [ -z "$file" ]; then file="-"; fi
-
-linux=1
 
 less_vim() {
     vim -R \
@@ -14,7 +13,7 @@ less_vim() {
     -c 'runtime! macros/less.vim' \
     -c 'set foldlevel=999' \
     -c 'set nonumber' \
-    -c ':colorscheme khaki' \
+    -c ':colorscheme neverland2' \
     -c 'set laststatus=2' \
     -c 'set textwidth=80' \
     -c 'set cursorline' \
