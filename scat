@@ -15,12 +15,16 @@ print "I need a file to scat!\n" and exit(1) unless @ARGV;
 
 my $f = shift;
 
+my %lang = (
+  pl  => 'perl',
+);
+
 sub whatlang {
   my $file = shift;
   my $ext;
   chomp(my @supported = lc(`source-highlight --lang-list`));
   if($file =~ /.*\.(.+)$/) { #foo.(pl)
-    $ext = $1;
+    $ext = $lang{$1};
   }
   else {
     open(my $fh,'<',$file) or croak "Cant open $file: $!";
