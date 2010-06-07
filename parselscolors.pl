@@ -15,13 +15,13 @@ for my $ft(@ft) {
     my $file = $2;
     $colors{$file} = $clr;
   }
-  if($ft =~ m/target/) {
-    $symlink = 'target';
+  if($ft =~ m/(target|follow)/) {
+    $symlink = $1;
   }
 }
 
 for my $f(sort(keys(%colors))) {
-  printf("\033[$colors{$f}m %15s\033[0m %s\n",
-    $f, $colors{$f});
+  printf("\033[$colors{$f}m %25s\033[0m %s\n",
+    "foo$f", $colors{$f});
 }
-printf("%16s %s\n",'symlink',$symlink); # bah, lazy
+printf(" %25s %s\n",'symlink',$symlink); # bah, lazy
