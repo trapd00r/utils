@@ -9,9 +9,9 @@ if(!$c->artist) {
   $out = sprintf("np> %s (no id3)",$c->file);
 }
 else {
-  $out = sprintf("np> %s: %s (%s) \@ %skbps \{%s\}",
+  $out = sprintf("np> %s: %s (%s) \@ %skbps \{%s\} [%s]",
                   $c->artist, $c->title, $c->album, $m->status->bitrate,
-                  $c->genre);
+                  $c->genre, $c->date);
               }
 
 print $out, "\n";                
