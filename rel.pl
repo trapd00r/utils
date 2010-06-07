@@ -90,7 +90,7 @@ foreach my $rel(sort(@episodes)) {
   printf("\033[38;5;196mTV\033[0m %s\n", $rel);
 }
 #printf("\033[38;5;154m%40s\033[0m\n", "MUSIC TODAY") unless !@music;
-printf("%40s\n", '-'); unless !@episodes;
+printf("%40s\n", '-') unless !@episodes;
 foreach my $rel(@music) {
   chomp($rel);
   $rel = sprintf("%60s", $rel);
