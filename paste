@@ -11,9 +11,22 @@ for(@files) {
   system("vim \"$_\" -c TOhtml -c :w :q! -c :q! -c :q!");
 }
 
-for(@files) {
-  $_ .= '.html';
-  system("scp -P 19216 \"$_\" $int_host:/home/srv/http/paste/");
-  my $fullstr = "$ext_host/$_";
-  system("printf \"$fullstr\n\" && printf \"$fullstr\"|xclip");
+for my $file(@files) {
+  my($basedir, $basename);
+
+  if($file =~ /(.+\/)+(.+)/) {
+    $basedir  = $1;
+    $basename = $2; # eq file
+  }
+  else {
+    $basedir  = './';
+    $basename = $file;
+  }
+
+  #$file .='.html';
+
+  system("scp -P 19216 \"$basedir/$basename.html\" $int_host:/home/srv/http/paste/");
+  my $fullstr = "$ext_host/$basename";
+  system("printf \"$fullstr.html\n\" && printf \"$fullstr.html\"|xclip && rm -v \"$basedir/$basename.html\"");
 }
+
