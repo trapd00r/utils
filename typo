@@ -1,0 +1,18 @@
+#!/usr/bin/perl
+# typo
+use strict;
+use LWP::UserAgent;
+
+my $arg = shift // 'insansiate';
+
+my $lwp = LWP::UserAgent->new(agent => 'Mozilla');
+my $c = $lwp->get("http://www.google.com/search?q=$arg") or die $!;
+
+my @content = split(/:/, $c->content);
+
+for(@content) {
+  if(m;<b><i>(.+)</i></b>;) {
+    print "$1\n";
+    exit;
+    }
+}
