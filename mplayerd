@@ -4,7 +4,7 @@ use strict;
 use App::Daemon qw(daemonize);
 
 my @files = @ARGV or die 'Need files';
-my $cmd = "mplayer -slave -input file=\$HOME/.mplayer/mplayerd.fifo";
+my $cmd = "mplayer -slave -input file=\$HOME/.mplayer/mplayerd.fifo > \$HOME/.mplayer/mplayerd.log";
 
 unless(-p "$ENV{HOME}/.mplayer/mplayerd.fifo") {
   use POSIX;
