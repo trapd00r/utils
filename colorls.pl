@@ -35,7 +35,7 @@ for(@arr) {
 
 
   printf("$CPERM%s$CDIM%3d\033[0m $CDATE%2s\033[0m $CFNO%s\033[0m$CPIPE▕\033[0m%s\n",
-    $perm, $dinmon,$month,sprintf("%3d",$fno), $file);
+    $perm, $dinmon,$month,sprintf("%4d",$fno), $file);
 }
 print "\033[38;5;160m$i\033[0m Files\n";
 
