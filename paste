@@ -4,7 +4,7 @@
 use strict;
 
 my @files = @ARGV or die;
-my $int_host = '192.168.1.33';
+my $int_host = '192.168.1.101';
 my $ext_host = 'http://paste.trapd00r.se';
 
 for(@files) {
