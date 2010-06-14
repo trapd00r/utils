@@ -8,7 +8,9 @@ my $CDATE = "\033[38;5;149m";
 my $CDIM  = "\033[38;5;100m";
 my $CPIPE = "\033[38;5;197m";
 
-my $ls = "ls -hAov --indicator-style=file-type --color=always --group-directories-first --time=ctime @ARGV";
+@ARGV = './' unless  @ARGV;
+
+my $ls = "ls -hAov --indicator-style=file-type --color=always --group-directories-first --time=ctime \"@ARGV\"";
 open(my $ph, "-|", $ls) or die $!;
 
 my @arr = <$ph>;
