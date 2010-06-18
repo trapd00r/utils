@@ -2,6 +2,7 @@
 # paste
 # for xeon-enouf ;p
 use strict;
+use File::Copy;
 
 my @files = @ARGV or die;
 my $int_host = '192.168.1.101';
@@ -9,6 +10,7 @@ my $ext_host = 'http://paste.trapd00r.se';
 
 for(@files) {
   system("vim \"$_\" -c 'set nonumber' -c TOhtml -c :w :q! -c :q! -c :q!");
+  move("$_.html", "$_-@{[time()]}.html");
 }
 
 for my $file(@files) {
@@ -23,7 +25,7 @@ for my $file(@files) {
     $basename = $file;
   }
 
-  #$file .='.html';
+  $basename .= "-@{[time()]}";
 
   system("scp -P 19216 \"$basedir/$basename.html\" $int_host:/home/srv/http/paste/");
   my $fullstr = "$ext_host/$basename";
