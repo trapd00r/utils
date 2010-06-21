@@ -1,52 +1,76 @@
 #!/usr/bin/perl
-# fbft - move files to dirs compelling to actual file-type
-=move shit based on filetype;
-:set paste
-               a.out => ELF/64
-           bubble.pl => ASCII/tex
-           cobalt.pl => ASCII/tex
-        fileident.pl => ASCII/tex
-        filemagic.pl => perl
-              foobar => ASCII/tex
-               foo.c => ASCII/C
-              foo.sh => POSIX/shell
-                lala => ELF/64
-             menu.pl => ASCII/tex
-         menu.pl.tar => POSIX/tar
-      menu.pl.tar.gz => gzip/compressed
-            menu.png => PNG/image
-        movefiles.pl => ASCII/tex
-                 rpd => perl
-14 files were skipped.
+# fbft - move files to fts compelling to actual file-type
+=zup?
+                      12-a.mp3 => audio/mpeg
+                      12-e.mp3 => audio/mpeg
+                      12-j.mp3 => audio/mpeg
+                      12-s.mp3 => audio/mpeg
+                         a.out => application/x-executable
+                       .bashrc => text/plain
+                     bubble.pl => text/plain
+                     cobalt.pl => text/plain
+                  fileident.pl => text/plain
+                  filemagic.pl => text/x-perl
+                   .fonts.conf => application/xml
+                        foobar => text/plain
+                         foo.c => text/x-c
+                        foo.sh => text/x-shellscript
+                    .gtkrc-2.0 => text/plain
+                       menu.pl => text/plain
+                   menu.pl.tar => application/x-tar
+                menu.pl.tar.gz => application/x-gzip
+                      menu.png => image/png
+                       .muttrc => text/plain
+                   .procmailrc => text/plain
+                  .ratpoisonrc => text/x-c++; charset=us-ascii
+                  .rtorrent.rc => text/plain
+                       .sbclrc => text/plain
+                     .screenrc => text/plain
+                .screenrc-dvdc => text/plain
+                    .stumpwmrc => text/x-lisp
+                        .toprc => text/plain
+                      .urlview => text/plain
+                 .vimperatorrc => text/plain
+                        .vimrc => text/plain
+                      .xinitrc => text/plain
+                   .Xresources => text/x-c
+0 files were skipped.
 =cut
 
 use strict;
-use File::LibMagic ':easy';
+use File::LibMagic;
 use File::Copy;
 use File::Path qw(make_path);
 use File::Basename;
 
 my @files = @ARGV or yell("I need files!") and die;
+my $magic = File::LibMagic->new;
 
 my $unwanted = 0;
 for my $file(@files) {
-  my $dir = MagicFile($file);
-  if($dir =~ /^a ([\/[a-zA-z_-]+)/) {
-    $dir =~ s/.+([\/]+)(\S+).+/$2/g;
-  }
-  #$dir =~ s/^(\w+)\s+(\w+).+$/$1\/$2/g;
-  $dir =~ s/^(\S+)\s+(\S+).+$/$1\/$2/g;
-  $dir =~ s/\s+/_/g;
-  if($dir =~ /^directory/) {
+  my $ft = $magic->checktype_filename($file);
+  $ft =~ s/([a-z\/]+);.+/$1/;
+
+  if($ft eq 'application/x-directory') {
     $unwanted++;
     next;
   }
-  if(!-d $dir) {
-    make_path($dir);
-    print "make_path($dir)\n";
+
+  #if($ft =~ /^a ([\/[a-zA-z_-]+)/) {
+  #  $ft =~ s/.+([\/]+)(\S+).+/$2/g;
+  #}
+  ##$ft =~ s/^(\w+)\s+(\w+).+$/$1\/$2/g;
+  #$ft =~ s/^(\S+)\s+(\S+).+$/$1\/$2/g;
+  #$ft =~ s/\s+/_/g;
+  #if($ft =~ /^directory/) {
+  #  $unwanted++;
+  #  next;
+  #}
+  if(!-d $ft) {
+    make_path($ft) or die;
   }
-  copy($file, $dir);
-  printf("%20s => %s\n", $file, $dir);
+  move($file, $ft);
+  printf("%30s => %s\n", $file, $ft);
 
 }
 print "$unwanted files were skipped.\n";
