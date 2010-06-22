@@ -1,17 +1,60 @@
 #!/usr/bin/perl
 # mplayerd
 use strict;
-use App::Daemon qw(daemonize);
+use Mplayer::NowPlaying qw($np_log np);
+use Working::Daemon;
 
-my @files = @ARGV or die 'Need files';
-my $cmd = "mplayer -slave -input file=\$HOME/.mplayer/mplayerd.fifo > \$HOME/.mplayer/mplayerd.log";
+my @files = @ARGV;
 
-unless(-p "$ENV{HOME}/.mplayer/mplayerd.fifo") {
+my $fifo  = "$ENV{HOME}/.mplayer/mplayerd.fifo";
+my $log   = "$ENV{HOME}/.mplayer/mplayerd.log";
+my $mplay = 'mplayer';
+my $mpopt = "-identify -slave -input file=$fifo";
+my $lock  = '/tmp/mplayerd.pid';
+
+$np_log = $log;
+
+unless(-f $log) {
+  open(my $fh, '>', $log);
+  close($fh);
+}
+unless(-p $fifo) {
   use POSIX;
-  mkfifo("$ENV{HOME}/.mplayer/mplayerd.fifo", 0666) or die $!;
+  mkfifo($fifo, 0666) or die "Cant mkfifo $fifo: $!";
+}
+if(!-f $lock) {
+  #daemonize();
+  mkpid();
+  system("$mplay $mpopt \"@files\" > $log") == 0 or croak();
+  unlink($lock) or die $!;
+}
+else {
+  yell("mplayer is running.\n");
+  my $artist = np('artist');
+  my $album  = np('album');
+  my $title  = np('title');
+  my $year   = np('year');
+  printf("%s - %s (%s) [%d]\n", $artist, $title, $album, $year);
+  exit 0;
 }
 
-print "Daemonizing. PID=$$\n";
-daemonize();
-system("$cmd \"$_\"") for @files;
+sub mkpid {
+  open(my $pid, '>', $lock) or die $!;
+  print $pid $$;
+  close($pid);
+}
 
+sub rmpid {
+  unlink($lock) or die $!;
+}
+
+sub daemonize {
+  my $d = Working::Daemon->new;
+  $d->name('Mplayerd');
+  $d->do_action;
+}
+
+sub yell {
+  my $str = shift;
+  return "\033[1m$str\033[0m";
+}
