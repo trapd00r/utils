@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# fbft - move files to fts compelling to actual file-type
+# fbft - move files to dirs compelling to actual file-type
 =zup?
                       12-a.mp3 => audio/mpeg
                       12-e.mp3 => audio/mpeg
@@ -42,38 +42,59 @@ use File::LibMagic;
 use File::Copy;
 use File::Path qw(make_path);
 use File::Basename;
+use Getopt::Long;
+use Data::Dumper;
+use Carp;
+use Cwd 'abs_path';
 
-my @files = @ARGV or yell("I need files!") and die;
 my $magic = File::LibMagic->new;
 
-my $unwanted = 0;
-for my $file(@files) {
-  my $ft = $magic->checktype_filename($file);
-  $ft =~ s/([a-z\/]+);.+/$1/;
+our($opt_symlink,$opt_copy,$opt_move);
+GetOptions(
+  'symlink|ln'  => \$opt_symlink,
+  'copy|cp'     => \$opt_copy,
+  'move|mv'     => \$opt_move,
+);
+my @files = @ARGV or yell("I need files!") and die;
 
-  if($ft eq 'application/x-directory') {
-    $unwanted++;
-    next;
+checkft(@files);
+
+sub checkft {
+  my @files = @_;
+  my $unwanted = 0;
+
+  for my $file(@files) {
+    my $ft = $magic->checktype_filename($file);
+    $ft =~ s/([a-z\/-]+);.+/$1/;
+
+    if($ft eq 'appliaction/x-directory') {
+      $unwanted++;
+      next;
+    }
+
+    if(!-d $ft) {
+      if(!$opt_symlink and !$opt_copy and !$opt_move) {
+        print "make_path($ft)\n";
+        next;
+      }
+      # if the mimetype does not exist as a possibly arbitary level of subdirs,
+      # We'll have to create it (mostly ./foo/bar)
+      make_path($ft);
+    }
+    if($opt_symlink) {
+      symlink(abs_path($file), "$ft/$file") or die $!;
+      print "symlink($file, $ft/$file)\n";
+    }
+    elsif($opt_move) {
+      move($file, $ft);
+      print "move($file, $ft)\n";
+    }
+    elsif($opt_copy) {
+      copy($file, $ft) or die $!;
+      print "copy($file, $ft)\n";
+    }
   }
-
-  #if($ft =~ /^a ([\/[a-zA-z_-]+)/) {
-  #  $ft =~ s/.+([\/]+)(\S+).+/$2/g;
-  #}
-  ##$ft =~ s/^(\w+)\s+(\w+).+$/$1\/$2/g;
-  #$ft =~ s/^(\S+)\s+(\S+).+$/$1\/$2/g;
-  #$ft =~ s/\s+/_/g;
-  #if($ft =~ /^directory/) {
-  #  $unwanted++;
-  #  next;
-  #}
-  if(!-d $ft) {
-    make_path($ft) or die;
-  }
-  move($file, $ft);
-  printf("%30s => %s\n", $file, $ft);
-
 }
-print "$unwanted files were skipped.\n";
 
 sub yell {
   my $msg = shift;
