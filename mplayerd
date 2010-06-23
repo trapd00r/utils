@@ -39,8 +39,8 @@ unless(-p $fifo) {
   mkfifo($fifo, 0666) or die "Cant mkfifo $fifo: $!";
 }
 if(!-e $lock) {
-  #mkpid();
-  #daemonize();
+  mkpid();
+  daemonize();
   print @files;
   system("$mplay $mpopt @files > $log") == 0 && unlink($lock) or die $!;
 }
