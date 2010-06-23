@@ -1,0 +1,37 @@
+#!/usr/bin/perl
+use strict;
+
+my $mame = 'sdlmame';
+my $rat  = 'ratmenu -font -nil-profont-medium-r-normal--12-120-72-72-c-60-iso8859-1';
+
+my %games = (
+  cninja          => 'Cavemen Ninja (Platform, 1991)',
+  pacmania        => 'Pacmania (1991)',
+  ladybugg        => 'Ladybug  (1983)',
+  macrossp        => 'Macross Plus (Shmup, 1991)',
+  macross         => 'Macross (Shmup, 1988)',
+  pacman          => 'Pacman (1982)',
+  mspacman        => 'Ms. Pacman (1984)',
+  donpachi        => 'Don Pachi (Shmup, 1998)',
+  ddonpach        => 'Don Donpachi (Shmup, 2001)',
+  tokib           => 'Toki',
+  mrdo            => 'Mr. Do (1981)',
+  sfa3            => 'Street Fighter 3 Alpha',
+  sfiii3          => 'Street Fighter 3: Third Strike - Fight The Future',
+  vasara          => 'Vasara 1 (Shmup, 2000)',
+  raiden          => 'Raiden 1 (Shmup, 1985)',
+  jumppop         => 'Jumping Pop (Platform, 2000)',
+  uballoon        => 'Ultra Baloon (Platform, 2000)',
+  cairblad        => 'Change Air Blade (Shmup, 2000)',
+  avspirit        => 'Avengin Spirit (Platform, 1990)',
+);
+
+my @games;
+for my $shname(sort {$games{$a} cmp $games{$b}} keys(%games)) {
+  push(@games, "\"$games{$shname}\" $mame\\ $shname");
+
+}
+print "$_\n" for @games;
+system("$rat @games");
+
+
