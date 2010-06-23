@@ -1,3 +1,21 @@
 #!/bin/sh
-scrot -e 'scp -P 19216 $f scp1@192.168.1.101:http/psy/scrots && rm $f && echo "http://psy.trapd00r.se/scrots/$f"|xclip'
+if [ $@ ]; then
+  DNAME="scrots/$1"
+  ssh -p 19216 scp1@192.168.1.101 "mkdir -p http/psy/$DNAME"
+  echo "Did mkdir $DNAME on server."
+else
+  DNAME="scrots"
+fi
+
+
+shot() {
+  FNAME=$(date +%s.png)
+  scrot $FNAME;
+  scp -P 19216 $FNAME scp1@192.168.1.101:http/psy/$DNAME &&
+    rm $FNAME &&
+    echo $FNAME &&
+    echo http://psy.trapd00r.se/$DNAME/$FNAME|xclip
+}
+
+shot
 
