@@ -1,5 +1,10 @@
 #!/usr/bin/perl
-# mplayerd
+=mplayerd
+  mplayerd - mplayer daemon
+  Control it by issuing commands through the named pipe
+  Get now playing info by executing mplayerd when the daemon's already running
+=cut
+
 use strict;
 use Mplayer::NowPlaying qw($np_log np);
 use Carp;
@@ -33,7 +38,7 @@ unless(-p $fifo) {
 if(!-e $lock) {
   mkpid();
   daemonize();
-  system("$mplay $mpopt \"@files\" > $log") && killmother();
+  system("$mplay $mpopt \"@files\" > $log") == 0 && unlink($lock) or die $!;
 }
 else {
   yell("mplayer is running.\n");
