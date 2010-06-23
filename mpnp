@@ -3,33 +3,59 @@
 use strict;
 use Mplayer::NowPlaying qw($np_log np);
 
-$np_log = "$ENV{HOME}/.mplayer/mpnp.log";
+$np_log =  "$ENV{HOME}/.mplayer/mpnp.log";
 
 if(@ARGV) {
   printall();
 }
 
-printf("mplayer: %s - %s (%s) [%d] {%s}\n", 
-  np('artist'), np('title'), np('album'), np('year'), np('file'));
+printf("mplayer: %s - %s (%s) [%s]\n", 
+  np('artist'), np('title'), np('album'), np('genre'));
 
 sub printall {
   printf("\033[38;5;197m\033[3m MPLAYER\033[0m\033[38;5;148m is playing\033[0m:\n");
-  my $bitrate = np('bitrate');
-  $bitrate =~ s/000$//;
-  printf("\033[38;5;033m\033[1m%10s\033[0m: %s\n", 'Artist', np('artist'));
-  printf("\033[38;5;032m\033[1m%10s\033[0m: %s\n", 'Album',  np('album'));
-  printf("\033[38;5;031m\033[1m%10s\033[0m: %s\n", 'Song',   np('title'));
-  printf("\033[38;5;030m\033[1m%10s\033[0m: %d\n", 'Year',   np('year'));
-  printf("\033[38;5;029m\033[1m%10s\033[0m: %s\n", 'File',   np('file'));
-  printf("\033[38;5;035m\033[1m%10s\033[0m: %s\n", 'Track',  np('track'));
-  printf("\033[38;5;035m\033[1m%10s\033[0m: %s\n", 'genre',  np('genre'));
-  printf("\033[38;5;036m\033[1m%10s\033[0m: %s\n", 'Comment',np('comment'));
-  print "\033[38;5;236m\033[3m\033[1m";
-  print '-' x 44, "\033[0m\n";
-  printf("\033[38;5;50m\033[1m%10s\033[0m: \033[38;5;196m%.3d\033[0m\033[3mkbps\033[0m\n", 'Bitrate',$bitrate);
-  printf("\033[38;5;49m\033[1m%10s\033[0m: %s\n", 'Codec',   np('codec'));
-  printf("\033[38;5;48m\033[1m%10s\033[0m: %s\n", 'Format',  np('format'));
-  printf("\033[38;5;47m\033[1m%10s\033[0m: \033[38;5;226m%d\033[0m \033[3mseconds\033[0m\n",'Length',  np('length'));#/10);
-  printf("\033[38;5;46m\033[1m%10s\033[0m: %s\n", 'Channels',np('channels'));
+  my $artist  = np('artist');
+  my $album   = np('album');
+  my $title   = np('title');
+  my $year    = np('year');
+  my $file    = np('file');
+  my $track   = np('track');
+  my $genre   = np('genre');
+  my $comment = np('comment');
+  
+  my $codec   = np('codec');
+  my $format  = np('format');
+  my $length  = np('length');
+  my $channels= np('channels');
+  my $bitrate = sprintf("%d", np('bitrate'));
+
+  printf("\033[38;5;033m\033[1m%10s\033[0m: %s\n", 'Artist', $artist)
+    unless !$artist;
+  printf("\033[38;5;032m\033[1m%10s\033[0m: %s\n", 'Album',  $album)
+    unless !$album;
+  printf("\033[38;5;031m\033[1m%10s\033[0m: %s\n", 'Song',   $title)
+    unless !$title;
+  printf("\033[38;5;030m\033[1m%10s\033[0m: %s\n", 'Year',   $year)
+    unless !$year;
+  printf("\033[38;5;029m\033[1m%10s\033[0m: %s\n", 'File',   $file)
+    unless !$file;
+  printf("\033[38;5;035m\033[1m%10s\033[0m: %s\n", 'Track',  $track)
+    unless !$track;
+  printf("\033[38;5;036m\033[1m%10s\033[0m: %s\n", 'Genre',  $genre)
+    unless !$genre;
+  printf("\033[38;5;037m\033[1m%10s\033[0m: %s\n", 'Comment',$comment)
+    unless !$comment;
+  printf("\033[38;5;050m\033[1m%10s\033[0m: %s\n", 'Codec',  $codec)
+    unless !$codec;
+
+  printf("\033[38;5;049m\033[1m%10s\033[0m: %s\n", 'Format', $format)
+    unless !$format;
+  printf("\033[38;5;048m\033[1m%10s\033[0m: %s\n", 'Length', $length)
+    unless !$length;
+  printf("\033[38;5;047m\033[1m%10s\033[0m: %s\n", 'Channels', $channels)
+    unless !$channels;
+
   exit 0;
+
+
 }
