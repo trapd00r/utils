@@ -26,6 +26,9 @@ if(!@ARGV) {
   }
 }
 
+for(@ARGV) { # ugly! :)
+  $_ = "\"$_\"";
+}
 my @files = @ARGV;
 unless(-f $log) {
   open(my $fh, '>', $log);
@@ -36,9 +39,10 @@ unless(-p $fifo) {
   mkfifo($fifo, 0666) or die "Cant mkfifo $fifo: $!";
 }
 if(!-e $lock) {
-  mkpid();
-  daemonize();
-  system("$mplay $mpopt \"@files\" > $log") == 0 && unlink($lock) or die $!;
+  #mkpid();
+  #daemonize();
+  print @files;
+  system("$mplay $mpopt @files > $log") == 0 && unlink($lock) or die $!;
 }
 else {
   yell("mplayer is running.\n");
