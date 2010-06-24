@@ -14,11 +14,17 @@ use Getopt::Long;
 
 my $fifo  = "$ENV{HOME}/.mplayer/mplayerd.fifo";
 my $log   = "$ENV{HOME}/.mplayer/mplayerd.log";
-my $mplay = 'mplayer';
+my $mplay = 'mplayer -quiet';
 my $mpopt = "-identify -slave -input file=$fifo";
-my $lock  = '/tmp/mplayerd.pid';
+my $lock  = '/tmp/mplayerd.pid'; # /var/run/
 
 $np_log = $log;
+
+# Will not work unless we fork() ourselves away and abuse a child for the
+# system() call
+#$SIG{INT}  = 'handle_INT';
+#$SIG{KILL} = 'handle_KILL';
+#$SIG{TERM} = 'handle_INT';
 
 if(!@ARGV) {
   if(!-e $lock) {
@@ -26,10 +32,14 @@ if(!@ARGV) {
   }
 }
 
-for(@ARGV) { # ugly! :)
-  $_ = "\"$_\"";
-}
+GetOptions(
+  'cmd:s'     => \&cmd_in,
+);
+
+map ($_ = "'$_'", @ARGV);
 my @files = @ARGV;
+print "$_\n" for @files;
+
 unless(-f $log) {
   open(my $fh, '>', $log);
   close($fh);
@@ -38,14 +48,12 @@ unless(-p $fifo) {
   use POSIX;
   mkfifo($fifo, 0666) or die "Cant mkfifo $fifo: $!";
 }
+
 if(!-e $lock) {
-  mkpid();
   daemonize();
-  print @files;
-  system("$mplay $mpopt @files > $log") == 0 && unlink($lock) or die $!;
+  system("$mplay $mpopt @files > $log; rm $lock") == 0 and unlink($lock) or die $!;
 }
 else {
-  yell("mplayer is running.\n");
   printf("\t\033[38;5;197m\033[1mMPLAYERD\033[0m\033[38;5;178m\033[0m\n");
   my $artist  = np('artist');
   my $album   = np('album');
@@ -76,7 +84,7 @@ else {
     unless !$track;
   printf("\033[38;5;036m\033[1m%10s\033[0m: %s\n", 'Genre',  $genre)
     unless !$genre;
-  printf("\033[38;5;037m\033[1m%10s\033[0m: %s\n", 'Comment',$comment)
+  printf("\033[38;5;037m\033[1m%10s\033[0m: \033[38;5;240m%s\033[0m\n", 'Comment',$comment)
     unless !$comment;
   printf("\033[38;5;050m\033[1m%10s\033[0m: %s\n", 'Codec',  $codec)
     unless !$codec;
@@ -87,37 +95,70 @@ else {
     unless !$length;
   printf("\033[38;5;047m\033[1m%10s\033[0m: %s\n", 'Channels', $channels)
     unless !$channels;
+
+  yell("\nmplayerd is running.\n");
 }
 
 
-
-sub mkpid {
-  open(my $pid, '>', $lock) or die $!;
-  print $pid $$;
-  close($pid);
-}
-
-sub rmpid {
-  unlink($lock) or die $!;
+sub cmd_in {
+  shift;
+  my $cmd = shift;
+  open(my $fh, '>', $fifo) or die "Cant open $fifo for writing: $!";
+  print $fh "$cmd\n";
+  close($fh);
+  exit 0;
 }
 
 sub daemonize {
-  open(STDOUT, '/dev/null');
-  open(STDERR, '/dev/null');
-  open(STDIN, '/dev/null');
+  open(my $fh, '>', $lock) or die "Cant open $lock: $!";
+  print $fh $$; # parent PID...
+  close($fh);
+
+
+  #$SIG{CHLD} = 'IGNORE';
+  #my $realpid = fork();
+  #
+  #if(!defined($realpid)) {
+  #  error("Cant fork: $!\n");
+  #}
+  #elsif($realpid == 0) { # the child
+  #  print "I AM CHILD\n";
+  #}
+  #else { # parent
+  #  exit 0;
+  #}
+  open(STDOUT, '>', '/dev/null');
+  open(STDIN, '<', '/dev/null');
+  open(STDERR, '>', '/dev/null');
   fork && exit;
 }
 
+sub handle_INT {
+  unlink($lock);
+  exit 1;
+}
+sub handle_KILL {
+  unlink($lock);
+  exit 1;
+}
+
 sub killmother {
-  open(my $fh, '<', $lock) or die $!;
-  my $daemon_pid = <$fh>;
-  close($fh);
-  if($daemon_pid =~ /^[0-9]+$/) {
-    kill(9, $daemon_pid);
-    print "Killed!\n";
+  shift;
+  shift;
+  my $PID = shift;
+  #open(my $fh, '<', $lock) or yell("No lockfile present\n") and exit 1;
+  #my $daemon_pid = <$fh>;
+  #close($fh);
+  if($PID =~ /^[0-9]+$/) {
+    if(kill(9, $PID)) {
+      yell("$PID killed\n");
+    }
+    else {
+      yell("Could not kill $PID\n");
+    }
   }
   else {
-    print "WTF\n";
+    error("Junk in PID: <$PID> or $PID not present\n");
   }
   unlink($lock);
   exit 0;
@@ -125,5 +166,10 @@ sub killmother {
 
 sub yell {
   my $str = shift;
-  return "\033[1m$str\033[0m";
+  print "\033[1m$str\033[0m";
+}
+
+sub error {
+  my $str = shift;
+  print "\033[1m\033[31;1m$str\033[0m";
 }
