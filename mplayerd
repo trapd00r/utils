@@ -10,16 +10,19 @@ use Mplayer::NowPlaying qw($np_log np);
 use Carp;
 use Data::Dumper;
 use Getopt::Long;
+use Cwd 'abs_path';
 
 
 my $fifo  = "$ENV{HOME}/.mplayer/mplayerd.fifo";
 my $log   = "$ENV{HOME}/.mplayer/mplayerd.log";
-my $mplay = 'mplayer -quiet';
-my $mpopt = "-identify -slave -input file=$fifo";
+my $mplay = 'mplayer';
+my $mpopt = " -quiet -identify -slave -input file=$fifo";
 my $lock  = '/tmp/mplayerd.pid'; # /var/run/
 
 $np_log = $log;
 
+my $PID; # for child
+my $PPID = $$;
 # Will not work unless we fork() ourselves away and abuse a child for the
 # system() call
 #$SIG{INT}  = 'handle_INT';
@@ -28,15 +31,17 @@ $np_log = $log;
 
 if(!@ARGV) {
   if(!-e $lock) {
-    print "Please hand me something to play, dear sir...\n";
+    yell("Mplayerd is not running\n");
+    print("Give me some files to play\n");
   }
 }
 
 GetOptions(
   'cmd:s'     => \&cmd_in,
+  'kill'      => \&killchild,
 );
 
-map ($_ = "'$_'", @ARGV);
+#map($_ = "'".abs_path($_)."'", @ARGV); # not needed in the list form of exec()
 my @files = @ARGV;
 print "$_\n" for @files;
 
@@ -51,7 +56,9 @@ unless(-p $fifo) {
 
 if(!-e $lock) {
   daemonize();
-  system("$mplay $mpopt @files > $log; rm $lock") == 0 and unlink($lock) or die $!;
+  # exec will NOT fork... so fork once in daemonize(), and we'll have
+  # control over the child PID
+  exec($mplay, $mpopt, @files) or die $!;
 }
 else {
   printf("\t\033[38;5;197m\033[1mMPLAYERD\033[0m\033[38;5;178m\033[0m\n");
@@ -110,66 +117,53 @@ sub cmd_in {
 }
 
 sub daemonize {
-  open(my $fh, '>', $lock) or die "Cant open $lock: $!";
-  print $fh $$; # parent PID...
+  use POSIX 'setsid';
+  $PID = fork();
+  exit 0 if $PID; # parent
+  exit 1 if !defined($PID); # out of resources
+
+  setsid();
+  $PID = fork();
+  exit 1 if !defined($PID); # out of resources
+
+  if($PID) { # parent
+    waitpid($PID, 0);
+    unlink($lock); #fail silently
+    exit 0;
+  }
+  elsif($PID == 0) { #child
+    open(my $fh, '>', $lock) or die "Cant open $lock: $!";
+    print $fh $$;
+    close($fh);
+    open(STDOUT, '>', $log);
+    open(STDERR, '>', '/dev/null');
+    open(STDIN, '<', '/dev/null');
+  }
+}
+
+sub killchild {
+  open(my $fh, '<', $lock) or die $!;
+  my $tokill = <$fh>;
   close($fh);
 
-
-  #$SIG{CHLD} = 'IGNORE';
-  #my $realpid = fork();
-  #
-  #if(!defined($realpid)) {
-  #  error("Cant fork: $!\n");
-  #}
-  #elsif($realpid == 0) { # the child
-  #  print "I AM CHILD\n";
-  #}
-  #else { # parent
-  #  exit 0;
-  #}
-  open(STDOUT, '>', '/dev/null');
-  open(STDIN, '<', '/dev/null');
-  open(STDERR, '>', '/dev/null');
-  fork && exit;
-}
-
-sub handle_INT {
-  unlink($lock);
-  exit 1;
-}
-sub handle_KILL {
-  unlink($lock);
-  exit 1;
-}
-
-sub killmother {
-  shift;
-  shift;
-  my $PID = shift;
-  #open(my $fh, '<', $lock) or yell("No lockfile present\n") and exit 1;
-  #my $daemon_pid = <$fh>;
-  #close($fh);
-  if($PID =~ /^[0-9]+$/) {
-    if(kill(9, $PID)) {
-      yell("$PID killed\n");
-    }
-    else {
-      yell("Could not kill $PID\n");
-    }
+  if(kill(9, $tokill)) {
+    yell("mplayerd: @{[error($tokill)]} killed\n");
   }
   else {
-    error("Junk in PID: <$PID> or $PID not present\n");
+    yell("Could not kill $tokill\n");
   }
-  unlink($lock);
-  exit 0;
+unlink($lock);
+exit 0;
 }
 
 sub yell {
-  my $str = shift;
-  print "\033[1m$str\033[0m";
+  my @text = @_;
+  map{$_ = "\033[1m$_\033[0m"} @text;
+  print @text;
 }
 
 sub error {
-  my $str = shift;
-  print "\033[1m\033[31;1m$str\033[0m";
+  my @text = @_;
+  map{$_ = "\033[31;1m$_\033[0m"} @text;
+  return @text;
 }
