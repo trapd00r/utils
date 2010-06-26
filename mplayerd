@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+our $VERSION = 0.3;
 =mplayerd
   mplayerd - mplayer daemon
   Control it by issuing commands through the named pipe
@@ -15,24 +16,16 @@ use Cwd 'abs_path';
 
 my $fifo  = "$ENV{HOME}/.mplayer/mplayerd.fifo";
 my $log   = "$ENV{HOME}/.mplayer/mplayerd.log";
-my $mplay = 'mplayer';
-my $mpopt = " -quiet -identify -slave -input file=$fifo";
 my $lock  = '/tmp/mplayerd.pid'; # /var/run/
 
 $np_log = $log;
 
 my $PID; # for child
-my $PPID = $$;
-# Will not work unless we fork() ourselves away and abuse a child for the
-# system() call
-#$SIG{INT}  = 'handle_INT';
-#$SIG{KILL} = 'handle_KILL';
-#$SIG{TERM} = 'handle_INT';
 
 if(!@ARGV) {
   if(!-e $lock) {
     yell("Mplayerd is not running\n");
-    print("Give me some files to play\n");
+    usage();
   }
 }
 
@@ -56,9 +49,9 @@ unless(-p $fifo) {
 
 if(!-e $lock) {
   daemonize();
-  # exec will NOT fork... so fork once in daemonize(), and we'll have
-  # control over the child PID
-  exec($mplay, $mpopt, @files) or die $!;
+  # system() will fork. So will exec(), unless used in list mode.
+  # From here, mplayer will take over our process (the grandchild)
+  exec('mplayer', '-identify', '-slave', "-input", "file=$fifo", @files);
 }
 else {
   printf("\t\033[38;5;197m\033[1mMPLAYERD\033[0m\033[38;5;178m\033[0m\n");
@@ -142,7 +135,7 @@ sub daemonize {
 }
 
 sub killchild {
-  open(my $fh, '<', $lock) or die $!;
+  open(my $fh, '<', $lock) or yell("Mplayerd is not running\n") and exit(1);
   my $tokill = <$fh>;
   close($fh);
 
@@ -166,4 +159,18 @@ sub error {
   my @text = @_;
   map{$_ = "\033[31;1m$_\033[0m"} @text;
   return @text;
+}
+
+sub usage {
+  print << "USAGE";
+  mplayerd $VERSION
+  Usage: mplayerd [OPTIONS] (ARGS)
+
+  OPTIONS:
+      -c, --cmd     send a command to mplayer
+      -k, --kill    kill the playing process
+
+USAGE
+
+exit 0;
 }
