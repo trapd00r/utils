@@ -103,8 +103,22 @@ else {
 sub cmd_in {
   shift;
   my $cmd = shift;
+
+  my %allowed_cmds = (
+    next    => 'pt_step 1',
+    prev    => 'pt_step -1',
+    toggle  => 'pause',
+    pause   => 'pause',
+    stop    => 'stop',
+    fs      => 'vo_fullscreen 1',
+  );
+  if(!defined($allowed_cmds{$cmd})) {
+    print "$cmd: Unrecognized command\n";
+    exit 1;
+  }
+    
   open(my $fh, '>', $fifo) or die "Cant open $fifo for writing: $!";
-  print $fh "$cmd\n";
+  print $fh $allowed_cmds{$cmd}, "\n";
   close($fh);
   exit 0;
 }
