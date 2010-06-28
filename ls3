@@ -1,0 +1,79 @@
+#!/usr/bin/perl
+use strict;
+
+open(my $ls, "ls -hAlv --group-directories-first --color=always @ARGV |") or die;
+
+my($perm,$nums,$user,$size,$month,$day,$time,$file) = undef;
+while(<$ls>) {
+  m/^(.{10})\s+(\d+)\s+(.+)\s+([0-9\.KMGT]+)\s+([A-Za-z]{3})\s+([0-9]{2,})\s+([0-9]{2}:[0-9]{2})\s+(.+)/;
+  $perm = $1;
+  $nums = $2;
+  $user = $3;
+  $size = $4;
+  $month= $5;
+  $day  = $6;
+  $time = $7;
+  $file = $8;
+
+  if($nums < 20) {
+    $nums = "\033[38;5;250m$nums\033[0m";
+  }
+
+  my @sizes = split(//, $size);
+  for my $s(@sizes) {
+    if($s eq 'K') {
+      $s = "\033[38;5;190mK\033[0m";
+    }
+    elsif($s eq 'M') {
+      $s = "\033[38;5;209mM\033[0m";
+    }
+    elsif($s eq 'G') {
+      $s = "\033[1m\033[38;5;209mG\033[0m";
+    }
+  }
+  $size = join('', @sizes);
+
+  my @perms = split(//, $perm);
+  for my $abstr(@perms) {
+    if($abstr eq '-') {
+      $abstr = "\033[48;5;232m\033[1m\033[38;5;240m‐\033[0m";
+    }
+    elsif($abstr eq 'r') {
+      $abstr = "\033[48;5;232m\033[38;5;076m$abstr\033[0m";
+    }
+    elsif($abstr eq 'w') {
+      $abstr = "\033[48;5;232m\033[38;5;214m$abstr\033[0m";
+    }
+    elsif($abstr eq 'x') {
+      $abstr = "\033[48;5;232m\033[38;5;202m$abstr\033[0m";
+    }
+    elsif($abstr eq 'd') {
+      $abstr = "\033[48;5;232m\033[1m\033[38;5;023m$abstr\033[0m";
+    }
+    elsif($abstr eq 'T') {
+      $abstr = "\033[48;5;232m\033[1m\033[38;5;226mT\033[0m";
+    }
+    elsif($abstr eq 'S') {
+      $abstr = "\033[48;5;232m\033[38;5;221mS\033[0m";
+    }
+    elsif($abstr eq 'l') {
+      $abstr = "\033[48;5;232m\033[1m\033[38;5;060ml\033[0m";
+    }
+    elsif($abstr eq 's') {
+      $abstr = "\033[48;5;232m\033[1m\033[38;5;197ms\033[0m";
+    }
+    elsif($abstr eq 'p') {
+      $abstr = "\033[48;5;232m\033[1m\033[38;5;127mp\033[0m";
+    }
+
+  }
+  $perm = join('', @perms);
+
+  #print "$perm $nums $file\n";
+  #printf("%s %4d %s\n", $perm, $nums, $file);
+  printf("%5s %s\n", $perm,$file);
+}
+
+
+
+
