@@ -3,7 +3,7 @@
 use strict;
 use Mplayer::NowPlaying qw($np_log np);
 
-$np_log =  "$ENV{HOME}/.mplayer/mpnp.log";
+$np_log =  "$ENV{HOME}/.mplayer/mplayerd.log";
 
 if(@ARGV) {
   printall();
