@@ -44,8 +44,8 @@ sub newpost {
   $filename =~ s/\s/-/g;
   $filename =~ s/-{1,}/-/g;
   my $fullpath = "$dir/$newpostcat/_posts/$date-$filename";
-  open(my $fh, '>>', "$fullpath.textile")
-    or croak "Cant open $fullpath.textile : $!";
+  open(my $fh, '>>', "$fullpath.mardown")
+    or croak "Cant open $fullpath.markdown : $!";
 
   chomp(my $friendlydate = `date '+%d %B %Y'`);
   print $fh "---\nlayout: post\ntitle: \"$title\"\n---\n\n";
@@ -55,7 +55,7 @@ sub newpost {
   print $fh "# vim: ft=html textwidth=120 nowrap:\n\n";
 
   close $fh;
-  system("vim", "$fullpath.textile");
+  system("vim", "$fullpath.markdown");
 }
 
 
