@@ -24,6 +24,16 @@ my %games = (
   uballoon        => 'Ultra Baloon (Platform, 2000)',
   cairblad        => 'Change Air Blade (Shmup, 2000)',
   avspirit        => 'Avengin Spirit (Platform, 1990)',
+  psychic5a       => 'Psychic (Platform)',
+  mgcrystl        => 'Magical Crystals (Platform, 2000)',
+  spelunk2        => 'Spelunker 2 (Platform, 1985)',
+  gunforce        => 'Gunforce (Shooter) [Contra-Style]',
+  dariusg         => 'Darius Gaiden (Shmup, 1991)',
+  esprade         => 'ESP Ra.De (Shmup, 1998)',
+  rtypeleo        => 'Rtype Leo (Shmup, 1991)',
+  drgnblaze       => 'Dragon Blaze (Shmup, 2000)',
+  prehisle        => 'Prehistoric Tale (Shmup, 1989) [SNK]',
+  preisle2        => 'Prehistoric Tale 2 (Shmup, 1999) [SNK]',
 );
 
 my @games;
