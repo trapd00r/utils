@@ -1,0 +1,18 @@
+#!/usr/bin/perl
+# alias
+use strict;
+use Data::Dumper;
+use v5.10;
+
+my %alias = ();
+
+open(my $fh, '<', "$ENV{HOME}/.zsh/alias.zsh") or die($!);
+while(<$fh>) {
+  s/^alias (.+)=(?:'|")(.+)(?:'|")/$1 => $2/;
+  $alias{$2} = $1;
+}
+
+printf("\033[38;5;178m%-12s\033[0m \033[1m%s\033[0m\n", $alias{$_}, $_)
+  for(sort({$alias{$a} cmp $alias{$b}} keys(%alias)));
+
+
