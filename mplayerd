@@ -51,7 +51,7 @@ if(!-e $lock) {
   daemonize();
   # system() will fork. So will exec(), unless used in list mode.
   # From here, mplayer will take over our process (the grandchild)
-  exec('mplayer', '-identify', '-slave', "-input", "file=$fifo", @files);
+  exec('mplayer', '-quiet','-identify', '-slave', "-input", "file=$fifo", @files);
 }
 else {
   printf("\t\033[38;5;197m\033[1mMPLAYERD\033[0m\033[38;5;178m\033[0m\n");
