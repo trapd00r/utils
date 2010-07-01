@@ -1,0 +1,49 @@
+#!/usr/bin/perl
+# pi(ls)ner
+# Copyright (C) 2010 Magnus Woldrich <trapd00r@trapd00r.se>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+###############################################################################
+use strict;
+
+open(my $l, "ls -hAlv --group-directories-first --color=always @ARGV |") or die($!);
+chomp(my @ls = grep{!/total.+/} (<$l>));
+
+my($fg,$bg,$bold,$def) = ("\033[38;5", "\033[48;5", "\033[1m", "\033[0m");
+
+for(@ls) {
+  my ($perm,$hlink,$user,$group,$size,$month,$day,$time,$file) = 
+    split(/\s+/, $_,8);
+  my($file) = m/.+(?:[0-9]+:?[0-9])\s+(.+)/;
+  $file =~ s/->/$fg;220m▪▶$def/;
+
+  my @perms = split(//, $perm);
+
+  for(@perms) {
+    $_ = "$bold$bg;232m$fg;240m‐$def"  if($_ eq '-');
+    $_ = "$bold$bg;232m$fg;032m$_$def" if($_ eq 'd');
+    $_ = "$bold$bg;232m$fg;060m$_$def" if($_ eq 'l');
+    $_ = "$bold$bg;232m$fg;197m$_$def" if($_ eq 's');
+    $_ = "$bold$bg;232m$fg;127m$_$def" if($_ eq 'p');
+    $_ = "$bold$bg;232m$fg;221m$_$def" if($_ eq 'S');
+    $_ = "$bold$bg;232m$fg;226m$_$def" if($_ eq 't');
+    $_ = "$bold$bg;232m$fg;220m$_$def" if($_ eq 'T');
+    $_ = "$bg;232m$fg;185m$_$def" if($_ eq 'r');
+    $_ = "$bg;232m$fg;215m$_$def" if($_ eq 'w');
+    $_ = "$bg;232m$fg;209m$_$def" if($_ eq 'x');
+  }
+  $perm = join('', @perms);
+  printf("$fg;240m▕%s$fg;240m▏$def%s\n", $perm, $file);
+
+}
