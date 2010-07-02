@@ -17,7 +17,8 @@
 ###############################################################################
 use strict;
 
-open(my $l, "ls -hAlv --group-directories-first --color=always @ARGV |") or die($!);
+open(my $l, "ls -hAlv --group-directories-first --color=always @ARGV |") 
+  or die($!);
 chomp(my @ls = grep{!/total.+/} (<$l>));
 
 my($fg,$bg,$bold,$def) = ("\033[38;5", "\033[48;5", "\033[1m", "\033[0m");
@@ -44,6 +45,24 @@ for(@ls) {
     $_ = "$bg;232m$fg;209m$_$def" if($_ eq 'x');
   }
   $perm = join('', @perms);
-  printf("$fg;240m▕%s$fg;240m▏$def%s\n", $perm, $file);
+
+  my %months = (
+    1  => 'Jan',
+    2  => 'Feb',
+    3  => 'Mar',
+    4  => 'Apr',
+    5  => 'May',
+    6  => 'Jun',
+    7  => 'Jul',
+    8  => 'Aug',
+    9  => 'Sep',
+    10 => 'Oct',
+    11 => 'Nov',
+    12 => 'Dec',
+  );
+
+
+  printf("$fg;235m%02d $bold$fg;240m%s$def$fg;240m▕$def%s$fg;240m▏$def%s\n",
+    $day, $month, $perm, $file);
 
 }
