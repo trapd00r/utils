@@ -11,12 +11,14 @@ use Mplayer::NowPlaying qw($np_log np);
 use Carp;
 use Data::Dumper;
 use Getopt::Long;
-use Cwd 'abs_path';
+use Cwd qw(abs_path getcwd);
+use File::Copy;
 
+my $destdir = "$ENV{HOME}/ToTransfer";
+my $fifo    = "$ENV{HOME}/.mplayer/mplayer.fifo";
+my $log     = "$ENV{HOME}/.mplayer/mplayerd.log";
+my $lock    = '/tmp/mplayerd.pid'; # /var/run/
 
-my $fifo  = "$ENV{HOME}/.mplayer/mplayerd.fifo";
-my $log   = "$ENV{HOME}/.mplayer/mplayerd.log";
-my $lock  = '/tmp/mplayerd.pid'; # /var/run/
 
 $np_log = $log;
 
@@ -32,10 +34,14 @@ if(!@ARGV) {
 GetOptions(
   'cmd:s'     => \&cmd_in,
   'kill'      => \&killchild,
+  'cp'        => \&cp,
+  'help'      => \&usage,
 );
 
 #map($_ = "'".abs_path($_)."'", @ARGV); # not needed in the list form of exec()
+map($_ = abs_path($_), @ARGV);
 my @files = @ARGV;
+
 print "$_\n" for @files;
 
 unless(-f $log) {
@@ -99,6 +105,16 @@ else {
   yell("\nmplayerd is running.\n");
 }
 
+sub cp {
+  my $file = np('file');
+  if(copy($file, "$destdir/")) {
+    print "\033[38;5;148m$file\033[0m > \033[1m $destdir\033[0m\n";
+  }
+  else {
+    print $destdir; yell(": $!\n");
+  }
+  exit(0);
+}
 
 sub cmd_in {
   shift;
@@ -159,8 +175,8 @@ sub killchild {
   else {
     yell("Could not kill $tokill\n");
   }
-unlink($lock);
-exit 0;
+  unlink($lock);
+  exit 0;
 }
 
 sub yell {
