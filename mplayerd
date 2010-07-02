@@ -24,6 +24,15 @@ $np_log = $log;
 
 my $PID; # for child
 
+my %allowed_cmds = (
+  next    => 'pt_step 1',
+  prev    => 'pt_step -1',
+  toggle  => 'pause',
+  pause   => 'pause',
+  stop    => 'stop',
+  fs      => 'vo_fullscreen 1',
+);
+
 if(!@ARGV) {
   if(!-e $lock) {
     yell("Mplayerd is not running\n");
@@ -36,6 +45,7 @@ GetOptions(
   'kill'      => \&killchild,
   'cp'        => \&cp,
   'help'      => \&usage,
+  'list'      => \&listcmds,
 );
 
 #map($_ = "'".abs_path($_)."'", @ARGV); # not needed in the list form of exec()
@@ -116,18 +126,21 @@ sub cp {
   exit(0);
 }
 
+
+sub listcmds {
+  yell("Valid commands:\n");
+  for my $k(sort(keys(%allowed_cmds))) {
+    print "  $k\n";
+  }
+  print "\nExample: mplayerd -cmd next\n";
+  print "\nIssue 'mplayer -input cmdlist' to see all supported commands\n";
+  exit 0;
+}
+
 sub cmd_in {
   shift;
   my $cmd = shift;
 
-  my %allowed_cmds = (
-    next    => 'pt_step 1',
-    prev    => 'pt_step -1',
-    toggle  => 'pause',
-    pause   => 'pause',
-    stop    => 'stop',
-    fs      => 'vo_fullscreen 1',
-  );
   if(!defined($allowed_cmds{$cmd})) {
     print "$cmd: Unrecognized command\n";
     exit 1;
