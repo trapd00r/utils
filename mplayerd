@@ -213,6 +213,7 @@ sub usage {
           --cmd     send a command to mplayer
           --kill    kill the playing process
           --cp      copy playing track to \$destdir
+          --list    list valid commands
 
 USAGE
 
