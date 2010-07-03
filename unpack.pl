@@ -1,10 +1,10 @@
 #!/usr/bin/perl
-# unpack Perl version
+# chmod, unpack, watch, delete
 use strict;
 use Cwd;
 use File::Find;
 
-my $mp = 'mplayer -msgcolor -slave -input file=$HOME/.mplayer/fifo';
+my $mp = 'mplayer -msgcolor -slave -input file=$HOME/.mplayer/mplayer.fifo';
 my $pwd = shift // getcwd();
 
 my $permdir  = 01742; # -rwxr---wT
@@ -24,7 +24,7 @@ File::Find::find({wanted  => \&wanted}, $pwd);
 
 sub wanted {
   /^.+\.rar/ 
-  && doexec(0, "rar x {} $tempdir && $mp $tempdir/* && rm $tempdir/*");
+  && doexec(0, "rar x {} $tempdir && $mp $tempdir/* && rm -v $tempdir/*");
 }
 
 sub doexec ($@) {
