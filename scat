@@ -50,6 +50,7 @@ sub whatlang {
     system("source-highlight -o STDOUT -f esc  -n --infer-lang -i $file") == 0
       or croak("That didnt went very well, dear sir...");
   }
+  print "\n";
 }
 
 whatlang($f);
