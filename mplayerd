@@ -46,13 +46,19 @@ GetOptions(
   'cp'        => \&cp,
   'help'      => \&usage,
   'list'      => \&listcmds,
+  'play:s{,}' => \&loadfiles,
 );
 
 #map($_ = "'".abs_path($_)."'", @ARGV); # not needed in the list form of exec()
-map($_ = abs_path($_), @ARGV);
+
+for(@ARGV) {
+  if($_ =~ /(?:http|mms):\/\//) {
+    next;
+  }
+  $_ = abs_path($_);
+}
 my @files = @ARGV;
 
-print "$_\n" for @files;
 
 unless(-f $log) {
   open(my $fh, '>', $log);
@@ -70,6 +76,11 @@ if(!-e $lock) {
   exec('mplayer', '-quiet','-identify', '-slave', "-input", "file=$fifo", @files);
 }
 else {
+  if(@files) {
+    print @files;
+    cmd_in("FIXTHIS loadfile @files");
+  }
+    
   printf("\t\033[38;5;197m\033[1mMPLAYERD\033[0m\033[38;5;178m\033[0m\n");
   my $artist  = np('artist');
   my $album   = np('album');
@@ -126,6 +137,17 @@ sub cp {
   exit(0);
 }
 
+sub loadfiles {
+  shift;
+  #map{abs_path($_)} @_;
+  my @files = @_;
+
+  open(my $fh, '>', $fifo) or croak("Cant open FIFO $fifo for writing:  $!");
+  print $fh "loadfile @files\n";
+  close($fh);
+  exit(0);
+}
+
 
 sub listcmds {
   yell("Valid commands:\n");
@@ -139,15 +161,15 @@ sub listcmds {
 
 sub cmd_in {
   shift;
-  my $cmd = shift;
+  my @cmd = @_;
+  @cmd = $allowed_cmds{@cmd} // @_;
 
-  if(!defined($allowed_cmds{$cmd})) {
-    print "$cmd: Unrecognized command\n";
-    exit 1;
-  }
+  #if(!defined($allowed_cmds{$cmd})) {
+  #  print "Arbitary command! Dont blame me if it doesnt work...\n";
+  #}
     
   open(my $fh, '>', $fifo) or die "Cant open $fifo for writing: $!";
-  print $fh $allowed_cmds{$cmd}, "\n";
+  print $fh @cmd, "\n";
   close($fh);
   exit 0;
 }
@@ -211,9 +233,11 @@ sub usage {
 
   OPTIONS:
           --cmd     send a command to mplayer
-          --kill    kill the playing process
+      -l, --list    list valid commands
+      -p, --play    play FILE or URI (change playlist)
           --cp      copy playing track to \$destdir
-          --list    list valid commands
+          --kill    kill the playing process
+          --help    this help
 
 USAGE
 
