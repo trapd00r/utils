@@ -1,2 +1,2 @@
 #!/bin/sh
-scp -P 19216 -r $HOME/httpd/NEWtrapd00r.se/_genSite scp1@192.168.1.33:http/
+scp -P 19216 -r $HOME/httpd/NEWtrapd00r.se/_genSite scp1@192.168.1.101:http/
