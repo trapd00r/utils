@@ -1,0 +1,2 @@
+#!/bin/sh
+urxvtc -e screen -x; screen -X screen zsh
