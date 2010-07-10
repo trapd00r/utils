@@ -1,0 +1,21 @@
+#!/usr/bin/perl
+# wp
+use strict;
+use warnings;
+
+my %users = ();
+
+for(`who`) {
+  s/\s.*\n//;
+  $users{$_}++;
+}
+
+print " Logged in users:\n";
+for(sort(keys(%users))) {
+  if($_."\n" eq `whoami`) {
+    $_ = "\033[1m$_\033[0m";
+  }
+  print "$_\n";
+}
+
+
