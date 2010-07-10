@@ -1,0 +1,18 @@
+#!/bin/sh
+# dump to httpd
+
+
+if [ "$1" == "-d" ]; then
+        scp -P 19216 -r /mnt/Music_1/$(mpc --format %file% |
+        head -1 |
+        perl -pe 's/(\/.*\/).*$/$1/g') scp1@192.168.1.33:/srv/http/psy/dump/ && echo "http://psy.trapd00r.se/dump/$(mpc --format %file% |
+        head -1 |
+        perl -pe 's/^..?\///g')"|
+        xclip
+else
+        scp /mnt/Music_1/$(mpc --format %file% |head -1)
+        scp1@192.168.1.33:/srv/http/psy/dump/ -P 19216 && echo "http://psy.trapd00r.se/dump/$(mpc --format %file% |
+        head -1 |
+        perl -pe 's/.*\/.*\///g')"|
+        xclip
+fi
