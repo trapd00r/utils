@@ -1,0 +1,10 @@
+#!/bin/sh
+echo -n "search> ";
+read "QUERY" && 
+wget -O - `wget -O - -U "Mozilla/5.0" "http://images.google.com/images?q=${QUERY}" 2>/dev/null |
+sed -e 's/","http/\n","http/g' |
+awk -F \" '{print $3}' |
+grep -i http: |
+head -1` > "$QUERY.png" && feh "$QUERY.png" &&
+rm -v "$QUERY.png"
+
