@@ -24,7 +24,7 @@ File::Find::find({wanted  => \&wanted}, $pwd);
 
 sub wanted {
   /^.+\.rar/ 
-  && doexec(0, "rar x {} $tempdir && $mp $tempdir/* && rm -v $tempdir/*");
+  && doexec(0, "rar x \"{}\" $tempdir && $mp $tempdir/* && rm -v $tempdir/*");
 }
 
 sub doexec ($@) {
