@@ -5,9 +5,9 @@ use strict;
 print "Expression?\n";
 while (1) {
   print '> ';
-  chomp(my $cmd = <STDIN>);
-  exit if ($cmd =~ /^\s*:q\s*/);
-  my $i = eval $cmd;
+  chomp(my $c = <STDIN>);
+  exit(0) if(($c =~ /^\s*:q\s*/));
+  my $i = eval($c);
   printf("%d 0x%x 0%o %b %f %s \n", $i, $i, $i, $i, $i, $i);
 }
 
