@@ -34,6 +34,10 @@ my %games = (
   drgnblaze       => 'Dragon Blaze (Shmup, 2000)',
   prehisle        => 'Prehistoric Tale (Shmup, 1989) [SNK]',
   preisle2        => 'Prehistoric Tale 2 (Shmup, 1999) [SNK]',
+  oscar           => 'Psycho-Nics Oscar (Platform, 1988)',
+  spf2t           => 'Super Puzzle Fighter 2 Turbo (Puzzle, 1996)',
+  bhswstl         => 'Bells & Whistles (Shmup, 1991) [Konami]',
+  progear         => 'Pro Gear (Shmup, 2001)  [BEST FUCKING GAME EVER]',
 );
 
 my @games;
