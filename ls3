@@ -5,7 +5,7 @@ open(my $ls, "ls -hAlv --group-directories-first --color=always @ARGV |") or die
 
 my($perm,$nums,$user,$size,$month,$day,$time,$file) = undef;
 while(<$ls>) {
-  m/^(.{10})\s+(\d+)\s+(.+)\s+([0-9\.KMGT]+)\s+([A-Za-z]{3})\s+([0-9]{2,})\s+([0-9]{2}:[0-9]{2})\s+(.+)/;
+  m/^(.{10})\s+(\d+)\s+(.+)\s+([0-9\.KMGT]+)\s+([A-Za-z]{3})\s+([0-9]{2})\s+([0-9]{2}:[0-9]{2})\s+(.+)/;
   $perm = $1;
   $nums = $2;
   $user = $3;
