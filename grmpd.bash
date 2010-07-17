@@ -1,5 +1,6 @@
 #!/bin/bash
 # copy the playing track from remote mpd session to local machine
+# This was sexier in Perl, but Net::SCP is retarded and wraps scp anyway
 
 if [ $@ ]; then
   dir=$@;
