@@ -37,9 +37,15 @@ for my $l(@c) {
   }
 }
 
-for my $dp(sort(keys(%disks))) {
-  printf("[ \033[1m%s\033[0m ] \033[38;5;29m%s \033[38;5;244m %4s \033[38;5;202m%4s\033[38;5;192m%4s \033[38;5;148m%s <\033[38;5;178m%s \033[0m\n", 
-    $disks{$dp}{fs}, $dp,
+my $dpf = undef;
+for my $dp(sort (keys(%disks))) {
+  if($dp =~ m;([a-z]+)([0-9]+);) {
+    $dpf = "\033[38;5;148m$1\033[38;5;178m\033[1m$2";
+  }
+
+
+  printf("\033[1m%5s\033[0m \033[38;5;29m%s \033[38;5;244m %4s \033[38;5;202m%4s \033[38;5;192m%4s \033[38;5;148m%3s <\033[38;5;178m\033[1m%s \033[0m\n", 
+    $disks{$dp}{fs}, $dpf,
     $disks{$dp}{size}, $disks{$dp}{used},
     $disks{$dp}{avail},$disks{$dp}{proc},
     $disks{$dp}{mount}
