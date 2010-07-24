@@ -71,10 +71,55 @@ for my $dp(sort (keys(%disks))) {
     }
   }
 
-  printf("\033[1m%6s\033[0m \033[38;5;29m%s \033[38;5;244m %4s \033[38;5;202m%4s \033[38;5;192m%4s \033[38;5;148m%17s\033[0m% <\033[38;5;191m\033[1m%s \033[0m\n", 
+  my $size   = $disks{$dp}{size};
+  my $nsize  = notate_size($disks{$dp}{size});
+  my $nused  = notate_size($disks{$dp}{used});
+  my $navail = notate_size($disks{$dp}{avail});
+  #for($size) {
+  #  m/([0-9]+)(.)/;
+  #  $nsize = $1;
+  #  $notation = $2;
+  #  if($notation eq 'M') { $notation = "\033[38;5;240m$notation\033[0m" }
+  #  elsif($notation eq 'G') { $notation = "\033[38;5;248m$notation\033[0m" }
+  #  elsif($notation eq 'T') { $notation = "\033[38;5;250m$notation\033[0m" }
+  #  else { $notation = "\033[38;5;100m$notation\033[0m" }
+
+  #  $nsize = "\033[38;5;184m$nsize\033[0m" . "\033[1m$notation\033[0m";
+  #}
+
+  printf("\033[1m%6s\033[0m \033[38;5;233m▏\033[38;5;29m%s \033[38;5;233m▏\033[38;5;244m%42s \033[38;5;202m%42s \033[38;5;192m%42s \033[38;5;148m%17s\033[0m% <\033[38;5;191m\033[1m%s \033[0m\n", 
     $disks{$dp}{fs}, $dpf,
-    $disks{$dp}{size}, $disks{$dp}{used},
-    $disks{$dp}{avail},$percent,
+    $nsize, $nused,
+    $navail,$percent,
     $disks{$dp}{mount}
   ) unless(!defined($disks{$dp}{mount}));
+}
+
+sub notate_size {
+  my $str = shift;
+  my($nsize,$notation) = (undef);
+
+  for($str) {
+    m/([0-9]+)(.)/;
+    $nsize = $1;
+    $notation = $2;
+
+    if($notation eq 'M') { 
+      $notation = "\033[38;5;070m$notation\033[0m";
+      $nsize = "\033[38;5;191m$nsize\033[0m" . "\033[1m$notation\033[0m";
+    }
+    elsif($notation eq 'G') {
+      $notation = "\033[38;5;202m$notation\033[0m";
+      $nsize = "\033[38;5;220m$nsize\033[0m" . "\033[1m$notation\033[0m";
+    }
+
+    elsif($notation eq 'T') {
+      $notation = "\033[38;5;112m$notation\033[0m";
+      $nsize = "\033[38;%;196m$nsize\033[0m" . "\033[1m$notation\033[0m";
+    }
+    else {
+      $notation = "\033[38;5;100m$notation\033[0m";
+    }
+  }
+  return($nsize);
 }
