@@ -29,7 +29,7 @@ for(@ls) {
   my ($perm,$hlink,$user,$group,$size,$month,$day,$time,$file) = 
     split(/\s+/, $_,8);
   my($file) = m/.+(?:[0-9]+:?[0-9])\s+(.+)/;
-  $file =~ s/->/$fg;202m▪▶$def/;
+  $file =~ s/->/$fg;196m▪▶$def/;
 
   my @perms = split(//, $perm);
 
