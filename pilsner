@@ -17,7 +17,9 @@
 ###############################################################################
 use strict;
 
-open(my $l, "ls -hAlv --group-directories-first --color=always @ARGV |") 
+@ARGV = map{"'$_'"} @ARGV; # escape bad chars
+
+open(my $l, "ls -hAlv --group-directories-first --color=always @ARGV|")
   or die($!);
 chomp(my @ls = grep{!/total.+/} (<$l>));
 
