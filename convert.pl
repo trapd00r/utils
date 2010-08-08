@@ -3,19 +3,19 @@ use strict;
 # convert
 use Getopt::Long;
 
-&usage if !@ARGV;
+usage() unless(@ARGV);
 
-our ($opt_d2b, $opt_d2o, $opt_d2h, $opt_hd, $opt_od, $opt_bd);
-GetOptions('db' =>  \$opt_d2b,
-           'do' =>  \$opt_d2o,
-           'dh' =>  \$opt_d2h,
-           'hd' =>  \$opt_hd,
-           'od' =>  \$opt_od,
-           'bd' =>  \$opt_bd,
+our ($opt_d2b, $opt_d2o, $opt_d2h, $opt_hd, $opt_od, $opt_bd, @to_ascii);
+GetOptions('db'   =>  \$opt_d2b,
+           'do'   =>  \$opt_d2o,
+           'dh'   =>  \$opt_d2h,
+           'hd'   =>  \$opt_hd,
+           'od'   =>  \$opt_od,
+           'bd'   =>  \$opt_bd,
            );
 
-my $int = shift or &usage;
-print &convert($int), "\n";
+my $int = shift;
+print convert($int), "\n";
 
 sub convert { 
   my $int = shift;
@@ -39,5 +39,5 @@ sub usage {
       -bd binary to decimal
 
 USAGE
-exit 0;
+exit(0);
 }
