@@ -14,16 +14,6 @@ print "$_\n" for basename(@categories); # os,perl,sex
 print "Category: ";
 chomp(my $newpostcat = <STDIN>);
 
-
-
-
-
-
-#  mkdir("$dir/$newpostcat", 0777) 
-#    or croak "Cant mkdir $dir/$newpostcat :$!";
-#  mkdir("$dir/$newpostcat/_posts", 0777) 
-#    or croak "Cant mkdir $dir/$newpostcat/_posts : $!";
-#}
 print "\n";
 print "Available posts in $newpostcat:\n";
 
@@ -36,7 +26,6 @@ chomp(my $newpostname = <STDIN>);
 unless($newpostname eq "" or !$newpostname) {
   newpost($newpostname);
 }
-
 
 sub newpost {
   my $title = shift;
@@ -57,7 +46,6 @@ sub newpost {
   close $fh;
   system("vim", "$fullpath.markdown");
 }
-
 
 sub basename {
   my @cat = @_;
