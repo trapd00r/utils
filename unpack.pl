@@ -13,7 +13,9 @@ my $permdir  = 01742; # -rwxr---wT
 chmod($permdir, $pwd); # This is specific to me, you dont want this!
 
 my $tempdir;
-$pwd =~ m/^((?:\/[^\/]+){2}\/).*/ and $tempdir = "$1.temp";
+$pwd =~ m/^((?:\/[^\/]+){2}\/).*/ and $tempdir = "$1.punpack-temp";
+
+$tempdir = '/tmp/scp1/' if(@ARGV);
 
 use vars qw/*name *dir *prune/;
 *name   = *File::Find::name;
@@ -23,15 +25,16 @@ use vars qw/*name *dir *prune/;
 File::Find::find({wanted  => \&wanted}, $pwd);
 
 sub wanted {
-  /^.+\.rar/ 
-  && doexec(0, "rar x \"{}\" $tempdir && $mp $tempdir/* && rm -v $tempdir/*");
+  /^.+(?:part00)?\.rar/
+  && doexec(0, "rar x \"{}\" $tempdir/ && $mp $tempdir/* && rm -rv $tempdir/");
 }
 
 sub doexec ($@) {
     my $ok = shift;
     my @command = @_; # copy so we don't try to s/// aliases to constants
-    for my $word (@command)
-        { $word =~ s#{}#$name#g }
+    for my $word (@command) {
+      $word =~ s#{}#$name#g;
+    }
     if ($ok) {
         my $old = select(STDOUT);
         $| = 1;
