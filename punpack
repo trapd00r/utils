@@ -4,18 +4,17 @@ use strict;
 use Cwd;
 use File::Find;
 
-my $mp = 'mplayer -msgcolor -slave -input file=$HOME/.mplayer/mplayer.fifo';
+my $mp = 'mplayer -msgcolor';
 my $pwd = shift // getcwd();
 
 my $permdir  = 01742; # -rwxr---wT
-#my $permfile = 0755;  # -rwxr-xr-x
 
-chmod($permdir, $pwd); # This is specific to me, you dont want this!
+chmod($permdir, $pwd);
 
 my $tempdir;
 $pwd =~ m/^((?:\/[^\/]+){2}\/).*/ and $tempdir = "$1.punpack-temp";
 
-$tempdir = '/tmp/scp1/' if(@ARGV);
+$tempdir = '/tmp/' if(@ARGV);
 
 use vars qw/*name *dir *prune/;
 *name   = *File::Find::name;
