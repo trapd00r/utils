@@ -38,6 +38,8 @@ my %games = (
   spf2t           => 'Super Puzzle Fighter 2 Turbo (Puzzle, 1996)',
   bhswstl         => 'Bells & Whistles (Shmup, 1991) [Konami]',
   progear         => 'Pro Gear (Shmup, 2001)  [BEST FUCKING GAME EVER]',
+  bonzeadv        => 'Bonze Adventure (Platform, 1988) [Taito]',
+  pacmanf         => 'Pacman (speedup hack)',
 );
 
 my @games;
