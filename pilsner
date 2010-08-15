@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
 use strict;
+use Data::Dumper;
 
 @ARGV = map{"'$_'"} @ARGV; # escape bad chars
 
@@ -45,6 +46,7 @@ for(@ls) {
     $_ = "$bg;232m$fg;185m$_$def" if($_ eq 'r');
     $_ = "$bg;232m$fg;215m$_$def" if($_ eq 'w');
     $_ = "$bg;232m$fg;209m$_$def" if($_ eq 'x');
+
   }
   $perm = join('', @perms);
 
@@ -63,8 +65,20 @@ for(@ls) {
     12 => 'Dec',
   );
 
+  my($left_delimiter, $right_delimiter);
+  if($file =~ /.+\.pl/) {
+    $right_delimiter = "\033[38;5;178m▏\033[0m";
+    $left_delimiter = "\033[38;5;240m▕\033[0m";
+  }
+  else {
+    $right_delimiter = "\033[38;5;240m▏\033[0m";
+    $left_delimiter = "\033[38;5;240m▕\033[0m";
+  }
+  if($file =~ /\..*rc/) {
+    $file = "\033[38;5;106m$file\033[0m";
+  }
 
-  printf("$fg;235m%02d $bold$fg;240m%s$def$fg;240m▕$def%s$fg;240m▏$def%s\n",
+  printf("$fg;235m%02d $bold$fg;240m%s$def$left_delimiter%s$right_delimiter$def%s\n",
     $day, $month, $perm, $file);
-
 }
+exit(0);
