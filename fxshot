@@ -1,4 +1,4 @@
 #!/bin/sh
 FNAME=$(fxr pic|awk '{print $4}'|perl -pe 's/\/.+\///')
-scp -P 19216 "$FNAME" scp1@192.168.1.102:http/psy/fxr
+scp -P 19216 "$FNAME" scp1@192.168.1.100:http/psy/fxr
 echo "http://psy.trapd00r.se/fxr/$FNAME"|xclip
