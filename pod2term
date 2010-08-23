@@ -1,4 +1,9 @@
 #!/usr/bin/perl
+# Dont use this
+# TODO 
+# Use colors from the actual vim colorscheme
+# Format code parts with real syntax hl
+
 use strict;
 
 my $pod = shift // '/home/scp1/devel/Mplayer::NowPlaying/README.pod';
