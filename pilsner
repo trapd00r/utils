@@ -77,6 +77,12 @@ for(@ls) {
   if($file =~ /\..*rc/) {
     $file = "\033[38;5;106m$file\033[0m";
   }
+  if($file eq 'README') {
+    $file = "\033[1m\033[38;5;26m$file\033[0m";
+  }
+  if($file eq 'Makefile') {
+    $file = "\033[1m\033[38;5;124m$file\033[0m";
+  }
 
   printf("$fg;235m%02d $bold$fg;240m%s$def$left_delimiter%s$right_delimiter$def%s\n",
     $day, $month, $perm, $file);
