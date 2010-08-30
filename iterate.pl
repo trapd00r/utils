@@ -20,9 +20,14 @@ sub iterate {
   my $i;
   for($i=0; $i<$count; ++$i) {
     if($opt_perl) {
-      print(eval($cmd));
-      print "\n";
-      print $@;
+      my $foo = (eval($cmd));
+      if($@) {
+        # :D
+        system("$cmd")==0 or print"$cmd: \e[1mJUNK args\e[0m\n" and exit(-1);
+      }
+      else {
+        print $foo, "\n";
+      }
     }
     else {
       system("$cmd");
