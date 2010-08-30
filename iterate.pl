@@ -10,12 +10,12 @@ GetOptions(
   'perl'    => \$opt_perl,
 );
 
-my @cmd = @ARGV;
-iterate($opt_count, @cmd);
+my ($torun) = @ARGV;
+iterate($opt_count, $torun);
 
 sub iterate {
   my $count = shift;
-  my $cmd   = join(/ /,@_);
+  my $cmd = shift;
 
   my $i;
   for($i=0; $i<$count; ++$i) {
