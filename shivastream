@@ -35,11 +35,15 @@ if(!-p $fifo) {
   POSIX::mkfifo($fifo, 0666) or die("$fifo: $!");
 }
 
+if(!@ARGV) {
+  load('shiva');
+}
+
 our(@opt_play_songs);
 GetOptions(
   'kill'        => \&killkid,
   'load:s@'     => \@opt_play_songs,
-  'list'        => \&list_chans,
+  'clist'       => \&list_chans,
   'help'        => sub {print "-load | -kill\n\n" and exit(0);},
 );
 
