@@ -1,0 +1,131 @@
+#!/usr/bin/perl
+# shivastream - constant stream of mushy mushrooms
+# barebone port of http://github.com/trapd00r/rmcd totally stripped
+# of the cool stuff and adjusted for the small display. It also needs
+# to be compatible with v5.8.3 :(
+use strict;
+use Getopt::Long;
+
+my $config  = "$ENV{HOME}/.shivastream.conf";
+my $fifo    = "$ENV{HOME}/.shivastream.fifo";
+my $log     = "$ENV{HOME}/MyDocs/log/shivastream.log";
+my $pidfile = '/tmp/shivastream.pid';
+my $player  = 'mplayer';
+my @playopt = (
+  '-cache', 400,
+  '-cache-min', 10,
+  '-identify', 
+  '-idle',
+  '-input', "file=$fifo",
+);
+
+
+
+our(%channels);
+if(!-f $config) {
+  print "$config does not exist\n";
+}
+else {
+  require($config); #FIXME
+}
+
+if(!-p $fifo) {
+  require POSIX;
+  print "Creating $fifo\n";
+  POSIX::mkfifo($fifo, 0666) or die("$fifo: $!");
+}
+
+our(@opt_play_songs);
+GetOptions(
+  'kill'        => \&killkid,
+  'load:s{1,}'  => \@opt_play_songs,
+  'list'        => \&list_chans,
+  'help'        => sub {print "-load | -kill\n\n" and exit(0);},
+);
+
+load(@opt_play_songs) unless(!@opt_play_songs);
+
+
+sub geturi {
+  my $name = shift;
+  return(undef) unless(exists($channels{$name}));
+  return($channels{$name}->{uri});
+}
+
+sub list_chans {
+  for my $name(sort(keys(%channels))) {
+    printf("%s\n", $name); # not much space on display
+  }
+}
+
+sub get_chan_name {
+  my $name = shift;
+  return($channels{$name}{name});
+}
+
+sub load {
+  my @toload = @_;
+  print @toload;
+  if($channels{$toload[0]}) {
+    $toload[0] = $channels{$toload[0]}->{uri};
+  }
+  if(!-e $pidfile) { # not started
+    if($toload[0] !~ m;(?:http|mms)://;) {
+      my @fixme = @toload;
+      for(@fixme) {
+        s;.+/(.+);$1;;
+        print("Adding \e[1m$1\e[0m\n");
+      }
+    }
+    print "GOING DOWN\n";
+    daemonize();
+    exec($player, @playopt, @toload);
+  }
+  exit(0) if(!@toload);
+  my @fixme = @toload;
+  for(@fixme) {
+    s;.+/(.+);$1;;
+    print("Adding \e[1m$1\e[0m\n");
+  }
+  open(my $fh, '>', $fifo) or(die("Cant open fifo $fifo: $!"));
+  print $fh "loadfile @toload\n";
+  exit(0);
+}
+
+sub daemonize {
+  use POSIX 'setsid';
+  my $PID = fork();
+  exit(0) if($PID);
+  exit(1) if(!defined($PID));
+
+  setsid();
+  $PID = fork();
+  exit(1) if(!defined($PID));
+
+  if($PID) { # parent
+    waitpid($PID, 0);
+    unlink($pidfile);
+    exit(0);
+  }
+  elsif($PID == 0) { # child
+    open(my $fh, '>', $pidfile) or die("$pidfile: $!");
+    print $fh $$;
+    close($fh);
+    open(STDOUT, '>', '/dev/null');
+    open(STDERR, '>', '/dev/null');
+    open(STDIN,  '<', '/dev/null');
+  }
+}
+
+sub killkid {
+  open(my $fh, '<', $pidfile) or(print("shivastream is \e[1mOFF\e[0m\n") and exit(1));
+  my $pid = <$fh>;
+  close($fh);
+  if(kill(9, $pid)) {
+    print("shivastream with PID $pid was \e[1mkilled\e[0m\n");
+  }
+  else {
+    print "Could not kill $pid: $!\n";
+  }
+  exit(0);
+}
