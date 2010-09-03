@@ -1,0 +1,11 @@
+#!/usr/bin/perl
+use strict;
+
+chomp(my $bat = `acpi`);
+for($bat) {
+  s/.+, ([0-9]+)%.+/$1/;
+}
+
+if($bat < 90) {
+  exec('zenity', '--warning', "--text=Battery low: $bat%");
+}
