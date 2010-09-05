@@ -26,10 +26,11 @@ sub transfer {
   }
   else {
     # I need all music files in the root of my music player
-    chomp(my @files = grep{/\.(?:mp3|flac)$/} `ssh -p 19216 scp1\@$host find $album`);
+    chomp(my @files = grep{/\.(?:mp3|flac)$/} `ssh -p 19216 scp1\@$host \"find \'$album\'\"`);
     map{$_ = "'$_'"} @files;
 
     for(@files) {
+      $_ =~ s/([;<>\*\|`&\$!#\(\)\[\]\{\}:'"])/\\$1/g;
       system("scp -P 19216 scp1\@$host:$_ $target");
     }
   }
