@@ -1,8 +1,6 @@
 #!/usr/bin/perl
 use strict;
 
-my $c = $ENV{LS_COLORS};
-
 my $i = 0;
 for(split(/:/, $ENV{LS_COLORS})) {
   my($ft,$color) = $_ =~ /\*\.(.+)=(.+)/;
