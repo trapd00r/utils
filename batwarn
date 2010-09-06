@@ -7,5 +7,5 @@ for($bat) {
 }
 
 if($bat < 90) {
-  exec('zenity', '--warning', "--text=Battery low: $bat%");
+  system("zenity --warning --text='Battery low: $bat%'");
 }
