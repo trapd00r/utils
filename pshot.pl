@@ -1,53 +1,63 @@
 #!/usr/bin/perl
 our $APP     = 'pshot';
-our $VERSION = 0.1;
+our $VERSION = 0.2;
 
 use strict;
 use Getopt::Long;
 use Pod::Usage;
 
-# TODO : scrot vs import, bbcode img thumbs, no hardcoded ssh stuff, xclip?
-my $base = 'http://psy.trapd00r.se';
+my $base     = 'http://psy.trapd00r.se';
+my $ssh_host = '192.168.1.100';
+my $ssh_user = 'scp1';
+my $ssh_port = 19216;
 
 our($opt_bbcode,$opt_html);
 GetOptions(
   bbcode  => \$opt_bbcode,
   html    => \$opt_html,
-  help    => sub { pod2usage(verbose => 1) && exit(0); },
+  '-h'    => sub { pod2usage(verbose => 1) && exit(0); },
   man     => sub { pod2usage(verbose => 3) && exit(0); },
 );
 
-my $dname = 'scrots/' . shift(@ARGV);
+my $dname = 'scrots';
+if(@ARGV) {
+  $dname . "/" . shift(@ARGV);
+}
 
 print shot(),"\n";
 
 sub shot {
-  my $fname = time() . '.png';
-  system('scrot', $fname) == 0 or die($!);
+  my $fname = 'pshot-' . time();
+  system("scrot -q 100 $fname.png -t 30%") == 0 or die("scrot failed: $!");
 
   system(
-    'ssh', '-p', 19216,
-    'scp1@192.168.1.100', "mkdir -p http/psy/$dname"
-  ) == 0 or(die($!));
+    'ssh', '-p', $ssh_port,
+    "$ssh_user\@$ssh_host", "mkdir -p http/psy/$dname"
+  ) == 0 or(die("ssh failed: $!"));
 
-  open(OLD_STDOUT, '>&', STDOUT) or die($!);
+  # dupe STDOUT so we can reopen it when we wanna be loud
+  open(OLD_STDOUT, '>&', STDOUT) or die("stddd$!");
   close(STDOUT);
 
   system(
-    'scp', '-P', 19216,
-    $fname, "scp1\@192.168.1.100:http/psy/$dname"
-  ) == 0 or(die($!));
+    'scp', '-P', $ssh_port,
+    "$fname.png", "$fname-thumb.png", "$ssh_user\@$ssh_host:http/psy/$dname"
+  ) == 0 or(die("scp failed: $!"));
+  unlink("$fname.png") or print "$fname.png: $!" and exit(-1);
+  unlink("$fname-thumb.png") or print "$fname-thumb.png: $!" and exit(-1);
 
   open(STDOUT, '>&', OLD_STDOUT) or die($!);
 
   if($opt_html) {
-    return("<a href=\"$base/$dname/$fname\">");
+    return("<a href=\"$base/$dname/$fname.png\">");
   }
-  elsif($opt_bbcode) { #TODO use thumb in [img]
-    return("[url=$base/$dname/$fname][img]$base/$dname/$fname\[/img][/url]");
+  elsif($opt_bbcode) {
+    return(
+      "[url=$base/$dname/$fname.png][img]$base/$dname/$fname-thumb.png\[/img][/url]"
+    );
   }
   else {
-    return("$base/$dname/$fname");
+    return("$base/$dname/$fname.png");
   }
   exit(0);
 }
@@ -68,7 +78,7 @@ sub shot {
 
   -b,   --bbcode    return the uri in bbcode syntax
   -ht,  --html      return the uri wrapped in html href syntax
-  -he,  --help      show the help and exit
+  -h,   --help      show the help and exit
   -m,   --man       show the manual and exit
 
 =head1 AUTHOR
