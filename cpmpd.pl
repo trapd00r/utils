@@ -4,6 +4,7 @@ our $VERSION = 0.2;
 
 use strict;
 use Getopt::Long;
+use Pod::Usage;
 
 #FIXME throw this crap in a config file
 my $base       = '/mnt/Music_1';
@@ -23,12 +24,19 @@ my ($albname)  = $album =~ m;.+/(.+)$;;
 our($opt_album) = undef;
 our(@opt_search);
 
+if(!@ARGV) {
+  get_track();
+}
+
 GetOptions(
   'album'         => \&get_album,
   'track'         => \&get_track,
   'dest:s'        => \$target,
   'search=s{1,}'  => \@opt_search,
+  'help'          => sub { pod2usage(verbose => 1); exit(0); },
+  'man'           => sub { pod2usage(verbose => 3); exit(0); },
 );
+
 
 search(@opt_search) if(@opt_search);
 
@@ -53,6 +61,8 @@ sub search {
 }
 sub transfer {
   my @files = @_;
+  #FIXME skip .{jpg,nfo,sfv,m3u} etc. grep for {mp3,flac}?
+  # use find on remote host? what about albums/single tracks?
   for(@files) {
     $_ =~ s/([;<>\*\|`&\$!#\(\)\[\]\{\}:'"])/\\$1/g;
     system("$scp -P $port -r $user\@$host:\"$_\" $target");
@@ -76,6 +86,9 @@ sub transfer {
   --album   copy the now playing album to target
   --track   copy the now playing track to target
   --search  search the MPD db and copy results to target
+
+  --help    show the help and exit
+  --man     show the manpage and exit
 
 =head1 COPYRIGHT
 
