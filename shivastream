@@ -36,7 +36,7 @@ if(!-p $fifo) {
 }
 
 if(!@ARGV) {
-  load('shiva');
+  load('psy');
 }
 
 our(@opt_play_songs);
