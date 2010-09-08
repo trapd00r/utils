@@ -1,16 +1,25 @@
 #!/usr/bin/perl
-# paste
-# for xeon-enouf ;p
 use strict;
+use Getopt::Long;
 use File::Copy;
 
-my @files = @ARGV or die;
+=paste
+  We should be allowed to just transfer the source code as is
+our($opt_source);
+GetOptions(
+  source  => \$opt_source,
+);
+=cut
+
+my @files = @ARGV;
 my $int_host = '192.168.1.100';
 my $ext_host = 'http://paste.trapd00r.se';
 
 for(@files) {
-  system("vim \"$_\" -c 'set nonumber' -c TOhtml -c :w :q! -c :q! -c :q!");
-  move("$_.html", "$_-@{[time()]}.html");
+  #unless($opt_source) {
+    system("vim \"$_\" -c 'set nonumber' -c TOhtml -c :w :q! -c :q! -c :q!");
+    move("$_.html", "$_-@{[time()]}.html");
+    #}
 }
 
 for my $file(@files) {
