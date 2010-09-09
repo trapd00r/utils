@@ -23,11 +23,12 @@ my $grey = shift // '1c1c1c';
 my @valid_hex = qw(A B C D E F a b c d e f 0 1 2 3 4 5 6 7 8 9);
 for(0..15) {
   my @shade;
-  #FIXME check valid hex
-  for my $foo(split(//, $grey)) {
+
+  my @chars = split(//, $grey);
+  for my $foo(@chars) {
     if($foo ~~ @valid_hex) {
-      if(($foo =~ m/[0-9]/) and ($foo < 10) or ($foo =~ /[A-Ea-e]/)) {
-        $foo++;
+      if(($foo =~ m/[0-9]/) and ($foo < 10 and $foo >= 0) or ($foo =~ /[A-Ea-e]/)) {
+        $foo++ unless($_ == 0);
       }
       push(@shade, $foo);
     }
@@ -40,3 +41,5 @@ for(0..15) {
   printf("%30s\n", $new_c);
   system("echo \"$new_c\" | xrdb -merge") == 0 or print($!) and exit(-1);
 }
+system("echo \"$xres_prefix.color7:  #e5d5dd\"| xrdb -merge");
+system("echo \"$xres_prefix.color15:  #ffffff\"| xrdb -merge");
