@@ -26,7 +26,7 @@ License GPLv2
 =cut
 
 our $APP      = 'dynxres';
-our $VERSION  = 0.2;
+our $VERSION  = '0.2.1';
 
 my  $DEBUG = 0;
 
@@ -133,10 +133,16 @@ sub make_new_colorscheme {
             $char = 0;
           }
         }
+        else {
+          print STDERR "\e[31m$char\e[0m is not valid hex! Converted to 'a'\n";
+          $char = 'a';
+        }
       }
       $char = sprintf("%.6s", join('', @chars));
       push(@shade, $char);
     }
+    print "Your \e[1mnew\e[0m colorscheme:\n---\n";
+    print lc($_),"\n" for(@shade);
     return(map { lc($_) } @shade);
   }
   return(map { lc($_) } @current_colorscheme);
@@ -154,6 +160,12 @@ sub set_colorscheme {
       system("echo \"$new_color\" | xrdb -merge") == 0
         or warn($!);
     }
+    #FIXME - We probably want #ffffff as the default fg, but the user should
+    #decide, really
+    system("echo \"$xres_prefix.color7: #ffffff\" | xrdb -merge") == 0
+      or warn($!);
+    system("echo \"$xres_prefix.color15: #ffffff\" | xrdb -merge") == 0
+      or warn($!);
   }
 }
 
