@@ -14,12 +14,10 @@ use strict;
   -p,   --prefix      X resource prefix
   -d,   --darker      darken the current colorscheme by INTEGER
   -b,   --brighter    brighten the current colorscheme by INTEGER
-  -s,   --shade       make a new shaded colorscheme with HEX_COLOR as
-                      as the starting point for the shade
-=head1 Shades
-
-  132b0a (army green)
-  0e1f2b (purblue)
+  -t,   --tint        make a new tinted colorscheme with HEX_COLOR as
+                      as the starting point
+  -s,   --stepping    control how far away from the original color we
+                      want to go
 
 =head1 AUTHOR
 
@@ -31,7 +29,7 @@ License GPLv2
 
 
 our $APP      = 'dynxres';
-our $VERSION  = '0.2.1';
+our $VERSION  = '0.2.3';
 
 my  $DEBUG = 0;
 
@@ -42,12 +40,14 @@ use Pod::Usage;
 our $xres_prefix = 'URxvt.india'; # URxvt is the default
 our $xresources  = "$ENV{HOME}/configs/.Xresources";
 
-our($opt_darker, $opt_brighter, $opt_shade);
+our($opt_darker, $opt_brighter, $opt_tint);
+our($opt_stepping) = 2000;
 GetOptions(
   'prefix:s'    => \$xres_prefix,
   'darker:i'    => \$opt_darker,
   'brighter:i'  => \$opt_brighter,
-  'shade:s'     => \$opt_shade,
+  'tint:s'      => \$opt_tint,
+  'stepping:i'  => \$opt_stepping,
   'xres'        => \$xresources,
   'help'        => sub { pod2usage(verbose => 1) && exit(0); },
 );
@@ -58,23 +58,25 @@ if($opt_darker) {
 if($opt_brighter) { #FIXME
   set_colorscheme(make_new_colorscheme('brighter', $opt_brighter, get_colorscheme($xresources)));
 }
-if($opt_shade) {
-  set_colorscheme(make_new_colorscheme($opt_shade));
+if($opt_tint) {
+  set_colorscheme(make_new_colorscheme($opt_tint, $opt_stepping));
 }
 
 sub make_new_colorscheme {
   #FIXME
-  my $shade_start = shift;
+  my $tint_start = shift;
+  my $stepping    = shift;
 
   my $modifier; # darken amount, brighten amount, start color
   my @current_colorscheme;
 
   if(@_ < 2) {
-    $modifier = $shade_start;
+    $modifier = $tint_start;
   }
   else {
+    #FIXME 
     $modifier = shift; # how many iterations?
-    if($shade_start eq 'brighter') {
+    if($tint_start eq 'brighter') {
       $modifier = "-$modifier"; #FIXME This doesnt work. Or does it?
     }
     @current_colorscheme = @_;
@@ -119,7 +121,7 @@ sub make_new_colorscheme {
     }
   }
   else { # use the single color
-    my @shade;
+    my @tint;
     for my $n(0..15) {
       for(split(//, $modifier)) {
         if($_ ~~ @valid_hex) { # OK
@@ -132,22 +134,22 @@ sub make_new_colorscheme {
       #FIXME Modify R/G/B in groups
       $modifier = sprintf("%d", hex($modifier));
       if($modifier <= 16588965) { # 16777215 / (15 colors * step)
-        $modifier = $modifier + 12550;
+        $modifier = $modifier + $stepping;
       }
       elsif($modifier < 150) {
         #FIXME
         $modifier = 150000;
       }
       else {
-        $modifier = $modifier - 12550;
+        $modifier = $modifier - $stepping;
       }
 
       $modifier = sprintf("%06x", $modifier);
-      push(@shade, $modifier);
+      push(@tint, $modifier);
     }
     print "Your \e[1mnew\e[0m colorscheme:\n---\n";
-    print Dumper \@shade;
-    return(map { lc($_) } @shade);
+    print Dumper \@tint;
+    return(map { lc($_) } @tint);
   }
   return(map { lc($_) } @current_colorscheme);
 }
