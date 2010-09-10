@@ -15,7 +15,11 @@ use strict;
   -d,   --darker      darken the current colorscheme by INTEGER
   -b,   --brighter    brighten the current colorscheme by INTEGER
   -s,   --shade       make a new shaded colorscheme with HEX_COLOR as
-                      as the starting point
+                      as the starting point for the shade
+=head1 Shades
+
+  132b0a (army green)
+  0e1f2b (purblue)
 
 =head1 AUTHOR
 
@@ -24,6 +28,7 @@ Written by Magnus Woldrich
 License GPLv2
 
 =cut
+
 
 our $APP      = 'dynxres';
 our $VERSION  = '0.2.1';
@@ -115,34 +120,33 @@ sub make_new_colorscheme {
   }
   else { # use the single color
     my @shade;
-    my @chars = split(//, $modifier);
-    my $char;
     for my $n(0..15) {
-
-      for $char(@chars) {
-        if($char ~~ @valid_hex) {
-          if(($char =~ /[0-9]/) or($char =~ /[A-Ea-e]/)) {
-            print "\e[1mBEFORE: $char\e[0m\n" if($DEBUG);
-            $char++;
-            print "\e[38;5;100m   NOW: $char\e[0m\n" if($DEBUG);
-          }
-          elsif(lc($char) eq 'f') {
-            $char = 'a';
-          }
-          elsif($char > 9) {
-            $char = 0;
-          }
+      for(split(//, $modifier)) {
+        if($_ ~~ @valid_hex) { # OK
         }
         else {
-          print STDERR "\e[31m$char\e[0m is not valid hex! Converted to 'a'\n";
-          $char = 'a';
+          print "<$_>\n";
         }
       }
-      $char = sprintf("%.6s", join('', @chars));
-      push(@shade, $char);
+
+      #FIXME Modify R/G/B in groups
+      $modifier = sprintf("%d", hex($modifier));
+      if($modifier <= 16588965) { # 16777215 / (15 colors * step)
+        $modifier = $modifier + 12550;
+      }
+      elsif($modifier < 150) {
+        #FIXME
+        $modifier = 150000;
+      }
+      else {
+        $modifier = $modifier - 12550;
+      }
+
+      $modifier = sprintf("%06x", $modifier);
+      push(@shade, $modifier);
     }
     print "Your \e[1mnew\e[0m colorscheme:\n---\n";
-    print lc($_),"\n" for(@shade);
+    print Dumper \@shade;
     return(map { lc($_) } @shade);
   }
   return(map { lc($_) } @current_colorscheme);
@@ -152,19 +156,17 @@ sub set_colorscheme {
   my @new_colorscheme = @_;
 
   if(@new_colorscheme) {
-    my $color_no = 0;
+    my $color_no = 0; # 0..15
     for my $new_color(@new_colorscheme) {
       $new_color = "$xres_prefix.color$color_no: #$new_color";
-#      print "$new_color\n";
-      $color_no++;
+
       system("echo \"$new_color\" | xrdb -merge") == 0
         or warn($!);
+      $color_no++;
     }
     #FIXME - We probably want #ffffff as the default fg, but the user should
     #decide, really
-    system("echo \"$xres_prefix.color7: #ffffff\" | xrdb -merge") == 0
-      or warn($!);
-    system("echo \"$xres_prefix.color15: #ffffff\" | xrdb -merge") == 0
+    system("echo \"$xres_prefix.color7: #ebf3ff\" | xrdb -merge") == 0
       or warn($!);
   }
 }
