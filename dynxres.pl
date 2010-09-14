@@ -3,61 +3,82 @@ use strict;
 use feature 'say';
 use Getopt::Long;
 
-my $hex = shift // '000000';
+my $DEBUG = 1;
 
-our($opt_r_step, $opt_g_step, $opt_b_step) = (15) x 3;
+our($opt_r_step, $opt_g_step, $opt_b_step) = (10) x 3;
+our $opt_hex = '000000';
+our $opt_include_ansi = 17;  # Start from 17
+our $opt_include_grey = 231; # End at 231
+our $opt_ansi_only    = 0;
 
 GetOptions(
-  'r:i'   => \$opt_r_step,
-  'g:i'   => \$opt_g_step,
-  'b:i'   => \$opt_b_step,
-  'all:i' => sub {shift; ($opt_r_step,$opt_g_step,$opt_b_step) = (shift) x 3;},
+  'hex:s'     => \$opt_hex,
+  'red:i'     => \$opt_r_step,
+  'g|green:i' => \$opt_g_step,
+  'blue:i'    => \$opt_b_step,
+  'ansi'      => \$opt_include_ansi,
+  'grey'      => \$opt_include_grey,
+  'ansi-only' => \$opt_ansi_only,
 );
 
-print "R Step: $opt_r_step\n";
-print "G Step: $opt_g_step\n";
-print "B Step: $opt_b_step\n";
+say "R Step: $opt_r_step";
+say "G Step: $opt_g_step";
+say "B Step: $opt_b_step";
+say "ANSI: $opt_include_ansi";
+say "GREY: $opt_include_grey";
 
-my($r, $g, $b) = $hex =~ /(..)(..)(..)/;
-$r = hex($r);
-$g = hex($g);
-$b = hex($b);
-my @tint;
-for my $ansi(0..15) {
+set_shade(make_shade());
 
-  $r = (($r + $opt_r_step) < (255 - ($opt_r_step + $r)))
-    ? ($r + $opt_r_step)
-    : (255 - ($opt_r_step++));
+sub set_shade {
+  my @colors = @_;
 
-  $g = (($g + $opt_g_step) < (255 - ($opt_g_step + $g)))
-    ? ($g + $opt_g_step)
-    : (255 - ($opt_g_step++));
+  my $i = $opt_include_ansi;
 
-  $b = (($b + $opt_b_step) <= (255 - ($opt_b_step + $b)))
-    ? ($b + $opt_b_step)
-    : (255 - ($opt_b_step++));
-
-  print "R: $r\n";
-  print "G: $g\n";
-  print "B: $b\n";
-
-  printf("%x\n", $r);
-  printf("%x\n", $g);
-  printf("%x\n", $b);
-
-
-  my $hex_r = sprintf("%02x", $r);
-  my $hex_g = sprintf("%02x", $g);
-  my $hex_b = sprintf("%02x", $b);
-  push(@tint, "$hex_r$hex_g$hex_b");
+  #open(OLD_STDOUT, '>&', STDOUT) or die("Can not dupe STDOUT: $!");
+  for my $color(@colors) {
+    my ($r, $g, $b) = $color =~ /(..)(..)(..)/;
+    printf("\e]4;$i;rgb:$r/$g/$b\e\\");
+    $i++;
+  }
 }
 
-use Data::Dumper;
-print Dumper \@tint;
+sub make_shade {
+  my @tint = ();
+  my ($r, $g, $b) = $opt_hex =~ /(..)(..)(..)/; #FIXME
 
-my $i = 0;
-for(@tint) {
-  system("printf \"URxvt.india.color$i: #$_\n\"|xrdb -merge");
-  $i++;
+  $opt_include_ansi == 0   if($opt_include_ansi == 1); # Include ANSI
+  $opt_include_grey == 255 if($opt_include_grey == 1); # Include greyscale
+
+  for my $color($opt_include_ansi .. $opt_include_grey) {
+
+    $r = (($r + $opt_r_step) < (255 - ($opt_r_step + $r)))
+      ? ($r + $opt_r_step)
+      : (255 - ($opt_r_step++))
+      ;
+
+    $g = (($g + $opt_g_step) < (255 - ($opt_g_step + $g)))
+      ? ($g + $opt_g_step)
+      : (255 - ($opt_g_step++))
+      ;
+
+    $b = (($b + $opt_b_step) < (255 - ($opt_b_step + $b)))
+      ? ($b + $opt_b_step)
+      : (255 - ($opt_b_step++))
+      ;
+
+    my $hex_r = sprintf("%02x", $r);
+    my $hex_g = sprintf("%02x", $g);
+    my $hex_b = sprintf("%02x", $b);
+
+    do {
+      say "\e[1m$hex_r$hex_g$hex_b\e[0m";
+      say "\e[38;5;160m0xR\e[0m: $hex_r";
+      say "\e[38;5;148m0xG\e[0m: $hex_g";
+      say "\e[38;5;033m0xB\e[0m: $hex_b";
+    } if($DEBUG);
+
+    push(@tint, $hex_r . $hex_g . $hex_b);
+
+  }
+  return(@tint);
 }
-
