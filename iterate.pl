@@ -23,8 +23,16 @@ sub iterate {
 
   my $i;
   my @foo;
+
+  my $error = 0;
+  PERL_CMD:
   if($opt_perl) {
-    print "\e[1m\e[36m> ";
+    if($error) {
+      print "\e[1m\e[38;5;160m> \e[38;5;197m";
+    }
+    else {
+      print "\e[1m\e[36m> \e[38;5;197m";
+    }
     chomp($cmd = <STDIN>);
     print "\e[0m";
   }
@@ -33,9 +41,13 @@ sub iterate {
       my $foo = (eval($cmd));
       if($@) {
         print $@;
+        $error = 1;
+        goto  PERL_CMD;
       }
       else {
+        $error = 0;
         print $foo, "\n";
+        goto  PERL_CMD;
       }
     }
     else {
