@@ -1,0 +1,11 @@
+#!/usr/bin/perl
+use strict;
+use feature 'say';
+use Lyrics::Fetcher::LyricWiki;
+
+chomp(my $artist = `mpc -h shiva --format "%artist%"|head -1`);
+chomp(my $title  = `mpc -h shiva --format "%title%"|head -1`);
+
+
+print Lyrics::Fetcher::LyricWiki->fetch($artist, $title);
+say "$artist - $title";
