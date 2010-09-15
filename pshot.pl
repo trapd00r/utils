@@ -21,7 +21,7 @@ GetOptions(
 
 my $dname = 'scrots';
 if(@ARGV) {
-  $dname . "/" . shift(@ARGV);
+  $dname .= "/" . shift(@ARGV);
 }
 
 print shot(),"\n";
