@@ -1,0 +1,2 @@
+#!/bin/sh
+rm /mnt/mp3/MUSIC/* && mv $HOME/ToTransfer /mnt/mp3/MUSIC/
