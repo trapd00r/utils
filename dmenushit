@@ -1,0 +1,5 @@
+#!/bin/sh
+$(dmenu_path | \
+  dmenu -fn '-windows-montecarlo-medium-r-normal--11-110-72-72-c-60-microsoft-cp1252' \
+  -nb \#111111 -nf \#d7005f -sb \#111111 -sf \#299ee8)
+
