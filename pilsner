@@ -74,6 +74,9 @@ for(@ls) {
     $right_delimiter = "\033[38;5;240m▏\033[0m";
     $left_delimiter = "\033[38;5;240m▕\033[0m";
   }
+  if($file =~ /\.un~/) {
+    next;
+  }
   if($file =~ /\..*rc/) {
     $file = "\033[38;5;106m$file\033[0m";
   }
