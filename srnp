@@ -1,0 +1,80 @@
+#!/usr/bin/perl
+# srnp - np for sveriges radio
+use strict;
+use LWP::Simple;
+use XML::Simple;
+use Getopt::Long;
+use Data::Dumper;
+
+my $xml = XMLin(get("http://api.sr.se/api/channels/channels.aspx"));
+$xml = $xml->{channel};
+my $npurl = "http://api.sr.se/api/rightnowinfo/Rightnowinfo.aspx?unit=";
+my $chanlist = '/home/scp1/devel/RPD/channelids.csv';
+
+our $optChan = 2576;
+
+my %channels;
+open my $fh, '<', $chanlist or die "Cant open $chanlist: $!";
+while(my $chinfo = <$fh>) {
+  chomp($chinfo);
+  my ($name, $id) = split(/,/, $chinfo);
+  $name = lc($name);
+  $channels{$name} = $id;
+}
+
+sub getID {
+  shift;
+  my $name = shift;# np($optChan),npNext($optChan);exit 0;
+  $optChan = $channels{$name};
+  np($optChan);npNext($optChan);
+}
+np($optChan), npNext($optChan) if !@ARGV;
+GetOptions(
+  'help'    => \&usage,
+  'chan:s'  => \&getID,
+  'list'    => sub {print "$_\n" for (sort keys %channels);},
+);
+
+sub np {
+  my $chan = shift;
+  my $xml = XMLin(get($npurl.$chan)) or sub {print "Error!\n";exit 1;};
+  if(ref($xml->{Channel}) ne 'HASH') {
+    print "No info available\n";
+    exit 1;
+  }
+  if($xml->{Channel}->{Song} ~~ {}) {
+    print "playing: unknown\n";
+  }
+  else {
+    print ' playing: ', $xml->{Channel}->{Song},
+          ' (', $xml->{Channel}->{Name}, ")\n";
+  }
+}
+
+sub npNext {
+  my $chan = shift;
+  my $xml = XMLin(get($npurl.$chan));
+  if(ref($xml->{Channel} ne 'HASH')) {
+    print "No info available\n";
+    exit 1;
+  }
+  if($xml->{Channel}->{Song} ~~ {}) {
+    print "playing: unknown\n";
+  }
+  else {
+    print 'upcoming: ', $xml->{Channel}->{NextSong},
+          ' (', $xml->{Channel}->{Name}, ")\n";
+  }
+}
+
+sub usage {
+  print << "USAGE";
+  srnp [OPTIONS]
+  OPTIONS
+    -np     show now playing info for default chan
+    -chan   channel to operate on
+    -list   list available channels
+
+USAGE
+exit 0;
+}
