@@ -4,7 +4,6 @@ use Cwd 'abs_path';
 
 my $bin = shift;
 
-
 my($bin_app, $bin_version);
 open(my $fh, '<', $bin) or die($!);
 while(<$fh>) {
@@ -16,6 +15,13 @@ while(<$fh>) {
   }
 }
 close($fh);
+
+if(!defined($bin_app)) {
+  print "app: ";
+  chomp($bin_app = <STDIN>);
+  print "ver: ";
+  chomp($bin_version = <STDIN>);
+}
 
 my $cwd  = abs_path($bin);
 $cwd =~ s;(.+)/.*$;$1;;
@@ -29,6 +35,5 @@ if(-f $tgz) {
 }
 
 system('tar', 'cvfz', $tgz, $cwd); #== 0 or die($!);
-system('scp', '-P 19216', $tgz, "scp1\@192.168.1.100:http/psy") == 0 or die($!);
-
-
+system('scp', '-P 19216', $tgz, "scp1\@192.168.1.100:http/hacks") == 0 or die($!);
+system("echo http://hacks.trapd00r.se/$tgz && echo http://hacks.trapd00r.se/$tgz|xclip");
