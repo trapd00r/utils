@@ -1,0 +1,12 @@
+#!/bin/bash
+# ddmpc
+
+out=$(mpc $(mpc help | grep "  mpc [a-z]" | awk '{print $2}' \
+  | dmenu -i -b $DMENU_LINES -fn $DMENU_FONT -nb $DMENU_NORMAL_BG \
+    -nf $DMENU_NORMAL_FG -sb $DMENU_SELECT_BG -sf $DMENU_SELECT_FG))
+
+echo "$out" | dzen2 -p 5  \
+  -fn -xos4-terminus-medium-r-normal--24-240-72-72-c-120-koi8-u \
+  -x $DZEN_X_POS -y $DZEN_Y_POS \
+  -ta $DZEN_ALIGNMENT -sa $DZEN_ALIGNMENT -w $DZEN_WIDTH \
+  -fg $DZEN_FG -bg $DZEN_BG
