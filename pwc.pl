@@ -1,56 +1,66 @@
-#!/usr/bin/perl 
+#!/usr/bin/perl
 use strict;
 # pwc - perl weather client
-use Getopt::Long;
 use Weather::Google;
+use String::Utils 'longest';
 
-our $irc;
-GetOptions(
-  'irc'   => \$irc,
-);
-
-my @towns = @ARGV;
-
+my @towns;
 if(!@ARGV) {
-  print "Specify town(s).\n";
+  push(@ARGV, qw(norrkoping
+                 finspang
+                 linkoping
+                 motala
+                 eskilstuna
+                 stockholm
+                 goteborg
+                 malmo
+                 lund
+                 ronneby
+                 svedala
+                 kiruna
+                 jokkmokk
+                 ystad
+                 berlin
+                 paris
+                 copenhagen
+                 oslo
+                 helsingfors
+                 baghdad
+                 )
+               );
+  push(@ARGV, ('Los Angeles', 'New York', 'Seattle',));
 }
 
-# In case we need more then one 
+@towns = @ARGV;
+
 my @gobjects;
 
 my %data;
-foreach my $town(@towns) {
-  push @{$data{$town}}, Weather::Google->new($town)->current(
-                                                             'temp_c',
-                                                             'condition',
-                                                             'humidity',
-                                                             'wind_condition',
-                                                             );
+for my $town(@towns) {
+  push(@{$data{$town}},
+    Weather::Google->new($town)->current(
+      'temp_c',
+      'condition',
+      'humidity',
+      'wind_condition',
+    )
+  );
 }
-my $town;
-my @data;
-foreach $town(sort keys %data) {
+
+
+my @data = ();
+my $town = undef;
+
+for my $town(sort(keys(%data))) {
   @data = @{$data{$town}};
-  foreach my $line (@data) {
-      if(!defined($line)) {
-          $line = "undef";
-      }
+  for(@data) {
+    $_ = 'undef' if(!defined($_));
   }
-  # I'm lazy
-  if(!$irc) {
-      print "\033[31;1m",ucfirst($town),"\033[0m\n";
-      print "Celsius: $data[0]°C\n";
-      print "Condition: $data[1]\n";
-      print "$data[2]\n";
-      print "$data[3]\n";
-  }
-  else {
-      # skummeslövsstrand
-      # The idea was to use %${lenght}s, but if that should work I'll have to
-      # figure out the longest string in @ARGV, which is simple, but I doubt
-      # that I'll get the formatting good anyway - therefore I leave it like
-      # this for now.
-      printf("%0s %0s %0s %0s %0s\n", '·',ucfirst($town).':', "$data[0]°C",
-             "[$data[1]]","| $data[3]");
-  }
+}
+
+
+my $len = longest(@towns);
+for(@towns) {
+  printf("\e[38;5;208m%${len}s\e[0m\e[1m: %3d\e[38;5;244m°\e[38;5;197mC \e[38;5;240m//\e[0m\e[38;5;38m %s\e[0m\n",
+    ucfirst($_), $data{$_}->[0], $data{$_}->[1], $data{$_}->[2]);
 }
