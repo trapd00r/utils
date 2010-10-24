@@ -24,7 +24,7 @@ sub play {
   print "\e[1m Top100 sid tracks, descending\e[0m\n";
   print "Pick a song kkthx: \e[1m";
   chomp(my $choice = <STDIN>);
-  print "\e[0m";
+  print "\e[0m\n";
   my $song = get("http://www.c64.org/HVSC/$sids->{$choice}");
 
   open(my $fh, '>', "/tmp/$$.sid") or die($!);
