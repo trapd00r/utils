@@ -1,0 +1,17 @@
+#!/usr/bin/perl
+# list packages which includes fonts
+use strict;
+use Data::Dumper;
+
+my %font_pkgs;
+open(my $pacman, '-|', 'pacman -Ql') or die($!);
+while(<$pacman>) {
+  push(@{$font_pkgs{$1}}, $2) if($_ =~ /(.*)?\s+(.*font.*)/) and(! -d $2);
+}
+
+for my $pkg(sort(keys(%font_pkgs))) {
+  printf("\t\e[31;1m%s\e[0m => [\n", $pkg);
+  for my $font(@{$font_pkgs{$pkg}}) {
+    print "\t\t$font\n";
+  }
+}
