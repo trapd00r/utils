@@ -1,0 +1,139 @@
+#!/usr/bin/perl
+our $APP     = 'prename';
+our $VERSION = '0.1.0-fork';
+use strict;
+
+use Getopt::Long;
+use Pod::Usage;
+use String::Utils 'longest';
+
+my ($verbose, $no_act, $force);
+
+GetOptions(
+  'v|verbose' => \$verbose,
+  'n|no-act'  => \$no_act,
+  'f|force'   => \$force,
+);
+
+my $re = shift;
+
+if(!defined($re)) {
+  usage();
+  exit 1;
+}
+
+
+$verbose++ if $no_act;
+
+if(!@ARGV) {
+  print "reading filenames from STDIN\n" if $verbose;
+  @ARGV = <STDIN>;
+  chop(@ARGV);
+}
+
+my $max_str_len = longest(@ARGV);
+for(@ARGV) {
+  #print "$_ => " . length($_), "\n";
+}
+
+for(@ARGV) {
+  my $was = $_;
+
+  eval($re);
+  die($@) if($@);
+
+  next if($was eq $_);
+
+  if(-e $_ and !$force) {
+    print STDERR "$was not renamed: $_ already exists\n";
+  }
+  elsif(($no_act) or (rename($was, $_))) {
+    if(-d $was) {
+      printf("\e[32m\e[1m%${max_str_len}s\e[0m => \e[34m\e[1m%s\e[0m\n", $was, $_);
+    }
+    else {
+      printf("\e[32m%${max_str_len}s\e[0m => \e[34m%s\e[0m\n", $was, $_);
+    }
+  }
+  else {
+    print STDERR "Can't rename $was => $_: $!\n";
+  }
+}
+
+sub usage {
+  print "$APP $VERSION\n";
+  pod2usage(verbose => 1);
+}
+
+=pod
+
+=head1 NAME
+
+rename - renames multiple files
+
+=head1 SYNreSIS
+
+B<rename> S<[ B<-v> ]> S<[ B<-n> ]> S<[ B<-f> ]> I<perlexpr> S<[ I<files> ]>
+
+=head1 DESCRIPTION
+
+C<rename>
+renames the filenames supplied according to the rule specified as the
+first argument.
+The I<perlexpr> 
+argument is a Perl expression which is expected to modify the C<$_>
+string in Perl for at least some of the filenames specified.
+If a given filename is not modified by the expression, it will not be
+renamed.
+If no filenames are given on the command line, filenames will be read
+via standard input.
+
+For example, to rename all files matching C<*.bak> to strip the extension,
+you might say
+
+	rename 's/\.bak$//' *.bak
+
+To translate uppercase names to lower, you'd use
+
+	rename 'y/A-Z/a-z/' *
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<-v>, B<--verbose>
+
+Verbose: print names of files successfully renamed.
+
+=item B<-n>, B<--no-act>
+
+No Action: show what files would have been renamed.
+
+=item B<-f>, B<--force>
+
+Force: overwrite existing files.
+
+=back
+
+=head1 ENVIRONMENT
+
+No environment variables are used.
+
+=head1 AUTHOR
+
+Larry Wall
+
+=head1 SEE ALSO
+
+mv(1), perl(1)
+
+=head1 DIAGNOSTICS
+
+If you give an invalid Perl expression you'll get a syntax error.
+
+=head1 BUGS
+
+The original C<rename> did not check for the existence of target filenames,
+so had to be used with care.  I hree I've fixed that (Robin Barker).
+
+=cut
