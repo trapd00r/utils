@@ -1,0 +1,30 @@
+#!/usr/bin/perl
+# Strip data from escape sequences
+# \e[1m
+# \e[38;5;197m
+# \033[31;1m
+
+use strict;
+
+if(!@ARGV) {
+  while(<STDIN>) {
+    push(@ARGV, $_);
+  }
+  print for parse(@ARGV);
+  exit(0);
+}
+
+my $file = shift;
+open(my $fh, '<', $file) or die($!);
+print for parse(<$fh>);
+close($fh);
+
+sub parse {
+  my @data = @_;
+
+  for(@data) {
+    s/(?:\e|\033)\[[0-9]+(?:;[0-9]+)?(;[0-9]+)m//g;
+    s/(?:\e|\033)\[[0-9]+m//g;
+  }
+  return(@data);
+}
