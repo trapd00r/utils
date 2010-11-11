@@ -1,0 +1,4 @@
+#!/bin/bash
+target="/mnt/Docs/Photography/n900-$(date +%Y-%m-%d)"
+mkdir -p $target
+scp -P 19216 user@192.168.1.112:MyDocs/DCIM/* $target
