@@ -32,6 +32,7 @@ sub play {
   close($fh);
 
   system("sidplay2", "/tmp/$$.sid");
+  unlink("/tmp/$$.sid");
 }
 
 play();

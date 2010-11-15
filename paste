@@ -36,7 +36,7 @@ for my $file(@files) {
 
   $basename .= "-@{[time()]}";
 
-  system("scp -P 19216 \"$basedir/$basename.html\" $int_host:/home/srv/http/paste/");
+  system("scp -P 19216 \"$basedir/$basename.html\" $int_host:/home/scp1/http/paste/");
   my $fullstr = "$ext_host/$basename";
   system("printf \"$fullstr.html\n\" && printf \"$fullstr.html\"|xclip && rm -v \"$basedir/$basename.html\"");
 }

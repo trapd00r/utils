@@ -28,7 +28,7 @@ print shot(),"\n";
 
 sub shot {
   my $fname = 'pshot-' . time();
-  system("scrot -q 100 $fname.png -t 30%") == 0 or die("scrot failed: $!");
+  system("scrot -q 100 $fname.png -t 5%") == 0 or die("scrot failed: $!");
 
   system(
     'ssh', '-p', $ssh_port,

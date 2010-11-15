@@ -4,7 +4,7 @@ use strict;
 my $i = 0;
 for(split(/:/, $ENV{LS_COLORS})) {
   my($ft,$color) = $_ =~ /\*\.(.+)=(.+)/;
-  if(@ARGV) {
+  if(!@ARGV) {
     my $end;
     if($i % 6 == 0) {
       $end = "\n";

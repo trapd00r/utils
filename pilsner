@@ -24,69 +24,55 @@ open(my $l, "ls -hAlv --group-directories-first --color=always @ARGV|")
   or die($!);
 chomp(my @ls = grep{!/total.+/} (<$l>));
 
-my($fg,$bg,$bold,$def) = ("\033[38;5", "\033[48;5", "\033[1m", "\033[0m");
+my($fg,$bg,$bold,$def) = ("\e[38;5", "\e[48;5", "\e[1m", "\e[0m");
 
 for(@ls) {
   my ($perm,$hlink,$user,$group,$size,$month,$day,$time,$file) = 
     split(/\s+/, $_,8);
-  my($file) = m/.+(?:[0-9]+:?[0-9])\s+(.+)/;
-  $file =~ s/->/$fg;196m▪▶$def/;
+  # dead fugly
+  my($file) = $_ =~ m/\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+ (.+)/;
 
   my @perms = split(//, $perm);
 
   for(@perms) {
-    $_ = "$bold$bg;232m$fg;240m‐$def"  if($_ eq '-');
-    $_ = "$bold$bg;232m$fg;032m$_$def" if($_ eq 'd');
-    $_ = "$bold$bg;232m$fg;060m$_$def" if($_ eq 'l');
-    $_ = "$bold$bg;232m$fg;197m$_$def" if($_ eq 's');
-    $_ = "$bold$bg;232m$fg;127m$_$def" if($_ eq 'p');
-    $_ = "$bold$bg;232m$fg;221m$_$def" if($_ eq 'S');
-    $_ = "$bold$bg;232m$fg;226m$_$def" if($_ eq 't');
-    $_ = "$bold$bg;232m$fg;220m$_$def" if($_ eq 'T');
-    $_ = "$bg;232m$fg;185m$_$def" if($_ eq 'r');
-    $_ = "$bg;232m$fg;215m$_$def" if($_ eq 'w');
-    $_ = "$bg;232m$fg;209m$_$def" if($_ eq 'x');
+    $_ = "$bold$fg;240m‐$def"  if($_ eq '-');
+    $_ = "$bold$fg;032m$_$def" if($_ eq 'd');
+    $_ = "$bold$fg;060m$_$def" if($_ eq 'l');
+    $_ = "$bold$fg;197m$_$def" if($_ eq 's');
+    $_ = "$bold$fg;127m$_$def" if($_ eq 'p');
+    $_ = "$bold$fg;221m$_$def" if($_ eq 'S');
+    $_ = "$bold$fg;226m$_$def" if($_ eq 't');
+    $_ = "$bold$fg;220m$_$def" if($_ eq 'T');
+    $_ = "$fg;185m$_$def" if($_ eq 'r');
+    $_ = "$fg;215m$_$def" if($_ eq 'w');
+    $_ = "$fg;209m$_$def" if($_ eq 'x');
 
   }
   $perm = join('', @perms);
 
-  my %months = (
-    1  => 'Jan',
-    2  => 'Feb',
-    3  => 'Mar',
-    4  => 'Apr',
-    5  => 'May',
-    6  => 'Jun',
-    7  => 'Jul',
-    8  => 'Aug',
-    9  => 'Sep',
-    10 => 'Oct',
-    11 => 'Nov',
-    12 => 'Dec',
-  );
-
   my($left_delimiter, $right_delimiter);
   if($file =~ /.+\.pl/) {
-    $right_delimiter = "\033[38;5;178m▏\033[0m";
-    $left_delimiter = "\033[38;5;240m▕\033[0m";
+    $right_delimiter = "\e[38;5;178m▏\e[0m";
+    $left_delimiter = "\e[38;5;240m▕\e[0m";
   }
   else {
-    $right_delimiter = "\033[38;5;240m▏\033[0m";
-    $left_delimiter = "\033[38;5;240m▕\033[0m";
+    $right_delimiter = "\e[38;5;240m▏\e[0m";
+    $left_delimiter = "\e[38;5;240m▕\e[0m";
   }
   if($file =~ /\.un~/) {
     next;
   }
   if($file =~ /\..*rc/) {
-    $file = "\033[38;5;106m$file\033[0m";
+    $file = "\e[38;5;106m$file\e[0m";
   }
   if($file eq 'README') {
-    $file = "\033[1m\033[38;5;26m$file\033[0m";
+    $file = "\e[1m\e[38;5;26m$file\e[0m";
   }
   if($file eq 'Makefile') {
-    $file = "\033[1m\033[38;5;124m$file\033[0m";
+    $file = "\e[1m\e[38;5;124m$file\e[0m";
   }
 
+  $file =~ s/-> (.+)/$fg;160m▪▶$def $fg;197m$1$def/;
   printf("$fg;235m%02d $bold$fg;240m%s$def$left_delimiter%s$right_delimiter$def%s\n",
     $day, $month, $perm, $file);
 }
