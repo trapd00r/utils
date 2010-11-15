@@ -44,7 +44,7 @@ sub cmd {
             next;
           }
           else {
-            printf("\n\e[1m---\e[38;5;208m%.30s\e[0m\e[1m---\e[0m\n", $project);
+            printf("\e[1m::\e[38;5;178m %s\e[0m - \e[38;5;162mPulling\e[0m\n", $project);
             print "$status\n";
             next;
           }
