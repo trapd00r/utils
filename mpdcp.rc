@@ -1,0 +1,16 @@
+#!/usr/bin/rc
+# mpdcp.rc
+
+dest = /tmp/scp1
+file  = /mnt/Music_1/`{mpc --format %file%|head -1}
+
+if(~ $1 '-d') {
+  album = `{echo $file|perl -pe 's;(.+)/.+;$1;'}
+  echo $album
+  for(file in `{find $album}) {
+    cp -v $file  $dest
+  }
+  exit 0 
+}
+
+cp -v $file $dest
