@@ -1,8 +1,10 @@
-printf "\e[1mdesktop\e[0m: "
+printf "   \e[1mshiva\e[0m: "
 uptime
-printf " \e[1mserver\e[0m: "
+printf "    \e[1mdvdc\e[0m: "
 ssh scp1@192.168.1.100 -p 19216 uptime
-printf " \e[1mlaptop\e[0m: "
+printf "   \e[1mindia\e[0m: "
 ssh scp1@192.168.1.102 -p 19216 uptime
-printf "  \e[1mphone\e[0m: "
+printf "    \e[1mn900\e[0m: "
 ssh user@192.168.1.112 -p 19216 uptime
+printf "\e[1mwrt54-gl\e[0m: "
+ssh root@192.168.1.1 -p 19216 uptime
