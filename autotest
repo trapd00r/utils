@@ -1,0 +1,126 @@
+#!/usr/bin/perl
+our $APP     = 'autotest';
+our $VERSION = '0.1.0';
+use strict;
+use Data::Dumper;
+use Pod::Usage;
+use Getopt::Long;
+use Linux::Inotify2;
+use Cwd;
+
+my $project_dir = "$ENV{HOME}/devel/lib/Term::ExtendedColor";
+my $test_dir    = "$ENV{HOME}/devel/lib/Term::ExtendedColor/t";
+my $lib_dir     = "$ENV{HOME}/devel/lib/Term::ExtendedColor/lib/Term";
+
+chdir("$project_dir") or die($!);
+
+watch_lib();
+
+sub compare_passes {
+  my($old, $new) = @_;
+
+  if($new < $old) {
+    return -1;
+  }
+  elsif($new == $old) {
+    return 0;
+  }
+  else {
+    return ($new - $old);
+  }
+}
+
+
+sub watch_lib {
+  my $notify = Linux::Inotify2->new;
+  
+  # Vim doesnt modify and save the file directly, but rather uses a temp file
+  # and replaces the old one with the temp file.
+  # It seems IN_CLOSE_WRITE does what we want, for now.
+  $notify->watch($lib_dir, IN_CLOSE_WRITE) or die($!);
+  print "Watching \e[1m$lib_dir\e[0m\n";
+
+  my $last_passes = 0;
+  my $new_passes;
+
+  while(my @events = $notify->read) {
+    unless(@events > 0) {
+      warn "Read error: $!\n";
+      last;
+    }
+
+    for my $event(@events) {
+      if($event->fullname =~ /\.pm$/) {
+
+        open(my $make, '-|', 'make test') or die($!);
+        my $output = join('', <$make>);
+
+        print "\e[38;5;195mCompiling\e[0m...\n";
+
+        ($new_passes) = $output =~ /Files=(?:\d+), Tests=(\d+),/;
+
+        my $cmp = compare_passes($last_passes, $new_passes);
+        $last_passes = $new_passes;
+
+        if($cmp < 0) {
+          print "Regression :(\n";
+        }
+        elsif($cmp == 0) {
+          print "Still no tests failing - good job!\n";
+        }
+        else {
+          print "\e[38;5;148mProgress\e[0m: \e[1m$cmp\e[0m more tests successful!\n";
+        }
+      }
+    }
+  }
+}
+
+
+=pod
+
+=head1 NAME
+
+autotest - test more
+
+=head1 USAGE
+
+=head1 DESCRIPTION
+
+=head1 EVENTS
+
+  '1'          => 'IN_ACCESS',       # file was accessed
+  '2'          => 'IN_MODIFY',       # file was modified
+  '4'          => 'IN_ATTRIB',       # metadata has changed
+  '8'          => 'IN_CLOSE_WRITE',  # writeable file was closed
+  '16'         => 'IN_CLOSE_NOWRITE',# unwriteable file was closed
+  '32'         => 'IN_OPEN',         # file was opened
+  '64'         => 'IN_MOVED_FROM',   # file was moved from X
+  '128'        => 'IN_MOVED_TO',     # file was moved to Y
+  '256'        => 'IN_CREATE',       # subfile was created
+  '512'        => 'IN_DELETE',       # subfile was deleted
+  '1024'       => 'IN_DELETE_SELF',  # self/dir was deleted
+  '2048'       => 'IN_MOVE_SELF',    # self was moved
+  '8192'       => 'IN_UNMOUNT',      # fs was unmounted
+  '16384'      => 'IN_O_OVERFLOW',   # Even queued overflowed
+  '32768'      => 'IN_IGNORED',      # file was ignored
+  '1073741824' => 'IN_ISDIR',        # event occurred against dir
+
+=head1 OPTIONS
+
+=head1 AUTHOR
+
+Written by Magnus Woldrich
+
+=head1 REPORTING BUGS
+
+Report bugs to trapd00r@trapd00r.se
+
+=head1 COPYRIGHT
+
+Copyright (C) 2010 Magnus Woldrich
+
+License GPLv2
+
+=cut
+
