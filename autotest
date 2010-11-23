@@ -1,12 +1,28 @@
 #!/usr/bin/perl
-our $APP     = 'autotest';
+our $APP     = 'autotest or whatever';
 our $VERSION = '0.1.0';
 use strict;
 use Data::Dumper;
-use Pod::Usage;
-use Getopt::Long;
+#use Pod::Usage;
+#use Getopt::Long;
 use Linux::Inotify2;
-use Cwd;
+
+# use Term::ExtendedColor;
+use constant FAIL       => "\e[38;5;160m";
+use constant SUCCESS    => "\e[38;5;028m";
+use constant PROGRESS   => "\e[38;5;226m";
+use constant REGRESSION => "\e[38;5;124m";
+use constant TIME       => "\e[38;5;242m";
+use constant BOLD       => "\e[1m";
+use constant END        => "\e[0m";
+
+$Data::Dumper::Terse     = 1;
+$Data::Dumper::Indent    = 1;
+$Data::Dumper::Useqq     = 1;
+$Data::Dumper::Deparse   = 1;
+$Data::Dumper::Quotekeys = 0;
+$Data::Dumper::Sortkeys  = 1;
+
 
 my $project_dir = "$ENV{HOME}/devel/lib/Term::ExtendedColor";
 my $test_dir    = "$ENV{HOME}/devel/lib/Term::ExtendedColor/t";
@@ -20,7 +36,9 @@ sub compare_passes {
   my($old, $new) = @_;
 
   if($new < $old) {
+    #return ( $old - $new );
     return -1;
+    # $old - $new 'new tests failing'
   }
   elsif($new == $old) {
     return 0;
@@ -31,16 +49,17 @@ sub compare_passes {
 }
 
 
+
 sub watch_lib {
   my $notify = Linux::Inotify2->new;
-  
+
   # Vim doesnt modify and save the file directly, but rather uses a temp file
   # and replaces the old one with the temp file.
   # It seems IN_CLOSE_WRITE does what we want, for now.
   $notify->watch($lib_dir, IN_CLOSE_WRITE) or die($!);
   print "Watching \e[1m$lib_dir\e[0m\n";
 
-  my $last_passes = 0;
+  my $last_passes = undef;
   my $new_passes;
 
   while(my @events = $notify->read) {
@@ -52,24 +71,50 @@ sub watch_lib {
     for my $event(@events) {
       if($event->fullname =~ /\.pm$/) {
 
-        open(my $make, '-|', 'make test') or die($!);
-        my $output = join('', <$make>);
+        open(OLD_STDOUT, '>&', STDOUT) or die($!);
+        close(STDOUT);
 
-        print "\e[38;5;195mCompiling\e[0m...\n";
 
-        ($new_passes) = $output =~ /Files=(?:\d+), Tests=(\d+),/;
+        my $success = system("make");
 
-        my $cmp = compare_passes($last_passes, $new_passes);
-        $last_passes = $new_passes;
+        if($success == 0) {
 
-        if($cmp < 0) {
-          print "Regression :(\n";
-        }
-        elsif($cmp == 0) {
-          print "Still no tests failing - good job!\n";
-        }
-        else {
-          print "\e[38;5;148mProgress\e[0m: \e[1m$cmp\e[0m more tests successful!\n";
+          open(my $make, '-|', 'make test') or die($!);
+          my $output = join('', <$make>);
+
+          open(STDOUT, '>&', OLD_STDOUT) or die($!);
+
+          printf("%10s: %s\n", 'Making', SUCCESS . 'successful' . END);
+
+          my($status) = $output =~ /Result: (.+)/;
+          $status = lc($status) . 'ed';
+
+          $status = ($status eq 'passed')
+            ? SUCCESS . $status . END
+            : FAIL . $status . END
+            ;
+
+          printf("%10s: %s\n", 'Testing', $status);
+
+          ($new_passes) = $output =~ /Files=(?:\d+), Tests=(\d+),/;
+
+          my $cmp = compare_passes($last_passes, $new_passes);
+
+          my $first_run = $last_passes; # undef? then first run.
+          $last_passes  = $new_passes;
+
+
+          if($cmp < 0) {
+            printf("%29s\n", REGRESSION . ':(' . END);
+          }
+          elsif($cmp == 0) {
+            print BOLD . "Keep going!" . END , "\n";
+          }
+          else {
+            printf("%29s: %s %s tests passed\n", BOLD . SUCCESS . 'Progress' . END,
+              $cmp, (defined($first_run)) ? ' more' : '');
+          }
+          print '-' x 30, "\n";
         }
       }
     }
@@ -86,6 +131,8 @@ autotest - test more
 =head1 USAGE
 
 =head1 DESCRIPTION
+
+Inspired by https://github.com/masak/tote
 
 =head1 EVENTS
 
@@ -123,4 +170,3 @@ Copyright (C) 2010 Magnus Woldrich
 License GPLv2
 
 =cut
-
