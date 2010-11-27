@@ -1,20 +1,13 @@
 #!/usr/bin/perl
-our $APP     = 'autotest or whatever';
-our $VERSION = '0.1.0';
-use strict;
-use Data::Dumper;
-#use Pod::Usage;
-#use Getopt::Long;
-use Linux::Inotify2;
+use vars qw($APP $VERSION);
+$APP     = 'autotest';
+$VERSION = 0.02;
 
-# use Term::ExtendedColor;
-use constant FAIL       => "\e[38;5;160m";
-use constant SUCCESS    => "\e[38;5;028m";
-use constant PROGRESS   => "\e[38;5;226m";
-use constant REGRESSION => "\e[38;5;124m";
-use constant TIME       => "\e[38;5;242m";
-use constant BOLD       => "\e[1m";
-use constant END        => "\e[0m";
+use strict;
+use Getopt::Long;
+use Linux::Inotify2;
+use Pod::Usage;
+use Data::Dumper;
 
 $Data::Dumper::Terse     = 1;
 $Data::Dumper::Indent    = 1;
@@ -24,107 +17,100 @@ $Data::Dumper::Quotekeys = 0;
 $Data::Dumper::Sortkeys  = 1;
 
 
-my $project_dir = "$ENV{HOME}/devel/lib/Term::ExtendedColor";
-my $test_dir    = "$ENV{HOME}/devel/lib/Term::ExtendedColor/t";
-my $lib_dir     = "$ENV{HOME}/devel/lib/Term::ExtendedColor/lib/Term";
+our($opt_watch_file);
+GetOptions(
+  'file:s'    => \$opt_watch_file,
+  'help'      => sub { print "$APP v$VERSION\n\n"; pod2usage(verbose => 1); },
+);
 
-chdir("$project_dir") or die($!);
+my($project_dir) = $opt_watch_file =~ m;(.+)/.+;;
 
-watch_lib();
-
-sub compare_passes {
-  my($old, $new) = @_;
-
-  if($new < $old) {
-    #return ( $old - $new );
-    return -1;
-    # $old - $new 'new tests failing'
-  }
-  elsif($new == $old) {
-    return 0;
-  }
-  else {
-    return ($new - $old);
-  }
+if($project_dir =~ m;(.+)/lib.+;) {
+  chdir($1) or print "file?\n";
 }
 
+watch($opt_watch_file);
 
+sub watch {
+  my $to_watch = shift;
+  my $not = Linux::Inotify2->new;
 
-sub watch_lib {
-  my $notify = Linux::Inotify2->new;
+  $not->watch($to_watch, IN_CLOSE_WRITE) or die($!);
 
-  # Vim doesnt modify and save the file directly, but rather uses a temp file
-  # and replaces the old one with the temp file.
-  # It seems IN_CLOSE_WRITE does what we want, for now.
-  $notify->watch($lib_dir, IN_CLOSE_WRITE) or die($!);
-  print 'Watching ' . BOLD . $lib_dir . END, "\n\n";
-
-  my $last_passes = undef;
+  my $previous_passes = 0;
   my $new_passes;
   my $revision = 0;
 
-  while(my @events = $notify->read) {
+  while(my @events = $not->read) {
     unless(@events > 0) {
       warn "Read error: $!\n";
       last;
     }
 
     for my $event(@events) {
-      if($event->fullname =~ /\.pm$/) {
 
-        open(OLD_STDOUT, '>&', STDOUT) or die($!);
-        close(STDOUT);
+      open(OLD_STDOUT, '>&', *STDOUT) or die($!);
+      close(STDOUT);
 
+      if(system('make') == 0) {
+        open(my $test, '-|', 'make test') or die($!);
+        my $test_output = join('', <$test>);
 
-        my $success = system("make");
+        open(STDOUT, '>&', *OLD_STDOUT) or die($!);
+        if(test_pass($test_output)) {
 
-        if($success == 0) {
-
-          open(my $make, '-|', 'make test') or die($!);
-          my $output = join('', <$make>);
-
-          open(STDOUT, '>&', OLD_STDOUT) or die($!);
-
-          $revision++;
-          printf("%15s %s\n", 'Revison', BOLD . PROGRESS . $revision . END);
-
-          printf("%10s: %s\n", 'Making', SUCCESS . 'successful' . END);
-
-          my($status) = $output =~ /Result: (.+)/;
-          $status = lc($status) . 'ed';
-
-          $status = ($status eq 'passed')
-            ? SUCCESS . $status . END
-            : FAIL . $status . END
-            ;
-
-          printf("%10s: %s\n", 'Testing', $status);
-
-          ($new_passes) = $output =~ /Files=(?:\d+), Tests=(\d+),/;
-
-          my $cmp = compare_passes($last_passes, $new_passes);
-
-          my $first_run = $last_passes; # undef? then first run.
-          $last_passes  = $new_passes;
+          $new_passes = no_passes($test_output);
+          my $cmp = compare_passes($previous_passes, $new_passes);
 
 
-          if($cmp < 0) {
-            printf("%29s\n", REGRESSION . ':(' . END);
+          if($cmp > 0) {
+            print "$cmp new tests passed\n";
           }
           elsif($cmp == 0) {
-            print BOLD . "Keep going!" . END , "\n";
+            print "No change, keep going\n";
           }
           else {
-            printf("%29s: %s %s tests passed\n", BOLD . SUCCESS . 'Progress' . END,
-              $cmp, (defined($first_run)) ? ' more' : '');
+            print "Regression\n";
           }
-          print '-' x 3, "\n\n";
         }
+        else {
+          print "$test_output\n---\n";
+        }
+        $previous_passes = $new_passes;
       }
     }
   }
 }
 
+sub compare_passes {
+  my($old, $new) = @_;
+
+  if($new > $old) {
+    return ( $new - $old );
+  }
+  elsif($new == $old) {
+    return 0;
+  }
+  else {
+    return -1;
+  }
+}
+
+sub no_passes {
+  my $test = shift;
+
+  my($passes) = $test =~ /Files=(?:\d+), Tests=(\d+),/;
+
+  return $passes;
+}
+
+sub test_pass {
+  my $test = shift;
+
+  my($status) = $test =~ m/Result: (.+)/;
+
+  return ($status eq 'PASS') ? 1 : 0;
+}
 
 =pod
 
@@ -134,9 +120,11 @@ autotest - test more
 
 =head1 USAGE
 
-=head1 DESCRIPTION
+autotest [-f ] [FILE...]
 
-Inspired by https://github.com/masak/tote
+=head1 OPTIONS
+
+  -f,   --file  file/dir to watch
 
 =head1 EVENTS
 
@@ -169,8 +157,4 @@ Report bugs to trapd00r@trapd00r.se
 
 =head1 COPYRIGHT
 
-Copyright (C) 2010 Magnus Woldrich
 
-License GPLv2
-
-=cut
