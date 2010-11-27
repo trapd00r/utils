@@ -57,10 +57,11 @@ sub watch_lib {
   # and replaces the old one with the temp file.
   # It seems IN_CLOSE_WRITE does what we want, for now.
   $notify->watch($lib_dir, IN_CLOSE_WRITE) or die($!);
-  print "Watching \e[1m$lib_dir\e[0m\n";
+  print 'Watching ' . BOLD . $lib_dir . END, "\n\n";
 
   my $last_passes = undef;
   my $new_passes;
+  my $revision = 0;
 
   while(my @events = $notify->read) {
     unless(@events > 0) {
@@ -83,6 +84,9 @@ sub watch_lib {
           my $output = join('', <$make>);
 
           open(STDOUT, '>&', OLD_STDOUT) or die($!);
+
+          $revision++;
+          printf("%15s %s\n", 'Revison', BOLD . PROGRESS . $revision . END);
 
           printf("%10s: %s\n", 'Making', SUCCESS . 'successful' . END);
 
@@ -114,7 +118,7 @@ sub watch_lib {
             printf("%29s: %s %s tests passed\n", BOLD . SUCCESS . 'Progress' . END,
               $cmp, (defined($first_run)) ? ' more' : '');
           }
-          print '-' x 30, "\n";
+          print '-' x 3, "\n\n";
         }
       }
     }
