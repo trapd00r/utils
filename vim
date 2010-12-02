@@ -21,8 +21,15 @@ print $fh "   cmdline> [vim] ",  join(' ', @ARGV), "\n";
 
 system('/usr/bin/vim', '-p', @ARGV);
 
+my $end = time();
+
+my $time_spent = ($end - $start);
+
+my $m = $time_spent / 60;
+
 print $fh sprintf("   Edited %s %s\n", $files, ($files > 1) ? 'files' : 'file');
-print $fh "Task finished " . scalar(localtime), "\n-\n";
+print $fh "Task finished in " . sprintf("%.2d minutes (%d seconds)",
+  $m, $time_spent), "\n-\n";
 
 __DATA__
 
