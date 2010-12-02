@@ -1,65 +1,68 @@
 #!/usr/bin/perl
-# httpdhits
+# hits
 use strict;
 use Data::Dumper;
+use Term::ExtendedColor;
 
-my $color = 1;
-my $cmd = shift // 'f';
-my $log = shift // '/var/log/lighttpd/cpan.japh.se/access.log';
 
-my $noc  = "\033[0m";
-my $clr1 = "\033[38;5;100m";
-my $clr2 = "\033[38;5;197m";
-$clr1 = $noc unless $color == 1;
-$clr2 = $noc unless $color == 1;
+parse_log(\@ARGV);
+pop_ips();
+pop_files();
 
-open(my $fh, '<', $log) or die "Cant open $log: $!";
+my(%ips, %files);
+sub parse_log {
+  my $log = shift;
 
-my(%ips, %reqfiles);
+  my @logs;
+  if(ref($log) eq 'ARRAY') {
+    push(@logs, @{$log});
+  }
+  else {
+    push(@logs, $log);
+  }
 
-while(my $line = <$fh>) {
-  my $re = '(.+?)';
-  $line =~ /^$re $re $re \[$re:$re $re\] "$re $re $re" $re $re/;
+  for my $logfile(@logs) {
+    open(my $fh, '<', $logfile) or die($!);
 
-  my $ip   = $1;
-  my $ref  = $2;
-  my $name = $3;
-  my $date = $4;
-  my $time = $5;
-  my $gmt  = $6;
-  my $req  = $7;
-  my $file = $8;
-  my $ptcl = $9;
-  my $code = $10;
-  my $size = $11;
+    while(my $line = <$fh>) {
+      my $re = '(.+?)';
+      $line =~ /^$re $re $re \[$re:$re $re\] "$re $re $re" $re $re/;
 
-  $ips{$ip}++;
-  $reqfiles{$file}++;
+      my $ip   = $1;
+      my $ref  = $2;
+      my $name = $3;
+      my $date = $4;
+      my $time = $5;
+      my $gmt  = $6;
+      my $req  = $7;
+      my $file = $8;
+      my $ptcl = $9;
+      my $code = $10;
+      my $size = $11;
+
+      $ips{$ip}++;
+      $files{$file}++;
+    }
+  }
 }
 
-my %opts = (
-  f => sub { popfiles(); },
-  i => sub { popips(); },
-  h => sub { print "f\trequested files\ni\tIP adresses making the requests\n";},
-);
 
-defined($opts{$cmd}) && $opts{$cmd}->();
 
-sub popips {
+sub pop_ips {
   my $sum;
   for my $ip(sort {$ips{$a} <=> $ips{$b}} keys(%ips)) {
-    printf("$clr1% 5d$noc %s\n", $ips{$ip}, $ip);
+    printf("% 5d %s\n", $ips{$ip}, $ip);
     $sum += $ips{$ip};
   }
-  printf("$clr2%6d$noc IP Adresses\n", $sum);
+  printf("%5s IPs\n", fg('red1', fg('bold', $sum)));
 }
 
-sub popfiles {
+sub pop_files {
   my $sum;
-  for my $file(sort {$reqfiles{$a}<=> $reqfiles{$b}} keys(%reqfiles)) {
-    printf("$clr1% 5d$noc %s\n", $reqfiles{$file}, $file);
-    $sum += $reqfiles{$file};
+  for my $file(sort {$files{$a}<=> $files{$b}} keys(%files)) {
+    printf("% 5d %s\n", $files{$file}, $file);
+    $sum += $files{$file};
   }
-  printf("$clr2%6d$noc requests\n", $sum);
+  printf("%5s requests\n", fg('orange2', fg('bold', $sum)));
 }
 
