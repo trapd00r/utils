@@ -1,0 +1,39 @@
+#!/usr/bin/perl
+# uses
+
+use strict;
+use Term::ExtendedColor;
+
+
+my %uses;
+
+chomp(my @files = `find`);
+for my $file(@files) {
+  if($file =~ /.+\.(?:pm|pl)$/) {
+    open(my $fh, '<', $file) or warn($!);
+
+    while(<$fh>) {
+      if(/^\s*use (.+);/) {
+        push(@{ $uses{$file} }, $1);
+      }
+    }
+  }
+}
+
+for my $file(sort(keys(%uses))) {
+  print "\n";
+  my($pkg) = $file =~ m|.+lib/(.+)|;
+  $pkg =~ s;/;::;g;
+  for(@{$uses{$file}}) {
+    if($_ eq 'strict') {
+      $_ = fg('green10', $_);
+    }
+    elsif($_ eq 'Carp') {
+      $_ = fg('purple10', $_);
+    }
+    elsif($_ eq 'Data::Dumper') {
+      $_ = fg('purple5', $_);
+    }
+    printf("%50.50s: %s\n", fg('blue2', $pkg), $_);
+  }
+}
