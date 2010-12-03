@@ -1,5 +1,8 @@
 #!/usr/bin/perl
 
+use strict;
+use Term::ExtendedColor;
+
 # Yes, I know
 chomp(my @func = `grep -Pi 'sub (.+) \{' \$(find .|grep -Pi '.+(?:pl|pm)\$')`);
 
@@ -10,8 +13,16 @@ for(@func) {
   $functions{$2} = $1;
 }
 
-for my $f(sort(keys(%functions))) {
-  printf("%15.15s() %s\n", $f, $functions{$f});
+for my $f(sort{ $functions{$a} cmp $functions{$b} }(keys(%functions))) {
+  if($f =~ /^_/) {
+    printf("%30.30s %s\n",
+      fg('yellow18', $functions{$f}),
+      fg('blue5', fg('bold', $f)),
+    );
+  }
+  else {
+    printf("%30.30s %s\n", fg('green25', $functions{$f}), $f);
+  }
 }
 
 # vim: set tw=0:
