@@ -1,0 +1,17 @@
+#!/usr/bin/perl
+
+# Yes, I know
+chomp(my @func = `grep -Pi 'sub (.+) \{' \$(find .|grep -Pi '.+(?:pl|pm)\$')`);
+
+my %functions;
+
+for(@func) {
+  m;.+/(.+):sub (.+) .+;;
+  $functions{$2} = $1;
+}
+
+for my $f(sort(keys(%functions))) {
+  printf("%15.15s() %s\n", $f, $functions{$f});
+}
+
+# vim: set tw=0:
