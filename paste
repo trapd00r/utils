@@ -1,43 +1,26 @@
 #!/usr/bin/perl
 use strict;
-use Getopt::Long;
 use File::Copy;
 
-=paste
-  We should be allowed to just transfer the source code as is
-our($opt_source);
-GetOptions(
-  source  => \$opt_source,
-);
-=cut
-
-my @files = @ARGV;
 my $int_host = '192.168.1.100';
-my $ext_host = 'http://paste.trapd00r.se';
+my $ext_host = 'http://p.japh.se';
 
-for(@files) {
-  #unless($opt_source) {
-    system("vim \"$_\" -c 'set nonumber' -c TOhtml -c :w :q! -c :q! -c :q!");
-    move("$_.html", "$_-@{[time()]}.html");
-    #}
+my @html;
+for(@ARGV) {
+  -f $_ and vimpaste($_);
+  my $time_str = substr(time(), -3);
+  move("$_.html", "$_-$time_str.html") and push(@html, "$_-$time_str.html");
 }
 
-for my $file(@files) {
-  my($basedir, $basename);
-
-  if($file =~ /(.+\/)+(.+)/) {
-    $basedir  = $1;
-    $basename = $2; # eq file
-  }
-  else {
-    $basedir  = './';
-    $basename = $file;
-  }
-
-  $basename .= "-@{[time()]}";
-
-  system("scp -P 19216 \"$basedir/$basename.html\" $int_host:/home/scp1/http/paste/");
-  my $fullstr = "$ext_host/$basename";
-  system("printf \"$fullstr.html\n\" && printf \"$fullstr.html\"|xclip && rm -v \"$basedir/$basename.html\"");
+for(@html) {
+  system("scp -P 19216 $_ $int_host:/home/scp1/http/japh.se/p/");
+  my $abs_url = "$ext_host/$_";
+  print "$abs_url\n";
+  system("echo $abs_url|xclip && rm -v $_");
 }
 
+sub vimpaste {
+  for(@_) {
+    system("vim \"$_\" -c 'set nonumber' -c TOhtml -c :w :q! -c :q!");
+  }
+}
