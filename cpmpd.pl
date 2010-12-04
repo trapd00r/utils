@@ -10,7 +10,7 @@ use Pod::Usage;
 my $base       = '/mnt/Music_1';
 my $target     = "$ENV{HOME}/ToTransfer";
 my $user       = 'scp1';
-my $host       = '192.168.1.101';
+my $host       = '192.168.1.100';
 my $port       = 19216;
 my $scp        = '/usr/bin/scp';
 
