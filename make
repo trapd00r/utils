@@ -5,7 +5,7 @@ use strict;
 my $remote_host   = '192.168.1.100';
 my $remote_port   = '19216';
 my $remote_user   = 'scp1';
-my $remote_dest   = 'http/p/devel';
+my $remote_dest   = 'http/japh.se/perl/devel';
 
 pass_on(@ARGV);
 
