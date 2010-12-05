@@ -1,0 +1,24 @@
+#!/usr/bin/perl
+use strict;
+use Term::ExtendedColor;
+
+chomp(my $pwd = `pwd`);
+
+my @chars = split//, $pwd;
+
+my $i = 1;
+for(@chars) {
+  if($_ eq '/') {
+    if($i == 1) {
+      print fg('green28', fg('bold', " /"));
+      $i++;
+      next;
+    }
+    print fg("yellow$i", " ➤ ");
+    $i += 6
+
+  }
+  else {
+    print fg('green28', $_);
+  }
+}
