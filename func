@@ -2,27 +2,77 @@
 
 use strict;
 use Term::ExtendedColor;
+use File::Find::Rule;
+use Cwd 'abs_path';
 
-# Yes, I know
-chomp(my @func = `grep -Pi 'sub (.+) \{' \$(find .|grep -Pi '.+(?:pl|pm)\$')`);
 
-my %functions;
+my $dir = abs_path( shift // '.' );
 
-for(@func) {
-  m;.+/(.+):sub (.+) .+;;
-  $functions{$2} = $1;
+
+my $ff = File::Find::Rule->new;
+$ff->file;
+$ff->name('*.pm', '*.pl');
+my @perl = $ff->in( $dir );
+
+output_func();
+
+
+sub grab_func {
+  my @files = @_;
+
+  my %functions;
+
+  for my $file(@files) {
+    open(my $fh, '<', $file) or die($!);
+    while(<$fh>) {
+      if(m;\s*sub\s+(.+)\s*{;) {
+        $functions{$1} = $file;
+      }
+    }
+  }
+  return \%functions;
 }
 
-for my $f(sort{ $functions{$a} cmp $functions{$b} }(keys(%functions))) {
-  if($f =~ /^_/) {
-    printf("%30.30s %s\n",
-      fg('yellow18', $functions{$f}),
-      fg('blue5', fg('bold', $f)),
-    );
-  }
-  else {
-    printf("%30.30s %s\n", fg('green25', $functions{$f}), $f);
-  }
-}
+sub output_func {
+  my %func =  %{ grab_func(@perl) };
 
-# vim: set tw=0:
+  my $module;
+  for my $file(sort { $func{$b} cmp $func{$a} } (keys(%func))) {
+    if($func{$file} ne $module) {
+      $module = $func{$file};
+
+      my $mod_name;
+      if( ($module =~ m;.+lib/(.+)\.pm$;)) {
+        $mod_name = $1;
+        $mod_name =~ s;/;::;g;
+        $mod_name =~ s;\.pm;;;
+        print "\n";
+        print fg('bold', fg('yellow18', $mod_name)), "\n";
+      }
+    }
+    my ($basename) = $func{$file} =~ m;.+/(.+)$;;
+    my ($two_lvl)  = $func{$file} =~ m;.+/(.+/.+)$;;
+
+    my $sep_counter = 0;
+    for(split(//, $func{$file})) {
+      if($_ eq '/') {
+        $sep_counter++;
+      }
+    }
+    if($sep_counter >= 4) {
+      $two_lvl =~ s;(.+)/(.+);
+        fg('grey10', $1) . fg('grey5', "::") .  fg('grey4', $2)
+      ;igex;
+
+      printf("%67.90s -> %s\n",
+        $two_lvl, $file);
+    }
+    else {
+      printf("%37.90s -> %s\n",
+        fg('gray10', $basename), $file);
+    }
+  }
+  printf("\n%s functions defined in %s\n",
+   fg('bold',  scalar(keys(%func))), $dir)
+    unless(scalar(keys(%func)) < 1);
+}
