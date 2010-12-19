@@ -1,0 +1,52 @@
+#!/usr/bin/perl
+
+use strict;
+use Cwd 'abs_path';
+use File::Find::Rule;
+use Module::CoreList;
+
+my $dir = abs_path( shift // '.' );
+
+my $ff = File::Find::Rule->new;
+$ff->file;
+$ff->name('*.pm', '*.pl');
+
+my @perls = $ff->in( $dir );
+
+@perls or print "No Perl files found.\n" and exit;
+
+my %result = %{ get_modules(@perls) };
+
+my $previous;
+for my $file(sort(keys(%result))) {
+  if($previous ne $file) {
+    $previous = $file;
+    print "\n";
+  }
+
+  for my $module(@{$result{$file}}) {
+    my ($in_core) = Module::CoreList->find_modules($module);
+    if($in_core) {
+      printf("%50.50s: [%s]\n", $file, $module);
+      next;
+    }
+    printf("%50.50s: %s\n", $file, $module);
+  }
+}
+
+
+sub get_modules {
+  my @files = @_;
+
+  my %used_modules;
+
+  for my $file(@files) {
+    open(my $fh, '<', $file) or die($!);
+    while(chomp(my $line = <$fh>)) {
+      if( $line =~ m/\s*(?:use|require)\s+(\S+);/ ) {
+        push(@{ $used_modules{$file} }, $1);
+      }
+    }
+  }
+  return \%used_modules;
+}
