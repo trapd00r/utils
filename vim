@@ -4,7 +4,7 @@
 # Calculate changes?
 use strict;
 
-my $history = "$ENV{HOME}/vimtimes";
+my $history = "$ENV{HOME}/doc/vimtimes";
 
 $\ = "\n";
 $|++;
