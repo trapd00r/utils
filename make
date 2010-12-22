@@ -1,6 +1,8 @@
 #!/usr/bin/perl
-use strict;
+use vars qw($VERSION);
+$VERSION = '0.02';
 
+use strict;
 
 my $remote_host   = '192.168.1.100';
 my $remote_port   = '19216';
@@ -10,7 +12,30 @@ my $remote_dest   = 'http/japh.se/perl/devel';
 pass_on(@ARGV);
 
 sub pass_on {
-  if($_[0] eq 'dist') {
+  if( ($_[0] eq 'rebuild') or (!@_) ) {
+    my ($makefile, $make_command);
+    if(-f 'Build.PL') {
+      $makefile     = 'Build';
+      $make_command = 'perl ./Build';
+    }
+    elsif(-f 'Makefile.PL') {
+      $makefile     = 'Makefile';
+      $make_command = '/usr/bin/make';
+    }
+    else {
+      print "Nothing to rebuild!\n";
+      exit 1;
+    }
+
+    if(-f $makefile) {
+      system($make_command, 'realclean');
+    }
+
+    system("perl $makefile.PL && $make_command && $make_command test");
+    exit;
+  }
+
+  elsif($_[0] eq 'dist') {
     system("/usr/bin/make", 'dist');
     for(glob('*.tar.gz')) {
       print "<< $_ <<\n";
