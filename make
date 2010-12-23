@@ -31,7 +31,8 @@ sub pass_on {
       system($make_command, 'realclean');
     }
 
-    system("perl $makefile.PL && $make_command && $make_command test");
+    system("perl $makefile.PL && $make_command && $make_command test") == 0
+      and system("su -c '/usr/bin/make install'");
     exit;
   }
 
