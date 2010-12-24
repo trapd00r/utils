@@ -8,13 +8,20 @@ use Cwd 'abs_path';
 
 my $dir = abs_path( shift // '.' );
 
-
-my $ff = File::Find::Rule->new;
-$ff->file;
-$ff->name('*.pm', '*.pl');
-my @perl = $ff->in( $dir );
-
-output_func();
+if(-f $dir) {
+  output_func($dir);
+}
+elsif(-d $dir) {
+  my $ff = File::Find::Rule->new;
+  $ff->file;
+  $ff->name('*.pm', '*.pl');
+  my @perl = $ff->in( $dir );
+  output_func($ff->in($dir));
+}
+else {
+  print STDERR "Neither a file or a directory specified.\n";
+  exit 1;
+}
 
 
 sub grab_func {
@@ -34,7 +41,8 @@ sub grab_func {
 }
 
 sub output_func {
-  my %func =  %{ grab_func(@perl) };
+  my @files = @_;
+  my %func =  %{ grab_func(@files) };
 
   my $module;
   for my $file(sort { $func{$b} cmp $func{$a} } (keys(%func))) {
