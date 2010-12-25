@@ -1,0 +1,40 @@
+use strict;
+use Term::ExtendedColor;
+
+my @disks = qw(
+  Movies_1
+  Movies_2
+  Movies_3
+  Movies_4
+);
+
+my %foo = %{ find(join(' ', @ARGV)) };
+
+my $i = 0;
+for my $movie(sort(keys(%foo))) {
+  printf("% 4d: \e[38;5;197m%s\e[0m [\e[38;5;196m%s\e[0m]\n",
+    $i, fg('bold', fg('orange1', $foo{$movie})), $movie,
+  );
+  $i++;
+}
+
+sub find {
+  my $term = shift // 'cage';
+
+
+  my %results;
+
+  chdir('/mnt/') or die($!);
+  for my $disk(@disks) {
+    for my $movie(glob("$disk/*")) {
+
+      if($movie =~ s;(.+)/(.+)$;$2;) {
+        my $mountpoint = $1;
+        if($movie =~ /$term/i) {
+          $results{$movie} = $mountpoint;
+        }
+      }
+    }
+  }
+  return \%results;
+}
