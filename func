@@ -19,7 +19,7 @@ elsif(-d $dir) {
   output_func($ff->in($dir));
 }
 else {
-  print STDERR "Neither a file or a directory specified.\n";
+  print STDERR "Neither a file or directory specified.\n";
   exit 1;
 }
 
