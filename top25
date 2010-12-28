@@ -19,6 +19,6 @@ for(sort { $commands{$b} <=> $commands{$a} } keys(%commands)) {
   if($count == 0) {
     exit(0);
   }
-  printf("% 4d => %s\n", $commands{$_}, $_);
+  printf("% 5d => %s\n", $commands{$_}, $_);
   $count--;
 }
