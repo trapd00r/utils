@@ -1,0 +1,2 @@
+#!/bin/sh
+for dir in $(find $HOME/devel -maxdepth 1 -type d); do PATH=$dir:$PATH; done 
