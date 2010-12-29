@@ -15,15 +15,20 @@ use strict;
 use Carp 'confess';
 
 sub new_mail {
+  #my @new_mails = map {
+  #  $_ = "/mnt/Docs/Mail/inbox/new/$_";
+  #  } glob("/mnt/Docs/Mail/inbox/new/*");
+
   my @new_mails = glob("/mnt/Docs/Mail/inbox/new/*");
-  
+
   return (wantarray()) ? @new_mails : scalar(@new_mails);
 }
 
 sub get_subject {
   my $mail = shift;
 
-  open(my $fh, '<', $mail) or confess("Cant open mail $mail: $!");
+  open(my $fh, '<', $mail)
+    or confess("Cant open mail $mail: $!");
   chomp(my @content = <$fh>);
 
   my($subject, $from) = qw(NULL NOBODY);
