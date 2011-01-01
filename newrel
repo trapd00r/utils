@@ -1,0 +1,11 @@
+#!/usr/bin/perl
+use strict;
+use Flexget::Parse;
+use Flexget::PatternMatch;
+
+my $log = "$ENV{HOME}/.local/share/flexget/flexget.log";
+
+open(my $fh, '<', $log) or die($!);
+chomp(my @new = flexparse(<$fh>));
+
+print $new[-1], "\n";
