@@ -35,8 +35,12 @@ function to_tty(s, r)
 end
 
 function to_dzen(s, r)
-  io.write("^fg(#ff0000)Sent^fg(): ", s,
-    "^fg(#ffff00)Recieved^fg(): ", r
+  local dzen_fg   = "^fg(#888888)";
+  local dzen_tx_c = "^fg(#ff0000)";
+  local dzen_rx_c = "^fg(#ffff00)";
+  printf("%s %s%s: %4d MB | %s %s%s: %4d MB\n",
+    dzen_rx_c, "Recieved", dzen_fg, r,
+    dzen_tx_c, "Sent",     dzen_fg, s
     );
 end
 
