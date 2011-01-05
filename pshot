@@ -1,12 +1,12 @@
 #!/usr/bin/perl
 our $APP     = 'pshot';
-our $VERSION = 0.2;
+our $VERSION = '0.21';
 
 use strict;
 use Getopt::Long;
 use Pod::Usage;
 
-my $base     = 'http://psy.trapd00r.se';
+my $base     = 'http://i.japh.se';
 my $ssh_host = '192.168.1.100';
 my $ssh_user = 'scp1';
 my $ssh_port = 19216;
@@ -28,11 +28,11 @@ print shot(),"\n";
 
 sub shot {
   my $fname = 'pshot-' . time();
-  system("scrot -q 100 $fname.png -t 5%") == 0 or die("scrot failed: $!");
+  system("scrot -q 100 $fname.png -t 7%") == 0 or die("scrot failed: $!");
 
   system(
     'ssh', '-p', $ssh_port,
-    "$ssh_user\@$ssh_host", "mkdir -p http/psy/$dname"
+    "$ssh_user\@$ssh_host", "mkdir -p http/japh.se/$dname"
   ) == 0 or(die("ssh failed: $!"));
 
   # dupe STDOUT so we can reopen it when we wanna be loud
@@ -41,7 +41,7 @@ sub shot {
 
   system(
     'scp', '-P', $ssh_port,
-    "$fname.png", "$fname-thumb.png", "$ssh_user\@$ssh_host:http/psy/$dname"
+    "$fname.png", "$fname-thumb.png", "$ssh_user\@$ssh_host:http/japh.se/$dname"
   ) == 0 or(die("scp failed: $!"));
   unlink("$fname.png") or print "$fname.png: $!" and exit(-1);
   unlink("$fname-thumb.png") or print "$fname-thumb.png: $!" and exit(-1);
@@ -49,15 +49,15 @@ sub shot {
   open(STDOUT, '>&', OLD_STDOUT) or die($!);
 
   if($opt_html) {
-    return("<a href=\"$base/$dname/$fname.png\">");
+    return("<a href=\"$base/$fname.png\">");
   }
   elsif($opt_bbcode) {
     return(
-      "[url=$base/$dname/$fname.png][img]$base/$dname/$fname-thumb.png\[/img][/url]"
+      "[url=$base/$fname.png][img]$base/$fname-thumb.png\[/img][/url]"
     );
   }
   else {
-    return("$base/$dname/$fname.png");
+    return("$base/$fname.png");
   }
   exit(0);
 }
@@ -85,7 +85,7 @@ sub shot {
 
 Written by Magnus Woldrich.
 
-License: GPLv2
+License: PerlArtistic
 
 =head1 COPYRIGHT
 
