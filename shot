@@ -1,21 +1,20 @@
 #!/bin/sh
 if [ $@ ]; then
   DNAME="scrots/$1"
-  ssh -p 19216 scp1@192.168.1.100 "mkdir -p http/psy/$DNAME"
-  echo "http/psy/$DNAME"
+  ssh -p 19216 scp1@192.168.1.100 "mkdir -p http/japh.se/scrots/$DNAME"
+  echo "http/japh.se/scrots/$DNAME"
 else
   DNAME="scrots"
-  echo "http/psy/$DNAME"
 fi
 
 
 shot() {
   FNAME=$(date +%s.png)
   scrot $FNAME;
-  scp -P 19216 $FNAME scp1@192.168.1.100:http/psy/$DNAME &&
+  scp -P 19216 $FNAME scp1@192.168.1.100:http/japh.se/scrots/$DNAME &&
     rm $FNAME &&
     echo $FNAME &&
-    echo http://psy.trapd00r.se/$DNAME/$FNAME|xclip
+    echo http://i.japh.se/$DNAME/$FNAME|xclip
 }
 
 shot
