@@ -7,18 +7,39 @@ chomp(my $pwd = `pwd`);
 my @chars = split//, $pwd;
 
 my $i = 1;
+
 for(@chars) {
   if($_ eq '/') {
-    if($i == 1) {
-      print fg('green28', fg('bold', " /"));
-      $i++;
-      next;
+    if(defined($ENV{DISPLAY})) {
+      if($i == 1) {
+        print fg('green28', fg('bold', " /"));
+        $i++;
+        next;
+      }
     }
-    print fg("yellow$i", " ➤ ");
-    $i += 6
-
+    else {
+      if($i == 1) {
+        print "\e[31;1m /\e[0m";
+        $i++;
+        next;
+      }
+    }
+    
+    if(defined($ENV{DISPLAY})) {
+      print fg("yellow$i", " » ");
+      $i += 6
+    }
+    else {
+      print "\e[33m > \e[0m";
+      $i += 6;
+    }
   }
   else {
-    print fg('green28', $_);
+    if(defined($ENV{DISPLAY})) {
+      print fg('green28', $_);
+    }
+    else {
+      print "\e[34m$_\e[0m";
+    }
   }
 }
