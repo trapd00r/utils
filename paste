@@ -21,7 +21,7 @@ for(@html) {
 
 sub vimpaste {
   for(@_) {
-    #system("vim \"$_\" -c 'set nonumber' -c TOhtml -c :w :q! -c :q!");
-    system("vim \"$_\" -c TOhtml -c :w :q! -c :q!");
+    system("vim \"$_\" -c 'set nonumber' -c TOhtml -c :w :q! -c :q!");
+    #system("vim \"$_\" -c TOhtml -c :w :q! -c :q!");
   }
 }
