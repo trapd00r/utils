@@ -1,0 +1,42 @@
+#!/usr/bin/perl
+# findsrc pm $HOME/devel
+use strict;
+use File::Find::Rule;
+use Data::Dumper;
+$Data::Dumper::Terse     = 1;
+$Data::Dumper::Indent    = 1;
+$Data::Dumper::Useqq     = 1;
+$Data::Dumper::Deparse   = 1;
+$Data::Dumper::Quotekeys = 0;
+$Data::Dumper::Sortkeys  = 1;
+
+use Getopt::Long;
+
+my $opt_vim;
+GetOptions(
+  vim => \$opt_vim,
+);
+
+my($type, $dir) = @ARGV;
+defined($type) or $type = 'pm';
+defined($dir)  or $dir  = '.';
+
+my @files = File::Find::Rule->file()
+  ->name("*.$type")
+  ->in($dir);
+
+if($opt_vim) {
+  system("/home/scp1/devel/utils/vim", @files);
+  exit 0;
+}
+
+my $previous;
+for my $file(@files) {
+  my($base) = $file =~ m|(.+)/|;
+  if($previous ne $base) {
+    $previous = $base;
+    print "\n";
+  }
+  print "$file\n";
+}
+
