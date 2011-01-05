@@ -27,7 +27,7 @@ function get_stats()
 end
 
 
-function to_tty(s, r) 
+function to_tty(s, r)
   printf("%8s: %4d MB\n%s: %4d MB\n",
     "Sent",     s,
     "Recieved", r
@@ -48,10 +48,6 @@ function usage(app, ver)
   printf("%s v%.2f\n\nUsage: %s [-t -d -h]\n", app, ver, app);
 end
 
-
-if(argv == 0) then
-  usage(app, version);
-end
 
 local sent, recieved = get_stats();
 
