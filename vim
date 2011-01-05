@@ -1,23 +1,29 @@
 #!/usr/bin/perl
 # vim wrapper
 
-# Calculate changes?
 use strict;
+use Time::localtime;
+use Term::ExtendedColor;
+use Data::Dumper;
+$Data::Dumper::Terse     = 1;
+$Data::Dumper::Indent    = 1;
+$Data::Dumper::Useqq     = 1;
+$Data::Dumper::Deparse   = 1;
+$Data::Dumper::Quotekeys = 0;
+$Data::Dumper::Sortkeys  = 1;
+
+
 
 my $history = "$ENV{HOME}/doc/vimtimes";
 
 $\ = "\n";
 $|++;
 
-
-my $files;
-map{ -f $_ and $files++ } @ARGV;
-
 my $start = time();
 
-open(my $fh, '>>', $history) or die($!);
-print $fh "Task started  " . scalar(localtime), "\n";
-print $fh "   cmdline> [vim] ",  join(' ', @ARGV), "\n";
+#print $fh "Task started  " . scalar(localtime), "\n";
+#print $fh "   cmdline> [vim] ",  join(' ', @ARGV), "\n";
+
 
 system('/usr/bin/vim', '-p', @ARGV);
 
@@ -25,20 +31,29 @@ my $end = time();
 
 my $time_spent = ($end - $start);
 
-my $m = $time_spent / 60;
+my $t = localtime($time_spent);
 
-print $fh sprintf("   Edited %s %s\n", $files, ($files > 1) ? 'files' : 'file');
-print $fh "Task finished in " . sprintf("%.2d minutes (%d seconds)",
-  $m, $time_spent), "\n-\n";
+my @files = map { -f $_ && $_ } @ARGV;
+my $vim = join(', ', @files);
+my $result;
+push(
+  @{$result->{$vim}},
+    sprintf("%d min, %d sec",
+      $t->min, $t->sec,
+  )
+);
 
-__DATA__
+open(my $fh, '>>', $history) or die($!);
+print $fh sprintf("% 2d min, % 2d sec spent hacking on %s", $t->min, $t->sec, $vim)
+  unless($vim =~ /^, , , /);
+close($fh);
 
-Task started  Tue Nov 30 22:50:55 2010
+my ($min, $sec) = ($t->min, $t->sec);
 
-   cmdline> [vim] vim fxshot calc batwarn fillmp3
-
-   Edited 5 files
-
-Task finished Tue Nov 30 22:50:59 2010
--
-
+printf("%s %s, %s %s spent hacking on %s\n",
+  fg('blue8', fg('bold', $min)),
+  fg('bold', 'minutes'),
+  fg('blue4', fg('bold', $sec)),
+  fg('bold', 'seconds'),
+  $vim,
+);
