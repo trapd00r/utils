@@ -43,6 +43,9 @@ sub pass_on {
       scp($remote_host, $remote_port, $remote_dest, $_);
     }
   }
+  elsif($_[0] eq 'test') {
+    system("/usr/bin/make", 'test');
+  }
   else {
     system("/usr/bin/make", @_);
   }
