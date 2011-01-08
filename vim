@@ -39,18 +39,21 @@ my $result;
 push(
   @{$result->{$vim}},
     sprintf("%d min, %d sec",
-      $t->min, $t->sec,
+      $t->hour, $t->min, $t->sec,
   )
 );
 
 open(my $fh, '>>', $history) or die($!);
-print $fh sprintf("% 2d min, % 2d sec spent hacking on %s", $t->min, $t->sec, $vim)
+print $fh sprintf("% 3d min, % 3d sec spent hacking on %s", $t->min, $t->sec, $vim)
   unless($vim =~ /^, , , /);
 close($fh);
 
-my ($min, $sec) = ($t->min, $t->sec);
+my ($hour, $min, $sec) = (($t->hour -1), $t->min, $t->sec);
 
-printf("%s %s, %s %s spent hacking on %s\n",
+
+printf("%s %s, %s %s, %s %s spent hacking on %s\n",
+  fg('blue18', fg('bold', $hour)),
+  fg('bold', 'hours'),
   fg('blue8', fg('bold', $min)),
   fg('bold', 'minutes'),
   fg('blue4', fg('bold', $sec)),
