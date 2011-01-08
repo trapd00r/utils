@@ -1,0 +1,42 @@
+#!/usr/bin/perl
+# sendsrc
+use strict;
+use File::Copy;
+
+my $int_host = '192.168.1.100';
+my $ext_host = 'http://p.japh.se/raw';
+
+
+my %ft = (
+  perl  => 'pl',
+  bash  => 'bash',
+  sh    => 'sh',
+  ruby  => 'rb',
+);
+
+my $filename;
+for(@ARGV) {
+  if($_ !~ /.*\..+$/) {
+    open(my $fh, '<', $_) or die($!);
+    READFSCK:
+    while(my $line = <$fh>) {
+      if($line =~ m|.+/(.+)$|) {
+        $filename = "$_.$ft{$1}";
+        print "$filename\n\n";
+        last READFSCK;
+      }
+    }
+  }
+  $filename = substr(time(), -2) . "_$filename";
+  -f $_ and _scp($_, $filename);
+}
+
+sub _scp {
+  my ($what, $dest) = @_;
+  system('scp',
+    ('-P', 19216, $what, "scp1\@192.168.1.100:http/japh.se/p/raw/$dest")
+  );
+}
+
+print "$ext_host/$filename\n";
+system("echo $ext_host/$filename|xclip");
