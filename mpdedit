@@ -1,0 +1,32 @@
+#!/usr/bin/perl
+# Edit playlists known by MPD
+use strict;
+use App::Pimpd;
+use App::Pimpd::Validate;
+use Trapd00r::Common;
+
+if(!@ARGV) {
+  @ARGV = get_valid_lists(undef);
+}
+
+_edit(_valid_list(@ARGV));
+
+sub _valid_list {
+  my @lists = @_;
+
+  my @valid;
+  for(@lists) {
+    if(not(isa_valid_playlist($_))) {
+      next;
+    }
+    push(@valid, abs_playlist_path($_));
+  }
+  return @valid;
+}
+
+sub _edit {
+  system("$ENV{HOME}/devel/utils/vim",
+    @_,
+  );
+}
+
