@@ -1,9 +1,11 @@
 #!/usr/bin/python2
 # EASY-INSTALL-ENTRY-SCRIPT: 'Pygments==1.3.1','console_scripts','pygmentize'
-__requires__ = 'Pygments==1.3.1'
+#__requires__ = 'Pygments==1.3.1'
+__requires__ = 'Pygments'
 import sys
 from pkg_resources import load_entry_point
 
 sys.exit(
-   load_entry_point('Pygments==1.3.1', 'console_scripts', 'pygmentize')()
+   #load_entry_point('Pygments==1.3.1', 'console_scripts', 'pygmentize')()
+   load_entry_point('Pygments', 'console_scripts', 'pygmentize')()
 )
