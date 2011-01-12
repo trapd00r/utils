@@ -4,26 +4,21 @@
 use strict;
 use Time::localtime;
 use Term::ExtendedColor;
-use Data::Dumper;
-$Data::Dumper::Terse     = 1;
-$Data::Dumper::Indent    = 1;
-$Data::Dumper::Useqq     = 1;
-$Data::Dumper::Deparse   = 1;
-$Data::Dumper::Quotekeys = 0;
-$Data::Dumper::Sortkeys  = 1;
 
-
+#use Data::Dumper;
+#$Data::Dumper::Terse     = 1;
+#$Data::Dumper::Indent    = 1;
+#$Data::Dumper::Useqq     = 1;
+#$Data::Dumper::Deparse   = 1;
+#$Data::Dumper::Quotekeys = 0;
+#$Data::Dumper::Sortkeys  = 1;
 
 my $history = "$ENV{HOME}/doc/vimtimes";
 
-$\ = "\n";
+$\ = "\n"; # evil :)
 $|++;
 
 my $start = time();
-
-#print $fh "Task started  " . scalar(localtime), "\n";
-#print $fh "   cmdline> [vim] ",  join(' ', @ARGV), "\n";
-
 
 system('/usr/bin/vim', '-p', @ARGV);
 
@@ -34,7 +29,7 @@ my $time_spent = ($end - $start);
 my $t = localtime($time_spent);
 
 my @files = map { -f $_ && $_ } @ARGV;
-my $vim = join(', ', @files);
+my $vim = join(' ', @files);
 my $result;
 push(
   @{$result->{$vim}},
@@ -44,19 +39,31 @@ push(
 );
 
 open(my $fh, '>>', $history) or die($!);
-print $fh sprintf("% 3d min, % 3d sec spent hacking on %s", $t->min, $t->sec, $vim)
-  unless($vim =~ /^, , , /);
+print $fh sprintf(" %3d hours, % 3d min, % 3d sec spent hacking on %s",
+  $t->hour, $t->min, $t->sec, $vim)
+  unless($vim =~ /^,/);
 close($fh);
 
-my ($hour, $min, $sec) = (($t->hour -1), $t->min, $t->sec);
+my($hour, $min, $sec) = (0) x 3;
+$hour = $t->hour -1;
+$min  = $t->min;
+$sec  = $t->sec;
 
+printf("%s %s",
+  fg('blue8', fg('bold', $hour)), ($hour > 1) ? 'hours ' : 'hour '
+) unless($hour == 0);
 
-printf("%s %s, %s %s, %s %s spent hacking on %s\n",
-  fg('blue18', fg('bold', $hour)),
-  fg('bold', 'hours'),
-  fg('blue8', fg('bold', $min)),
-  fg('bold', 'minutes'),
-  fg('blue4', fg('bold', $sec)),
-  fg('bold', 'seconds'),
-  $vim,
+printf("%s %s",
+  fg('blue8', fg('bold', $min)), ($min > 1) ? 'minutes ' : 'minute '
+) unless($min == 0);
+
+printf("%s %s",
+  fg('blue8', fg('bold', $sec)), ($sec > 1) ? 'seconds ' : 'second '
 );
+
+@files = split(/\s+/, $vim);
+my $i = 2;
+@files = map {++$i; $_ = fg($i, $_);} @files;
+
+printf(" spent hacking on %s\n", join(', ', @files));
+
