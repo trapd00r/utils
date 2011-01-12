@@ -3,6 +3,9 @@ use vars qw($VERSION);
 $VERSION = '0.02';
 
 use strict;
+use File::Copy;
+use File::Path qw(make_path);
+use Term::ExtendedColor;
 
 my $remote_host   = '192.168.1.100';
 my $remote_port   = '19216';
@@ -39,12 +42,15 @@ sub pass_on {
   elsif($_[0] eq 'dist') {
     system("/usr/bin/make", 'dist');
     for(glob('*.tar.gz')) {
-      print "<< $_ <<\n";
+      print "\n>> " . fg('orange3', fg('bold', $_)) . " <<\n\n";
       scp($remote_host, $remote_port, $remote_dest, $_);
+      make_path("$ENV{HOME}/devel/Distributions");
+      move($_, "$ENV{HOME}/devel/Distributions")  or die("move $_: $!");
     }
   }
   elsif($_[0] eq 'test') {
-    system("/usr/bin/make", 'test');
+    system("prove", qw(--count --timer -j 9 -f -o));
+    #system("/usr/bin/make", 'test');
   }
   else {
     system("/usr/bin/make", @_);
