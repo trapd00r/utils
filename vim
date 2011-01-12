@@ -50,20 +50,24 @@ $min  = $t->min;
 $sec  = $t->sec;
 
 printf("%s %s",
-  fg('blue8', fg('bold', $hour)), ($hour > 1) ? 'hours ' : 'hour '
+  fg('blue8', fg('bold', $hour)), ($hour > 1) ? 'hours ' : 'hour'
 ) unless($hour == 0);
 
-printf("%s %s",
-  fg('blue8', fg('bold', $min)), ($min > 1) ? 'minutes ' : 'minute '
+printf(" %s %s",
+  fg('blue8', fg('bold', $min)), ($min > 1) ? 'minutes ' : 'minute'
 ) unless($min == 0);
 
-printf("%s %s",
-  fg('blue8', fg('bold', $sec)), ($sec > 1) ? 'seconds ' : 'second '
+printf(" %s %s",
+  fg('blue8', fg('bold', $sec)),
+  (($sec != 0) && ($sec > 1)) ? 'seconds ' : 'second'
 );
 
 @files = split(/\s+/, $vim);
 my $i = 2;
 @files = map {++$i; $_ = fg($i, $_);} @files;
 
-printf(" spent hacking on %s\n", join(', ', @files));
+my $foo = join(', ', @files);
+$foo =~ s/(.+), (.+)$/$1 . fg('bold', ' and ') . "$2."/e;
+
+printf(" spent hacking on %s\n", $foo);
 
