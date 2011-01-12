@@ -29,7 +29,7 @@ my $time_spent = ($end - $start);
 
 my $t = localtime($time_spent);
 
-my @files = map { -f $_ && $_ } @ARGV;
+my @files = map { -f $_ && $_ =~ s|.+/(.+)$|$1|; $_ } @ARGV;
 my $vim = join(' ', @files);
 
 my $result;
