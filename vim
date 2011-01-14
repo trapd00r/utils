@@ -27,6 +27,10 @@ my @files = @ARGV;
 my @vim_args;
 
 for my $file(@files) {
+  if($file =~ m/^[ls]et /) {
+    system('/usr/bin/vim', @files);
+    exit;
+  }
   if( (! -e $file) and ($file =~ /^-/) ) {
     push(@vim_args, $file);
     undef($file);
@@ -68,7 +72,6 @@ sub get_statistics {
 }
 
 
-
 sub format_time {
   my $time = shift;
   my $t = localtime($time);
@@ -76,6 +79,18 @@ sub format_time {
   my($d, $h, $m, $s) = ($t->yday, $t->hour -1, $t->min, $t->sec);
 
   return ($d, $h, $m, $s);
+}
+
+sub color_by_value {
+  my $value = shift;
+
+  return fg('bold', fg('grey20',  $value)) if $value < 2;
+  return fg('bold', fg('yellow4', $value)) if $value < 4;
+  return fg('bold', fg('yellow9', $value)) if $value < 6;
+  return fg('bold', fg('orange4', $value)) if $value < 8;
+  return fg('bold', fg('red1',    $value)) if $value < 10;
+
+  return $value;
 }
 
 
@@ -127,23 +142,43 @@ sub output_term {
   my(undef, undef, undef, $who) = caller(1);
 
 
+  if($d == 0) {
+    print " " x 12;
+  }
+  else {
+    printf("%s day%s,",
+      color_by_value( sprintf("% 3d", $d)),
+      #fg('grey7', fg('bold', sprintf("% 3d", $d))),
+      ( ($d > 1) or ($d == 0) ) ? 's' : ' ',
+    );
+  }
 
-  printf("%s day%s,",
-    fg('blue8', fg('bold', sprintf("% 3d", $d))),
-    ( ($d > 1) or ($d == 0) ) ? 's' : ' ',
-  );
+  if($h == 0) {
+    print " " x 10;
+  }
+  else {
+    printf("%s hour%s,",
+      color_by_value( sprintf("% 3d", $h)),
+      #fg('grey10', fg('bold', sprintf("% 3d", $h))),
+      ( ($h > 1) or ($h == 0) ) ? 's' : ' ',
+    );
+  }
 
-  printf("%s hour%s,",
-    fg('blue8', fg('bold', sprintf("% 3d", $h))),
-    ( ($h > 1) or ($h == 0) ) ? 's' : ' ',
-  );
-  printf("%s minute%s",
-    fg('blue8', fg('bold', sprintf("% 3d", $m))),
-    ( ($m > 1) or ($m == 0) )  ? 's' : ' ',
-  );
+  if($m == 0) {
+    print " " x 10;
+  }
+  else {
+    printf("%s minute%s",
+      #color_by_value( sprintf("% 3d", $m)),
+      fg('grey14', fg('bold', sprintf("% 3d", $m))),
+      ( ($m > 1) or ($m == 0) )  ? 's' : ' ',
+    );
+  }
 
-  printf(" and %s second%s",
-    fg('blue8', fg('bold', sprintf("% 3d", $s))),
+  printf(" %s %s second%s",
+    #color_by_value( sprintf("% 3d", $s)),
+    ($m == 0) ? '    ' : 'and',
+    fg('grey17', fg('bold', sprintf("% 3d", $s))),
     ( ($s > 1 ) or ($s == 0) ) ? 's' : ' ',
   );
 
@@ -159,5 +194,3 @@ sub output_term {
 sub basename {
   return map { -f $_ && $_ =~ s|.+/(.+)$|$1|; $_ } @_;
 }
-
-
