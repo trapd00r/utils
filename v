@@ -9,7 +9,7 @@
  
   [[ "${0:0:1}" == "/" ]] && script="$0" || script="$PWD/$0"
  
-  vim -e -X -R "$@" -c "source $script" -c "visual" -c "bufdo call AnsiHighlight()" -c qa >/dev/null 2>/dev/null
+  /usr/bin/vim -e -X -R "$@" -c "source $script" -c "visual" -c "bufdo call AnsiHighlight()" -c qa >/dev/null 2>/dev/null
   exec cat <&9
 : endif
  
