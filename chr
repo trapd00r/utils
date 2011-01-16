@@ -1,0 +1,2 @@
+#!/usr/bin/perl
+print join(", ", map { chr($_) } @ARGV), "\n" if @ARGV;
