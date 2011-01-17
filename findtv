@@ -1,0 +1,57 @@
+#!/usr/bin/perl
+use strict;
+use Term::ExtendedColor;
+
+my @disks = qw(
+  TV_1
+  TV_2
+  TV_3
+  TV_4
+);
+
+my %foo = %{ find(@ARGV) };
+
+my $i = 1;
+my $prev_chr;
+for my $movie(sort(keys(%foo))) {
+  my($chr) = $movie =~ /(.)/;
+  $chr = '#' if $chr =~ /^\d+$/;
+  if($prev_chr ne $chr) {
+    printf(" %s\n", fg('bold', fg('red1', $chr)));
+    $prev_chr = $chr;
+  }
+
+  my($movie_disk_no) = $foo{$movie} =~ /(\d+)$/;
+  $movie_disk_no += 8;
+  printf("% 5d: %s [ %s ]\n",
+    $i,
+    fg('bold', fg("yellow$movie_disk_no", $foo{$movie})),
+    fg('blue4', $movie),
+  );
+  $i++;
+}
+
+sub find {
+  my $term = shift;
+  if(!defined($term)) {
+    my(undef, undef, undef, undef, undef, $year) = localtime(time);
+    $year += 1900;
+    $term = $year;
+  }
+  my %results;
+
+  chdir('/mnt/') or die($!);
+
+  for my $disk(@disks) {
+    for my $movie(glob("$disk/*")) {
+      next if ! -d $movie;
+      if($movie =~ s;(.+)/(.+)$;$2;) {
+        my $mountpoint = $1;
+        if($movie =~ /$term/i) {
+          $results{$movie} = $mountpoint;
+        }
+      }
+    }
+  }
+  return \%results;
+}
