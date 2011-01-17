@@ -1,18 +1,50 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 # typo
 use strict;
+use utf8;
 use LWP::UserAgent;
+use Getopt::Long;
+use Data::Dumper;
+use Encode;
+binmode(STDOUT,":encoding(utf8)");
 
-my $arg = shift // 'insansiate';
+my $locale = '';
+
+# Need -CA for utf8 ARGV support under(?) 5.8 or use decode
+my $arg = decode('utf-8',$ARGV[0]) || 'insansiate'; # bad here , combine with Getopt later
+GetOptions("locale=s" => \$locale);
+
+my %rules = (
+  en => {
+    url => "http://www.google.com",
+    re  => "<b><i>(.+)</i></b>"
+  },
+  tw => {
+    url => "http://www.google.com.tw",
+    re  => "<em>(.+)</em>"
+  },
+);
+
+my $thisRule;
+
+if(exists($rules{$locale}))
+{
+  $thisRule = $rules{$locale};
+}
+else
+{
+  # default
+  $thisRule = $rules{en};
+}
 
 my $lwp = LWP::UserAgent->new(agent => 'Mozilla');
-my $c = $lwp->get("http://www.google.com/search?q=$arg") or die $!;
+my $c = $lwp->get("$thisRule->{url}/search?q=".$arg) or die $!;
 
-my @content = split(/:/, $c->content);
-
-for(@content) {
-  if(m;<b><i>(.+)</i></b>;) {
-    print "$1\n";
+if($c->decoded_content =~ m{<a.*?class=spell>(.*?)</a>}s)
+{
+  $_ = $1;
+  if(m;$thisRule->{re};) {
+    print $1."\n";
     exit;
-    }
+  }
 }
