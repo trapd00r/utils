@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 use strict;
-use Term::ExtendedColor;
+use Term::ExtendedColor 'fg';
 
 chomp(my $pwd = `pwd`);
 
