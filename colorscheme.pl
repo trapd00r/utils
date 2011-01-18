@@ -3,7 +3,7 @@
 # The colorscheme I've been using for ~2 years
 
 use strict;
-use Term::ExtendedColor;
+use Term::ExtendedColor::Xresources qw(set_xterm_color);
 
 
 my %colors = (
@@ -27,5 +27,5 @@ my %colors = (
 
 
 for my $ansi(keys(%colors)) {
-  print set_color($ansi, $colors{$ansi});
+  print set_xterm_color($ansi, $colors{$ansi});
 }

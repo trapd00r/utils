@@ -1,0 +1,23 @@
+#!/usr/bin/perl
+use strict;
+use File::Path qw(make_path);
+use Term::ExtendedColor qw(fg);
+
+_mkdir(@ARGV);
+
+
+sub _mkdir {
+  my $dir = shift;
+  if(-f $dir) {
+    if($dir =~ m|(.+)\..+$|) { # I know, works for me for now.
+      warn "$dir is a file. Will mkdir $1\n";
+      $dir = $1;
+    }
+  }
+  if(make_path($dir)) {
+    printf("mkdir: created directory '%s'\n", fg('red1', fg('bold', $dir)));
+  }
+  else {
+    print "mkdir: $!\n";
+  }
+}
