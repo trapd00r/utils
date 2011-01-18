@@ -2,7 +2,7 @@
 # hits
 use strict;
 use Data::Dumper;
-use Term::ExtendedColor;
+use Term::ExtendedColor qw(fg);
 
 
 parse_log(\@ARGV);

@@ -5,7 +5,7 @@ $VERSION = '0.02';
 use strict;
 use File::Copy;
 use File::Path qw(make_path);
-use Term::ExtendedColor;
+use Term::ExtendedColor qw(fg);
 
 my $remote_host   = '192.168.1.100';
 my $remote_port   = '19216';

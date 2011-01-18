@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 use strict;
-use Term::ExtendedColor;
+use Term::ExtendedColor qw(fg);
 
 my @disks = qw(
   Movies_1

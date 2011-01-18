@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 use strict;
-use Term::ExtendedColor; # 256 colors
+use Term::ExtendedColor qw(fg bg);
 
 =for environment
 
