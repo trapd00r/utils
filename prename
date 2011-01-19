@@ -1,11 +1,12 @@
 #!/usr/bin/perl
 our $APP     = 'prename';
-our $VERSION = '0.1.0-fork';
+our $VERSION = '0.1.2-fork';
 use strict;
 
 use Getopt::Long;
 use Pod::Usage;
 use String::Utils 'longest';
+use Term::ExtendedColor qw(fg);
 
 my ($verbose, $no_act, $force);
 
@@ -28,7 +29,7 @@ $verbose++ if $no_act;
 if(!@ARGV) {
   print "reading filenames from STDIN\n" if $verbose;
   @ARGV = <STDIN>;
-  chop(@ARGV);
+  chomp(@ARGV);
 }
 
 my $max_str_len = longest(@ARGV);

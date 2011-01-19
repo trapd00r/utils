@@ -14,8 +14,10 @@ my @c = grep{/(\*color\d+:\s*#.+)/} @r;
 
 
 for(@c) {
-  if($_ =~ /!?\*(color\d+):\s*#(.+)/) {
-    print "  $1 => '$2',\n";
+  if($_ =~ /!?\*color(\d+):\s*#(.+)/) {
+    my($index, $color) = ($1, $2);
+    $color =~ s/^\s+|\s+$//;
+    print "  $index  => '$color',\n";
   }
 
 }

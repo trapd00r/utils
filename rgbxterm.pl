@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
-use Term::ExtendedColor;
-use Term::ExtendedColor::Xresources;
+use Term::ExtendedColor qw(fg);
+use Term::ExtendedColor::Xresources qw(get_xterm_color);
 use Getopt::Long;
 
 
@@ -16,7 +16,7 @@ GetOptions(
 output();
 
 sub output {
-  my $c = get_xterm_colors( [0 .. 255] );
+  my $c = get_xterm_color( [0 .. 255] );
 
   my $end = int(256/16);
 

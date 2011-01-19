@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 use strict;
-use Term::ExtendedColor; # 256 colors
+use Term::ExtendedColor qw(fg bg);
 
 =for environment
 
@@ -86,7 +86,6 @@ sub color_square {
 
 sub set_ls_color {
   select(STDERR);
-  print "> ";
 
   $ENV{LS_COLORS} = '';
   for my $f(keys(%ls_colors)) {
@@ -100,11 +99,10 @@ sub set_ls_color {
     }
   }
   $EXPORT =~ s/^(.+):$/"$1"/;
-  $EXPORT =~ s/^/export LS_COLORS=/;
-
 
   select(STDOUT);
-  print $EXPORT;
+  print "export LS_COLORS=\"ln=38;5;100;1:fi=38;5;196;1\"";
+  #print "$EXPORT\n";
 
 }
 

@@ -5,6 +5,7 @@ use Term::ExtendedColor qw(fg);
 
 _mkdir(@ARGV);
 
+
 sub _mkdir {
   my $dir = shift;
   if(-f $dir) {

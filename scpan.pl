@@ -3,7 +3,7 @@
 use strict;
 use LWP::Simple;
 use HTML::FormatText::Lynx;
-use Term::ExtendedColor;
+use Term::ExtendedColor qw(fg);
 
 my $base_url = 'http://search.cpan.org/search?query=';
 my $search = shift // 'woldrich';

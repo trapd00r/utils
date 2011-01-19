@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use Term::ReadKey;
-use Term::ExtendedColor;
+use Term::ExtendedColor qw(fg);
 use Data::Dumper;
 $Data::Dumper::Terse     = 1;
 $Data::Dumper::Indent    = 1;

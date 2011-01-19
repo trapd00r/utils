@@ -3,10 +3,10 @@ use strict;
 use Term::ExtendedColor qw(fg);
 
 my @disks = qw(
-  Movies_1
-  Movies_2
-  Movies_3
-  Movies_4
+  TV_1
+  TV_2
+  TV_3
+  TV_4
 );
 
 my %foo = %{ find(@ARGV) };
