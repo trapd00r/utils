@@ -34,4 +34,6 @@ else {
   store(\%extensions, './filetypes');
 }
 
-print Dumper \%extensions;
+for my $e(sort(keys(%extensions))) {
+  printf("% 7s: %s\n", $e, $extensions{$e});
+}
