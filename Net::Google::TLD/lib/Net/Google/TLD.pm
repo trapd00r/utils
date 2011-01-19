@@ -4,15 +4,21 @@ package Net::Google::TLD;
 use vars qw($VERSION);
 $VERSION = '0.001';
 
-use strict;
-use Data::Dumper;
-
-{
-  package Data::Dumper;
-  no strict 'vars';
-  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
-  $Quotekeys = 0;
+BEGIN {
+  require Exporter;
+  our @ISA = 'Exporter';
+  our @EXPORT_OK = qw(get_url_by_tld);
 }
+
+use strict;
+#use Data::Dumper;
+#
+#{
+#  package Data::Dumper;
+#  no strict 'vars';
+#  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
+#  $Quotekeys = 0;
+#}
 
 my $google = {
   ad => {
