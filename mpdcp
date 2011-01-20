@@ -74,11 +74,11 @@ sub transfer {
 
 =head1 NAME
 
-  cpmpd - copy music from a (remote) MPD server
+mpdcp - copy music from a (remote) MPD server
 
 =head1 DESCRIPTION
 
-  cpmpd is cool
+mpdcp is cool
 
 =head1 OPTIONS
 
@@ -93,7 +93,5 @@ sub transfer {
 =head1 COPYRIGHT
 
 Copyright (C) Magnus Woldrich 2010
-
-License GPLv2
 
 =cut
