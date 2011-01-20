@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+
 # typo
 use strict;
 use utf8;
@@ -6,45 +7,54 @@ use LWP::UserAgent;
 use Getopt::Long;
 use Data::Dumper;
 use Encode;
+use Net::Google::TLD qw(get_url_by_tld);
 binmode(STDOUT,":encoding(utf8)");
 
 my $locale = '';
 
 # Need -CA for utf8 ARGV support under(?) 5.8 or use decode
-my $arg = decode('utf-8',$ARGV[0]) || 'insansiate'; # bad here , combine with Getopt later
+my $query = decode('utf-8',$ARGV[0]) || 'insansiate'; # bad here , combine with Getopt later
 GetOptions("locale=s" => \$locale);
 
 my %rules = (
-  en => {
-    url => "http://www.google.com",
+  com => {
     re  => "<b><i>(.+)</i></b>"
   },
   tw => {
-    url => "http://www.google.com.tw",
     re  => "<em>(.+)</em>"
   },
 );
 
-my $thisRule;
+for(keys %rules)
+{
+  $rules{$_}{url} = "http://".(get_url_by_tld($_))[0];
+}
+
+my $whichRule;
 
 if(exists($rules{$locale}))
 {
-  $thisRule = $rules{$locale};
+  $whichRule = $rules{$locale};
 }
 else
 {
   # default
-  $thisRule = $rules{en};
+  $whichRule = $rules{com};
 }
 
 my $lwp = LWP::UserAgent->new(agent => 'Mozilla');
-my $c = $lwp->get("$thisRule->{url}/search?q=".$arg) or die $!;
+my $c = $lwp->get($whichRule->{url}."/search?q=".$query) or die $!;
 
 if($c->decoded_content =~ m{<a.*?class=spell>(.*?)</a>}s)
 {
-  $_ = $1;
-  if(m;$thisRule->{re};) {
-    print $1."\n";
+  if($1 =~ m;$whichRule->{re};) {
+    printMessage($query,$1);
     exit;
   }
+}
+
+sub printMessage
+{
+  (my $searchTerm,my $correctTerm) = @_;
+  printf("%16s %s\n%16s %s\n","Search Term:",$searchTerm,"after corrected:",$correctTerm);
 }
