@@ -1,60 +1,121 @@
 #!/usr/bin/perl -w
 
-# typo
+# typo setting part
 use strict;
 use utf8;
 use LWP::UserAgent;
 use Getopt::Long;
+use Pod::Usage;
 use Data::Dumper;
 use Encode;
 use Net::Google::TLD qw(get_url_by_tld);
-binmode(STDOUT,":encoding(utf8)");
+binmode(STDOUT,':encoding(utf8)');
 
-my $locale = '';
+# constants
+use constant DEFAULT_RULE => 'com';
+
+my %options = (
+  locale => q{},
+  help => 0,
+);
 
 # Need -CA for utf8 ARGV support under(?) 5.8 or use decode
 my $query = decode('utf-8',$ARGV[0]) || 'insansiate'; # bad here , combine with Getopt later
-GetOptions("locale=s" => \$locale);
+GetOptions(
+  'locale=s' => \$options{locale},
+  'help|h' => \$options{help},
+);
 
+pod2usage({
+  -exitval => 1,
+  -verbose => 1,
+}) if $options{help};
+
+my $used_rule;
 my %rules = (
   com => {
-    re  => "<b><i>(.+)</i></b>"
+    re  => '<b><i>(.+)</i></b>',
   },
   tw => {
-    re  => "<em>(.+)</em>"
+    re  => '<em>(.+)</em>',
   },
 );
 
-for(keys %rules)
-{
-  $rules{$_}{url} = "http://".(get_url_by_tld($_))[0];
+for (keys %rules) {
+  $rules{$_}{url} = 'http://'.(get_url_by_tld($_))[0];
 }
 
-my $whichRule;
-
-if(exists($rules{$locale}))
-{
-  $whichRule = $rules{$locale};
+if (exists( $rules{ $options{locale} } )) {
+  $used_rule = $rules{ $options{locale} };
 }
-else
-{
+else {
   # default
-  $whichRule = $rules{com};
+  $used_rule = $rules{+DEFAULT_RULE};
 }
 
 my $lwp = LWP::UserAgent->new(agent => 'Mozilla');
-my $c = $lwp->get($whichRule->{url}."/search?q=".$query) or die $!;
+my $lwp_response = $lwp->get($used_rule->{url}.'/search?q='.$query) or die $!;
 
-if($c->decoded_content =~ m{<a.*?class=spell>(.*?)</a>}s)
-{
-  if($1 =~ m;$whichRule->{re};) {
-    printMessage($query,$1);
+if ($lwp_response->decoded_content =~ m[<a.*?class=spell>(.*?)</a>]s) {
+  if ($1 =~ m[$used_rule->{re}]) {
+    print_result($query,$1);
     exit;
   }
 }
 
-sub printMessage
-{
-  (my $searchTerm,my $correctTerm) = @_;
-  printf("%16s %s\n%16s %s\n","Search Term:",$searchTerm,"after corrected:",$correctTerm);
+sub print_result {
+  my ($searchTerm,$correctTerm) = @_;
+  printf "%16s %s\n%16s %s\n",
+         'Search Term:', $searchTerm, 'After corrected:', $correctTerm;
 }
+
+
+__END__
+
+=head1 NAME
+
+typo - A tiny tool that can help you detect your typos in input
+
+=head1 SYNOPSIS
+
+perl typo [input] [-h|--help|--locale=your_locale]
+
+=head1 OPTIONS
+
+=over 4
+
+=item *
+
+-h|--help
+
+Print a brief help message and exits.
+
+=item *
+
+--locale=<your_locale>
+
+You can choose preferred locale here ! 
+
+Supported locales :
+
+{
+
+  com => 'google.com',  #default
+  tw  => 'google.com.tw',
+
+}
+
+=back
+
+=head1 OPTIONS
+
+  Magnus Woldrich
+  CPAN ID: WOLDRICH
+  magnus@trapd00r.se
+  http://japh.se
+
+  EragonJ
+  eragonj@hax4.in
+  http://eragonj.hax4.in
+
+=cut
