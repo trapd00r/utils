@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use vars qw($VERSION);
 my $APP  = 'ddg';
-$VERSION = '0.003';
+$VERSION = '0.004';
 
 use strict;
 use JSON::XS;
@@ -23,16 +23,20 @@ my $base  = "http://api.duckduckgo.com/?q=$query&o=json";
 my $reply  = get($base);
 my $struct = decode_json($reply);
 
+#print Dumper $struct;
+
 
 if(my $r = results()) {
-  print bg('red2', fg('bold', $query)) . " is:\n";
+  print bg('green27', fg('bold', fg('gray21', $query))) . " is:\n";
   printf("· %s %s\n",
     $r->{Text}, "($r->{FirstURL})",
   );
+
+
 }
 
-if(exists($struct->{RelatedTopics})) {
-  print bg('blue10', fg('bold', $query)) . " might be\n";
+if(scalar(@{$struct->{RelatedTopics}}) > 0) {
+  print 'Related to ' . hilight($query) . ": \n";
   printf("· %s\n· %s\n· %s\n· %s\n· %s\n",
     hilight($query, $struct->{RelatedTopics}->[0]->{Text}),
     hilight($query, $struct->{RelatedTopics}->[1]->{Text}),
@@ -51,6 +55,8 @@ printf("%s %s\n",
 
 sub hilight {
   my($term, $data) = @_;
+
+  return fg('bold', fg('red1', $term)) if !defined($data);
 
   if($data =~ m/($term)(.*)/gpi) {
     return ${^PREMATCH} . fg('bold', fg('red1', $1)) . $2;
