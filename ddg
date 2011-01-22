@@ -1,0 +1,109 @@
+#!/usr/bin/perl
+use vars qw($VERSION);
+my $APP  = 'ddg';
+$VERSION = '0.004';
+
+use strict;
+use JSON::XS;
+use LWP::Simple;
+use encoding 'utf8';
+use Term::ExtendedColor qw(fg bg);
+#use Data::Dumper;
+#
+#{
+#  package Data::Dumper;
+#  no strict 'vars';
+#  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
+#  $Quotekeys = 0;
+#}
+
+my $query = shift // 'perl';
+my $base  = "http://api.duckduckgo.com/?q=$query&o=json";
+
+my $reply  = get($base);
+my $struct = decode_json($reply);
+
+#print Dumper $struct;
+
+
+if(my $r = results()) {
+  print bg('green27', fg('bold', fg('gray21', $query))) . " is:\n";
+  printf("· %s %s\n",
+    $r->{Text}, "($r->{FirstURL})",
+  );
+
+
+}
+
+if(scalar(@{$struct->{RelatedTopics}}) > 0) {
+  print 'Related to ' . hilight($query) . ": \n";
+  printf("· %s\n· %s\n· %s\n· %s\n· %s\n",
+    hilight($query, $struct->{RelatedTopics}->[0]->{Text}),
+    hilight($query, $struct->{RelatedTopics}->[1]->{Text}),
+    hilight($query, $struct->{RelatedTopics}->[2]->{Text}),
+    hilight($query, $struct->{RelatedTopics}->[3]->{Text}),
+    hilight($query, $struct->{RelatedTopics}->[4]->{Text}),
+    hilight($query, $struct->{RelatedTopics}->[5]->{Text}),
+  );
+}
+
+printf("%s %s\n",
+  hilight($query, $struct->{AbstractText}),
+  "(@{[fg('blue2', $struct->{AbstractSource})]})",
+) unless $struct->{AbstractText} eq '';
+
+
+sub hilight {
+  my($term, $data) = @_;
+
+  return fg('bold', fg('red1', $term)) if !defined($data);
+
+  if($data =~ m/($term)(.*)/gpi) {
+    return ${^PREMATCH} . fg('bold', fg('red1', $1)) . $2;
+  }
+  return $data;
+}
+
+sub results {
+  if(exists($struct->{Results})) {
+    return $struct->{Results}->[0];
+  }
+  return 0;
+}
+
+
+
+
+
+1;
+
+__END__
+
+=pod
+
+=head1 NAME
+
+ddg - duckduckgo command-line search utility
+
+=head1 SYNOPSIS
+
+  ddg [QUERY]
+
+=head1 AUTHOR
+
+  Magnus Woldrich
+  CPAN ID: WOLDRICH
+  magnus@trapd00r.se
+  http://japh.se
+
+=head1 REPORTING BUGS
+
+Report bugs on rt.cpan.org or to magnus@trapd00r.se
+
+=head1 COPYRIGHT
+
+Copyright (C) 2011 Magnus Woldrich. All right reserved.
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut

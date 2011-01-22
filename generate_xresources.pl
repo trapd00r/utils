@@ -1,26 +1,37 @@
 #!/usr/bin/perl
+# Generate a hash with colorschemes from X resources
+use vars qw($VERSION);
+my $APP  = '';
+$VERSION = '0.003';
 
-# Create a hash of colorschemes found in .Xresources
 use strict;
+use Data::Dumper;
 
-my $file = shift or die;
-
-open(my $fh, '<', $file) or die($!);
-chomp( my @r = <$fh> );
-close($fh);
-
-
-my @c = grep{/(\*color\d+:\s*#.+)/} @r;
-
-
-for(@c) {
-  if($_ =~ /!?\*color(\d+):\s*#(.+)/) {
-    my($index, $color) = ($1, $2);
-    $color =~ s/^\s+|\s+$//;
-    print "  $index  => '$color',\n";
-  }
-
+{
+  package Data::Dumper;
+  no strict 'vars';
+  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
+  $Quotekeys = 0;
 }
+
+my $colors;
+
+for my $file(@ARGV) {
+  open(my $fh, '<', $file) or die($!);
+  chomp( my @r = <$fh> );
+
+  @r = grep{/(\*color\d+:\s*#.+)/} @r;
+
+  for my $l(@r) {
+    print $l, "\n";
+    if($l =~ m/!?(?:\w+)?\*color(\d+):\s*#(.+)/) {
+      $colors->{$file}->{$1} = $2;
+    }
+  }
+}
+
+print Dumper $colors;
+
 
 
 __DATA__
@@ -76,4 +87,39 @@ XTerm*trimSelection: true
 
 ! Sets Xcursor theme (installed under /usr/share/icons/ or ~/.icons/)
 Xcursor.theme:Vanilla-DMZ-AA
+
+
+=pod
+
+=head1 NAME
+
+=head1 SYNOPSIS
+
+=head1 DESCRIPTION
+
+=head1 OPTIONS
+
+=head1 AUTHOR
+
+  Magnus Woldrich
+  CPAN ID: WOLDRICH
+  magnus@trapd00r.se
+  http://japh.se
+
+=head1 REPORTING BUGS
+
+Report bugs on rt.cpan.org or to magnus@trapd00r.se
+
+=head1 COPYRIGHT
+
+Copyright (C) 2011 Magnus Woldrich. All right reserved.
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
+
+1;
+
+
+# vim: set ts=2 et sw=2:
 
