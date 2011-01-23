@@ -2,7 +2,7 @@
 use strict;
 # flexget parser
 
-my $flexlog = "/home/scp1/.flexget.log";
+my $flexlog = "/home/scp1/.local/share/flexget/flexget.log";
 
 open(LOG,$flexlog) || die "$flexlog does not exist?!\n";
 my @releases = <LOG>;
