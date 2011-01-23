@@ -18,7 +18,7 @@ my $i = 0;
 for(keys(%{$foo})) {
   for($foo->{channel}{item}) {
     for(@{$_}) {
-      #print Dumper $_;
+      print Dumper $_;
       $shows{$i++} = {
         name  => $_->{title},
         uri   => $_->{link},

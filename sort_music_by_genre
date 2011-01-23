@@ -1,0 +1,29 @@
+#!/usr/bin/perl
+use strict;
+use File::PatternMatch;
+use File::Path 'make_path';
+use File::Find::Rule;
+
+use Data::Dumper;
+
+
+$|++;
+for my $i(1 .. 7) {
+  print "Processing Music_$i..\n";
+  my @files = File::Find::Rule->directory->in("/mnt/Music_$i");
+  my $data = patternmatch('none', @files);
+  for my $index(keys(%$data)) {
+    for my $file(sort(keys(%{$data->{$index}}))) {
+      my $genre = $data->{$index}->{$file};
+      my ($basedir) = $file =~ m|.+/(.+)$|;
+
+      if(make_path("/tmp/scp1/Music/TEST2/$genre/")) {
+        printf("mkdir '/tmp/scp1/Music/TEST2/$genre/$basedir'\n");
+      }
+      if(symlink($file, "/tmp/scp1/Music/TEST2/$genre/$basedir")) {
+      }
+    }
+  }
+}
+
+#print Dumper $data;

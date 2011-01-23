@@ -1,6 +1,7 @@
-#!/usr/bin/perl 
+#!/usr/bin/perl
 use strict;
 use File::Tail;
+use Term::ExtendedColor qw(fg bg);
 
 my $log   = shift;
 my $line  = "";
@@ -26,27 +27,28 @@ while(defined($line=$tail->read)) {
   my $code    = $10;
   my $size    = $11;
 
-  $code = "\e[38;5;240m$code\e[0m" if $code == 404;
-  $code = "\e[38;5;155m$code\e[0m" if $code == 200;
-  $code = "\e[38;5;160m$code\e[0m" if $code == 501;
-  $code = "\e[38;5;208m$code\e[0m" if $code == 301;
-  $code = "\e[38;5;124m$code\e[0m" if $code == 403;
-  $code = "\e[38;5;113m$code\e[0m" if $code == 304;
-  $request = "\e[38;5;190m    $request\e[0m" if $request eq 'GET';
-  $request = "\e[38;5;196m   $request\e[0m" if $request eq 'POST';
-  $request = "\e[38;5;197m$request\e[0m" if $request eq 'CONNECT';
+  $code = fg(240, $code) if $code == 404;
+  $code = fg(155, $code) if $code == 200;
+  $code = fg(160, $code) if $code == 501;
+  $code = fg(208, $code) if $code == 301;
+  $code = fg(124, $code) if $code == 403;
+  $code = fg(113, $code) if $code == 304;
+
+  $request = fg(190, "    $request") if $request eq 'GET';
+  $request = fg(196, "   $request") if $request eq 'POST';
+  $request = fg(197, "   $request") if $request eq 'CONNECT';
 
   if($file =~ /\.(:?png|gif|jpg|jpeg)$/) {
-    $file = "\e[38;5,167m$file\e[0m";
+    $file = fg(167, $file);
   }
   elsif($file =~ /\.html$/) {
-    $file = "\e[38;5;74m$file\e[0m";
+    $file = fg(74, $file);
   }
   else {
-    $file = "\e[38;5;222m$file\e[0m";
+    $file = fg(222, $file);
   }
 
-  $size = "\e[38;5;160m$size\e[0m" if $size > 5;
+  $size = fg(160, $size) if $size > 5;
   printf("%s %7s %s \e[38;5;215m%s\e[0m \t%-60.40s\n",
-  $code, $request, $size, $ip, $file);
+    $code, $request, $size, $ip, $file) unless $file =~ m/.+\.(?:css|ico)$/
 }
