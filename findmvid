@@ -21,10 +21,10 @@ for my $movie(sort(keys(%foo))) {
 
   my($movie_disk_no) = $foo{$movie} =~ /(\d+)$/;
   $movie_disk_no += 8;
+
   printf("% 5d: %33s [ %s ]\n",
-    $i,
-    fg('bold', fg("yellow$movie_disk_no", $foo{$movie})),
-    fg('blue4', $movie),
+    $i, fg("yellow$movie_disk_no", $foo{$movie}),
+    (-f "$foo{$movie}/$movie") ? fg('orange1', $movie) : fg('blue4', $movie),
   );
   $i++;
 }
@@ -42,7 +42,7 @@ sub find {
 
   for my $disk(@disks) {
     for my $movie(glob("$disk/*")) {
-      next if ! -d $movie;
+    #next if ! -d $movie;
       if($movie =~ s;(.+)/(.+)$;$2;) {
         my $mountpoint = $1;
         if($movie =~ /$term/i) {
