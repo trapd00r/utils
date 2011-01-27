@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use Term::ExtendedColor qw(fg);
+use File::Lscolor qw(ls_color);
 
 my @disks = qw(
   Movies_1
@@ -26,7 +27,7 @@ for my $movie(sort(keys(%foo))) {
   printf("% 5d: %s [ %s ]\n",
     $i,
     fg('bold', fg("yellow$movie_disk_no", $foo{$movie})),
-    fg('blue4', $movie),
+    (-f "$foo{$movie}/$movie") ? ls_color($movie) : fg('blue4', $movie),
   );
   $i++;
 }
@@ -44,7 +45,6 @@ sub find {
 
   for my $disk(@disks) {
     for my $movie(glob("$disk/*")) {
-      next if ! -d $movie;
       if($movie =~ s;(.+)/(.+)$;$2;) {
         my $mountpoint = $1;
         if($movie =~ /$term/i) {
