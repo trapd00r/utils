@@ -1,6 +1,5 @@
 #!/usr/bin/perl -w
 
-# typo setting part
 use strict;
 use utf8;
 use LWP::UserAgent;
@@ -14,12 +13,13 @@ use Net::Google::TLD qw(get_url_by_tld);
 use constant DEFAULT_RULE => 'com';
 
 my %options = (
-  locale => q{},
-  help => 0,
+  locale => 'com',
+  help   => 0,
 );
 
 # Need -CA for utf8 ARGV support under(?) 5.8 or use decode
-my $query = decode('utf-8',$ARGV[0]) || 'insansiate'; # bad here , combine with Getopt later
+# Hmm...
+my $query = decode('utf-8',$ARGV[0]) // 'insansiate';
 GetOptions(
   'locale=s' => \$options{locale},
   'help|h' => \$options{help},
@@ -30,7 +30,7 @@ pod2usage({
   -verbose => 1,
 }) if $options{help};
 
-my $used_rule;
+my $used_rule = $options{locale};
 my %rules = (
   com => {
     re  => '<b><i>(.+)</i></b>',
@@ -40,23 +40,16 @@ my %rules = (
   },
 );
 
-for (keys %rules) {
-  $rules{$_}{url} = 'http://'.(get_url_by_tld($_))[0];
-}
-
-if (exists( $rules{ $options{locale} } )) {
-  $used_rule = $rules{ $options{locale} };
-}
-else {
-  # default
-  $used_rule = $rules{+DEFAULT_RULE};
-}
+map { $rules{$_}->{url} = 'http://' . (get_url_by_tld($_))[0] } keys %rules;
 
 my $lwp = LWP::UserAgent->new(agent => 'Mozilla');
-my $lwp_response = $lwp->get($used_rule->{url}.'/search?q='.$query) or die $!;
 
-if ($lwp_response->decoded_content =~ m[<a.*?class=spell>(.*?)</a>]s) {
-  if ($1 =~ m[$used_rule->{re}]) {
+my $response = $lwp->get(
+  "$rules{ $options{locale} }->{url}/search?q=$query"
+) or die $!;
+
+if ($response->decoded_content =~ m[<a.*?class=spell>(.*?)</a>]s) {
+  if ($1 =~ m[$rules{$used_rule}->{re}]) {
     print "$1\n";
     exit;
   }
@@ -71,44 +64,38 @@ typo - A tiny tool that can help you detect your typos in input
 
 =head1 SYNOPSIS
 
-perl typo [input] [-h|--help|--locale=your_locale]
+  typo [input] [-h|--help|--locale=your_locale]
 
 =head1 OPTIONS
 
-=over 4
+  -l, --locale  set prefered locale
+  -s, --show    show available locales
 
-=item *
+  -h, --help    show the help and exit
 
--h|--help
-
-Print a brief help message and exits.
-
-=item *
-
---locale=<your_locale>
-
-You can choose preferred locale here ! 
-
-Supported locales :
-
-{
-
-  com => 'google.com',  #default
-  tw  => 'google.com.tw',
-
-}
-
-=back
-
-=head1 OPTIONS
+=head1 AUTHOR
 
   Magnus Woldrich
   CPAN ID: WOLDRICH
   magnus@trapd00r.se
   http://japh.se
 
+=head1 CONTRIBUTORS
+
   EragonJ
   eragonj@hax4.in
   http://eragonj.hax4.in
 
+=head1 COPYRIGHT
+
+Copyright 2010, 2011 B<THIS MODULE>s L</AUTHOR> and L</CONTRIBUTORS> as listed
+above.
+
+=head1 LICENSE
+
+This program is free software; you may redistribute it and/or modify it under
+the same terms as Perl itself.
+
 =cut
+
+# vim: set ts=2 et sw=2:
