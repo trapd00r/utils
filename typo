@@ -1,5 +1,12 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 use strict;
+
+BEGIN {
+  our($VERSION);
+
+  $VERSION = '0.050';
+};
+
 use utf8;
 use LWP::UserAgent;
 use Getopt::Long;
@@ -8,7 +15,7 @@ use Encode;
 use Net::Google::TLD qw(get_url_by_tld);
 
 my %options = (
-  locale => 'com',
+  l
   help   => 0,
 );
 
