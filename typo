@@ -57,15 +57,9 @@ my $lwp_response = $lwp->get($used_rule->{url}.'/search?q='.$query) or die $!;
 
 if ($lwp_response->decoded_content =~ m[<a.*?class=spell>(.*?)</a>]s) {
   if ($1 =~ m[$used_rule->{re}]) {
-    print_result($query,$1);
+    print "$1\n";
     exit;
   }
-}
-
-sub print_result {
-  my ($searchTerm,$correctTerm) = @_;
-  printf "%16s %s\n%16s %s\n",
-         'Search Term:', $searchTerm, 'After corrected:', $correctTerm;
 }
 
 
