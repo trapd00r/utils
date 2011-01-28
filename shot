@@ -1,8 +1,8 @@
 #!/bin/sh
 if [ $@ ]; then
-  DNAME="scrots/$1"
+  DNAME="$1"
   ssh -p 19216 scp1@192.168.1.100 "mkdir -p http/japh.se/scrots/$DNAME"
-  echo "http/japh.se/scrots/$DNAME"
+  echo "http/i.japh.se/$DNAME"
 else
   DNAME="scrots"
 fi
