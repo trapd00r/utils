@@ -6,7 +6,6 @@ BEGIN {
 
   $VERSION = '0.050';
 };
-
 use utf8;
 use LWP::UserAgent;
 use Getopt::Long;
@@ -15,22 +14,20 @@ use Encode;
 use Net::Google::TLD qw(get_url_by_tld);
 
 my %options = (
-  l
+  locale => 'com',
   help   => 0,
 );
 
 # Need -CA for utf8 ARGV support under(?) 5.8 or use decode
 # Hmm...
 my $query = decode('utf-8',$ARGV[0]) // 'insansiate';
+
+our($opt_show_locales);
 GetOptions(
   'locale=s' => \$options{locale},
-  'help|h' => \$options{help},
+  'show'     => \$opt_show_locales,
+  'help|h'   => sub { pod2usage(verbose => 1, exitval => 1,); },
 );
-
-pod2usage({
-  -exitval => 1,
-  -verbose => 1,
-}) if $options{help};
 
 my $used_rule = $options{locale};
 my %rules = (
@@ -41,6 +38,12 @@ my %rules = (
     re  => '<em>(.+)</em>',
   },
 );
+
+if($opt_show_locales) {
+  print "$_\n" for keys %rules;
+  exit;
+}
+
 
 map { $rules{$_}->{url} = 'http://' . (get_url_by_tld($_))[0] } keys %rules;
 
