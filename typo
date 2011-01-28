@@ -1,16 +1,11 @@
 #!/usr/bin/perl -w
-
 use strict;
 use utf8;
 use LWP::UserAgent;
 use Getopt::Long;
 use Pod::Usage;
-use Data::Dumper;
 use Encode;
 use Net::Google::TLD qw(get_url_by_tld);
-
-# constants
-use constant DEFAULT_RULE => 'com';
 
 my %options = (
   locale => 'com',
