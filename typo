@@ -9,7 +9,6 @@ use Pod::Usage;
 use Data::Dumper;
 use Encode;
 use Net::Google::TLD qw(get_url_by_tld);
-binmode(STDOUT,':encoding(utf8)');
 
 # constants
 use constant DEFAULT_RULE => 'com';
