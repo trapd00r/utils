@@ -3,9 +3,10 @@ use vars qw($VERSION);
 $VERSION = '0.02';
 
 use strict;
+use Cwd;
 use File::Copy;
 use File::Path qw(make_path);
-use Term::ExtendedColor qw(fg);
+use Term::ExtendedColor ':attributes';
 
 my $remote_host   = '192.168.1.100';
 my $remote_port   = '19216';
@@ -40,9 +41,22 @@ sub pass_on {
   }
 
   elsif($_[0] eq 'dist') {
+    my ($project) = cwd() =~ m|.*/(.+)$|m;
+    $project =~ s/::/-/g;
+
+    if(-f 'Makefile') {
+      system("/usr/bin/make clean");
+    }
+    system('perl Makefile.PL');
     system("/usr/bin/make", 'dist');
     for(glob('*.tar.gz')) {
       print "\n>> " . fg('orange3', fg('bold', $_)) . " <<\n\n";
+      system("ssh -p $remote_port $remote_user\@$remote_host 'mkdir -p http/japh.se/perl/devel/$project'")
+        == 0 or die($!);
+      $remote_dest .= "/$project";
+
+      print "\n\n", bold(fg('red1', "Sending $_ to $remote_dest")), "\n\n";
+
       scp($remote_host, $remote_port, $remote_dest, $_);
       make_path("$ENV{HOME}/devel/Distributions");
       move($_, "$ENV{HOME}/devel/Distributions")  or die("move $_: $!");
