@@ -55,9 +55,14 @@ sub pass_on {
         == 0 or die($!);
       $remote_dest .= "/$project";
 
-      print "\n\n", bold(fg('red1', "Sending $_ to $remote_dest")), "\n\n";
+      print "\n\n", "Sending @{[bold($_)]} to @{[fg('green14', bold($remote_dest))]}", "\n\n";
 
       scp($remote_host, $remote_port, $remote_dest, $_);
+      print "\n\nContent in @{[fg('blue4', bold($remote_dest))]}:\n\n";
+
+      system("ssh -p $remote_port $remote_user\@$remote_host '/bin/ls -1 http/japh.se/perl/devel/$project'");
+
+      print "\n\n";
       make_path("$ENV{HOME}/devel/Distributions");
       move($_, "$ENV{HOME}/devel/Distributions")  or die("move $_: $!");
     }
