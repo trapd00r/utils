@@ -63,6 +63,7 @@ sub pass_on {
       system("ssh -p $remote_port $remote_user\@$remote_host '/bin/ls -1 http/japh.se/perl/devel/$project'");
 
       print "\n\n";
+      print "http://perl.japh.se/devel/$project\n";
       make_path("$ENV{HOME}/devel/Distributions");
       move($_, "$ENV{HOME}/devel/Distributions")  or die("move $_: $!");
     }
