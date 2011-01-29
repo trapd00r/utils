@@ -1,0 +1,88 @@
+#!/usr/bin/perl
+# imv - watch a dir and scp all created files therein to another host
+use strict;
+use Linux::Inotify2;
+use Getopt::Long;
+
+my $DEBUG = 0;
+
+my $dest    = '/mnt/Music_3/.torrents/';
+my $log     = "$ENV{HOME}/.mvtorrents.log";
+my $pidfile = '/tmp/mvtorrents.pid';
+
+
+GetOptions(
+  k => \&killkid,
+  d => \$DEBUG,
+);
+
+my $what = shift // "$ENV{HOME}/TorrentsToServer";
+
+if(!-d $what) {
+  print STDERR "$what is not a directory, bye\n";
+  exit(1);
+}
+
+daemonize($log) unless($DEBUG);
+watch($what);
+
+sub watch {
+  my $dir = shift;
+  my $n = Linux::Inotify2->new;
+
+  $n->watch($dir, IN_CREATE) or die($!);
+
+
+  while(my @events = $n->read) {
+    for my $event(@events) {
+      sleep 2;
+      if($event->{name} =~ m/\.torrent$/) {
+        print localtime(time) . "\tIN_CREATE\t$event->{name} => $dest\n";
+        system("scp -P 19216 $what/$event->{name} scp1\@192.168.1.100:$dest");
+      }
+    }
+  }
+  return 0;
+}
+
+sub daemonize {
+  my $daemon_log = shift // '/dev/null';
+  use POSIX 'setsid';
+  my $PID = fork();
+  exit(0) if($PID); #parent
+  exit(1) if(!defined($PID)); # out of resources
+
+  setsid();
+  $PID = fork();
+  exit(1) if(!defined($PID));
+
+  if($PID) { # parent
+    waitpid($PID, 0);
+    unlink($pidfile); # remove the lock when child have died
+    exit(0);
+  }
+  elsif($PID == 0) { # child
+    open(my $fh, '>', $pidfile) or die("Cant open $pidfile: $!");
+    print $fh $$;
+    close($fh);
+    open(STDOUT, '>', $daemon_log);
+    open(STDERR, '>', '/dev/null');
+    open(STDIN,  '<', '/dev/null');
+  }
+}
+
+sub killkid {
+  open(my $fh, '<', $pidfile) or print "imv is not running\n" and exit(1);
+  my $target = <$fh>;
+  close($fh);
+
+  if(kill(9, $target)) {
+    print "imv with PID $target terminated\n";
+  }
+  else {
+    print "Could not kill $target: $!";
+  }
+  exit(0);
+}
+
+

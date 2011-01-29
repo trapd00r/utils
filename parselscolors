@@ -1,0 +1,16 @@
+#!/usr/bin/perl
+use strict;
+
+my $i = 0;
+for(split(/:/, $ENV{LS_COLORS})) {
+  my($ft,$color) = $_ =~ /\*\.(.+)=(.+)/;
+  if(!@ARGV) {
+    printf("\e[$color%s %10s\e[m\n", 'm', $ft);
+    $i++;
+  }
+  else {
+    open(my $fh, '>', "ls_color.$ft");
+    close($fh);
+  }
+}
+print "\n";
