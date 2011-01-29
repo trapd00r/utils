@@ -1,2 +1,0 @@
-#!/bin/bash
-file $(which "$@")

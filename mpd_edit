@@ -25,7 +25,7 @@ sub _valid_list {
 }
 
 sub _edit {
-  system("$ENV{HOME}/devel/utils/vim",
+  system("$ENV{HOME}/devel/time-spent-in-vim/vim",
     @_,
   );
 }
