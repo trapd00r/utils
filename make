@@ -7,6 +7,8 @@ use Cwd;
 use File::Copy;
 use File::Path qw(make_path);
 use Term::ExtendedColor ':attributes';
+use File::LsColor qw(ls_color);
+
 
 my $remote_host   = '192.168.1.100';
 my $remote_port   = '19216';
@@ -55,7 +57,9 @@ sub pass_on {
         == 0 or die($!);
       $remote_dest .= "/$project";
 
-      print "\n\n", "Sending @{[bold($_)]} to @{[fg('green14', bold($remote_dest))]}", "\n\n";
+      printf("\n\nSending %s to %s\n\n",
+        ls_color($_), fg('green14', bold($remote_dest)),
+      );
 
       scp($remote_host, $remote_port, $remote_dest, $_);
       print "\n\nContent in @{[fg('blue4', bold($remote_dest))]}:\n\n";
