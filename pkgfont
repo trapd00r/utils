@@ -1,7 +1,7 @@
 #!/usr/bin/perl
-# list packages which includes fonts
+# List packages that includes fonts
 use strict;
-use Data::Dumper;
+use File::LsColor qw(ls_color);
 
 my %font_pkgs;
 open(my $pacman, '-|', 'pacman -Ql') or die($!);
@@ -12,6 +12,6 @@ while(<$pacman>) {
 for my $pkg(sort(keys(%font_pkgs))) {
   printf("\t\e[31;1m%s\e[0m => [\n", $pkg);
   for my $font(@{$font_pkgs{$pkg}}) {
-    print "\t\t$font\n";
+    print "\t\t", ls_color($font), "\n";
   }
 }
