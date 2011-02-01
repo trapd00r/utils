@@ -1,12 +1,13 @@
 #!/usr/bin/perl
-our $APP     = 'prename';
-our $VERSION = '0.1.2-fork';
+use strict;
+my $APP      = 'prename';
+our $VERSION = '0.160';
 use strict;
 
 use Getopt::Long;
 use Pod::Usage;
-use String::Utils 'longest';
-use Term::ExtendedColor qw(fg);
+use String::Utils qw(longest);
+use File::LsColor qw(ls_color);
 
 my ($verbose, $no_act, $force);
 
@@ -32,12 +33,10 @@ if(!@ARGV) {
   chomp(@ARGV);
 }
 
-my $max_str_len = longest(@ARGV);
-for(@ARGV) {
-  #print "$_ => " . length($_), "\n";
-}
 
-for(@ARGV) {
+my $max_len = longest(@ARGV);
+
+for(sort(@ARGV)) {
   my $was = $_;
 
   eval($re);
@@ -49,12 +48,11 @@ for(@ARGV) {
     print STDERR "$was not renamed: $_ already exists\n";
   }
   elsif(($no_act) or (rename($was, $_))) {
-    if(-d $was) {
-      printf("\e[32m\e[1m%${max_str_len}s\e[0m => \e[34m\e[1m%s\e[0m\n", $was, $_);
-    }
-    else {
-      printf("\e[32m%${max_str_len}s\e[0m => \e[34m%s\e[0m\n", $was, $_);
-    }
+    # Thank you mauke        ↓
+    print ls_color(sprintf('%*s', $max_len, $was)), ' => ', ls_color($_), "\n";
+
+    # This breaks perl.vim :)
+    #printf("@{[ls_color(sprintf(\"%${max_len}s\", $was))]} => %s\n", ls_color($_));
   }
   else {
     print STDERR "Can't rename $was => $_: $!\n";
@@ -72,7 +70,7 @@ sub usage {
 
 rename - renames multiple files
 
-=head1 SYNreSIS
+=head1 SYNOPSIS
 
 B<rename> S<[ B<-v> ]> S<[ B<-n> ]> S<[ B<-f> ]> I<perlexpr> S<[ I<files> ]>
 
