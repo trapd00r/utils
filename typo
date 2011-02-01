@@ -4,7 +4,7 @@ use strict;
 BEGIN {
   our($VERSION);
 
-  $VERSION = '0.050';
+  $VERSION = '0.051';
 };
 use utf8;
 use LWP::UserAgent;
@@ -20,9 +20,11 @@ my %options = (
 
 # Need -CA for utf8 ARGV support under(?) 5.8 or use decode
 # Hmm...
-my $query = decode('utf-8',$ARGV[0]) // 'insansiate';
 
-our($opt_show_locales);
+my $query = decode('utf-8', shift);
+defined($query) or $query = 'insansiate';
+
+my $opt_show_locales;
 GetOptions(
   'locale=s' => \$options{locale},
   'show'     => \$opt_show_locales,
