@@ -1,0 +1,80 @@
+#!/usr/bin/perl
+use strict;
+use vars qw($VERSION);
+my $APP  = q{colorclock};
+$VERSION = '0.002';
+
+#use Data::Dumper;
+#
+#{
+#  package Data::Dumper;
+#  no strict 'vars';
+#  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
+#  $Quotekeys = 0;
+#}
+
+use Term::ExtendedColor qw(:attributes);
+use Term::ExtendedColor::Xresources qw(set_xterm_color);
+
+$SIG{INT} = sub { print qq{\e[?25h\e[m\n} and exit; };
+
+$|++;
+print qq{\e[?25l};
+while(1) {
+  my($s, $m, $h) = map { sprintf(qq{%02d}, $_) } (localtime)[0..2];
+  print  values %{ set_xterm_color({ 0 => qq{$h$m$s}}) };
+  printf(qq{%s\r},  bg(0, qq{  $h$m$s  }));
+  sleep 1;
+}
+
+
+
+
+__END__
+
+
+=pod
+
+=head1 NAME
+
+colorclock
+
+=head1 USAGE
+
+  colorclock
+
+=head1 OPTIONS
+
+None.
+
+=head1 REPORTING BUGS
+
+Report bugs and/or feature requests on rt.cpan.org, the repository issue tracker
+or directly to L<magnus@trapd00r.se>
+
+=head1 AUTHOR
+
+  Magnus Woldrich
+  CPAN ID: WOLDRICH
+  magnus@trapd00r.se
+  http://japh.se
+
+=head1 CONTRIBUTORS
+
+None required yet.
+
+=head1 COPYRIGHT
+
+Copyright 2011 B<THIS APPLICATION>s L</AUTHOR> and L</CONTRIBUTORS> as listed
+above.
+
+=head1 LICENSE
+
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=head1 SEE ALSO
+
+=cut
+
+# vim: set ts=2 et sw=2:
