@@ -1,8 +1,9 @@
 #!/usr/bin/perl
-our $APP      = 'git-rec';
-our $VERSION  = 0.1;
-
 use strict;
+
+my $APP       = 'git-rec';
+our $VERSION  = '0.200';
+
 use Getopt::Long;
 use Pod::Usage;
 
@@ -10,9 +11,12 @@ usage() if !@ARGV;
 
 our($cmd, $dir, $branch) = (undef) x 3;
 GetOptions(
-  'cmd:s'    => \$cmd,
-  'dir:s'    => \$dir,
-  'branch:s' => \$branch,
+  'c|md:s'    => \$cmd,
+  'd|ir:s'    => \$dir,
+  'b|ranch:s' => \$branch,
+  'h|help'    => sub { pod2usage(verbose => 1) and exit; },
+  'm|man'     => sub { pod2usage(verbose => 3) and exit; },
+  'v|version' => sub { print "$APP v$VERSION\n" and exit; },
 );
 
 ($cmd)    = $cmd    ? $cmd    : 'pull';
@@ -104,28 +108,41 @@ sub usage {
 
 =head1 NAME
 
-git-rec - do git stuff recursively
+git-rec - perform git stuff recursively
 
-=head1 DESCRIPTION
+=head1 SYNOPSIS
+
+  git-rec -d [DIRECTORY] -c [COMMAND] -b [BRANCH]
 
 =head1 OPTIONS
 
-  -c,   --cmd     git cmd
-  -d,   --dir     start dir
-  -b,   --branch  branch
+  -d,   --dir       root directory; default: $HOME/devel
+  -c,   --cmd       git command; default: pull
+  -b,   --branch    branch; default: master
+
+  -h,   --help      show the help and exit
+  -v,   --version   show version info and exit
+  -m,   --man       show the manpage and exit
 
 =head1 AUTHOR
 
-Written by Magnus Woldrich
+  Magnus Woldrich
+  CPAN ID: WOLDRICH
+  magnus@trapd00r.se
+  http://japh.se
 
-=head1 REPORTING BUGS
+=head1 CONTRIBUTORS
 
-Report bugs to trapd00r@trapd00r.se
+None required yet.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2010 Magnus Woldrich
+Copyright 2011 B<THIS PROGRAM>s L</AUTHOR> and L</CONTRIBUTORS> as listed above.
 
-License GPLv2
+=head1 LICENSE
+
+This program is free software; you may redistribute it and/or modify it under
+the same terms as Perl itself.
 
 =cut
+
