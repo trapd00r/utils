@@ -13,6 +13,7 @@ $VERSION = '0.002';
 #  $Quotekeys = 0;
 #}
 
+
 use Term::ExtendedColor qw(:attributes);
 use Term::ExtendedColor::Xresources qw(set_xterm_color);
 
@@ -23,7 +24,7 @@ print qq{\e[?25l};
 while(1) {
   my($s, $m, $h) = map { sprintf(qq{%02d}, $_) } (localtime)[0..2];
   print  values %{ set_xterm_color({ 0 => qq{$h$m$s}}) };
-  printf(qq{%s\r},  bg(0, qq{  $h$m$s  }));
+  printf(qq{%s\r},  bg(0, qq{  $h$m$s  } ));
   sleep 1;
 }
 
