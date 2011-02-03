@@ -1,0 +1,47 @@
+#!/usr/bin/perl
+use strict;
+use Storable;
+use Term::ExtendedColor qw[:attributes];
+
+my $movie_db = "$ENV{HOME}/.movie.db";
+
+my @disks = map { qq[/mnt/Movies_$_] } ( 1 .. 4 );
+
+my %all = %{ retrieve_db() };
+
+
+my($i, $j) = (0) x 2;
+while(<STDIN>) {
+  chomp;
+  ++$i;
+  for my $movie(sort(keys(%all))) {
+    if($movie eq $_) {
+      ++$j;
+      printf("%s\n\t=> %s\n",
+        $_, fg(172, "$all{$movie}/") . fg(208, bold($movie)));
+    }
+  }
+}
+print "\n$j of $i movies already present\n";
+
+
+sub retrieve_db {
+  if(-f $movie_db) {
+    return retrieve($movie_db);
+  }
+
+  generate_db();
+}
+
+sub generate_db {
+  my $struct;
+  my $i = 0;
+  for my $d(@disks) {
+    for my $file(glob("$d/*")) {
+      my($base) = $file =~ m|.+/(.+)$|;
+      $struct->{$base} = $d;
+    }
+  }
+  store($struct, $movie_db);
+  return $struct;
+}
