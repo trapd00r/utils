@@ -1,0 +1,38 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Carp;
+use Getopt::Long qw[GetOptions];
+use Term::ExtendedColor qw[:attributes];
+
+our @foo = (42, undef, ['arrayref', 12], &foo);
+
+sub foo { 'foo() resolved'; }
+
+for my $sig(keys(%SIG)) {
+  $SIG{$sig} = sub { croak("bye\n") };
+}
+
+{
+  no strict 'refs';
+  no warnings 'uninitialized';
+
+  for my $k((keys(%{ __PACKAGE__ . '::' }))) {
+    if(%{"::$k"}) {
+      print '-' x 80, "\n";
+      printf("%60.80s\t=> {\n", fg('red1', bold('%')) . bold($k));
+      for my $m(keys(%{"::$k"})) {
+        printf("%35.35s => %s\n", $m, ${"::$k"}{$m});
+      }
+      print "\t},\n";
+    }
+    printf("%35.35s => %s\n", "\$" . $k, ${"::$k"}) unless(!defined(${"::$k"}));
+
+    if(@{"::$k"}) {
+      print '-' x 80, "\n";
+      printf("%60.80s\t=> [\n", fg('green10', bold('@')) . bold($k));
+      print "\t\t\t\t\t$_\n" for @{"::$k"};
+      print "\t],\n";
+    }
+  }
+}
