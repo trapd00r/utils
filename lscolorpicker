@@ -2,48 +2,6 @@
 use strict;
 use Term::ExtendedColor qw(fg bg);
 
-=for environment
-
-There's no reliable way of setting environment variables for the parent process.
-This  means that
-
-  system("export LS_COLORS=\$EXPORT");
-
-will happily change the LS_COLORS environment variable for the B<child> process,
-and then exit.
-
-A solution would be to write the command ( export ... ) to a file, and source
-that from within a shellscript:
-
-  print $fh $EXPORT
-
-and later, in the shell:
-
-  source my_file.sh
-
-Or use B<eval> (or backticks, or $()):
-
-  eval `perl this_script.pl`
-
-The problem here is that we output a colored square along with instructions as
-well.
-
-I 'solved' this by printing everything except the actual export command to
-STDERR - $() will only take input from STDOUT, so we can simply do this:
-
-  $(perl this_script.pl)
-
-A further improvement would probably be to put that into a shellscript, and let
-the shellscript execute this program, so the user can simply do
-
-  sh foobar.sh
-
-instead.
-
-It's ugly. But it works!
-
-=cut
-
 my $EXPORT;
 my %ls_colors = (
   normal                  => 'no',
