@@ -1,0 +1,116 @@
+#!/usr/bin/perl
+use strict;
+our $VERSION = '0.001';
+
+use Storable;
+use File::Find::Rule;
+use Term::ExtendedColor qw[:attributes];
+use Getopt::Long;
+use File::LsColor qw[ls_color];
+
+my $music_db = "$ENV{HOME}/.music_full.db";
+
+my @disks = map { qq[/mnt/Music_$_] } ( 1 .. 7 );
+
+
+my $r = generate_db();
+
+all( $r );
+#artist_query('Laleh');
+
+#my $artist = shift // 'Laleh';
+#print Dumper $r{artist}{$artist};
+
+sub artist_query {
+  my($s, $query_artist) = @_;
+
+  for my $artist(sort(keys(%{$s->{artist}{$query_artist}}))) {
+    print bg('red3', $artist), "\n";
+    for my $year(sort(keys(%{$s->{artist}{$artist}->{year}}))) {
+      my @albums = map { m|.+/(.+)$| } @{$s->{artist}{$artist}->{year}{$year}};
+      printf("%s   %s\n", fg('blue4', bold($year)), join("\n  '--> ", @albums));
+    }
+    print "\n\n\n";
+  }
+}
+
+sub all {
+  my $s = shift;
+
+  for my $artist(sort(keys(%{$s->{artist}}))) {
+    print bg('red3', $artist), "\n";
+    for my $year(sort(keys(%{$s->{artist}{$artist}->{year}}))) {
+      my @albums = map { m|.+/(.+)$| } @{$s->{artist}{$artist}->{year}{$year}};
+      printf("%s   %s\n", fg('blue4', bold($year)), join("\n  '--> ", @albums));
+    }
+    print "\n\n\n";
+  }
+}
+
+
+sub generate_db {
+  if(-f $music_db) {
+    return retrieve($music_db);
+  }
+  my $struct;
+  my $i = 0;
+  for my $d(@disks) {
+    my $rule = File::Find::Rule->new;
+    $rule->directory;
+    $rule->maxdepth(1);
+
+    for my $album($rule->in( glob("$d/*" ))) {
+      # Biogenesis_-_Escape_The_Illusion-2010-UPE
+      my($base) = $album =~ m|.*/(.+/.+)$|;
+
+      my($year, $group, $artist) = (0, 'UNKNOWN', undef);
+      if($base =~ m|-(\d{4})-(.+)$|) {
+        $year  = $1;
+        $group = $2;
+      }
+      if($base =~ m|(\w+)-|) {
+        $artist = $1;
+        $artist =~ s/_/ /g;
+      }
+      $artist =~ s/\s+$//;
+      $artist =~ s/^\s+//;
+      push(@{$struct->{artist}{$artist}->{year}{$year}}, $album);
+    }
+  }
+  store($struct, $music_db);
+  return $struct;
+}
+
+
+__END__
+
+=pod
+
+=head1 NAME
+
+music_query
+
+=head1 OPTIONS
+
+
+=head1 AUTHOR
+
+  Magnus Woldrich
+  CPAN ID: WOLDRICH
+  magnus@trapd00r.se
+  http://japh.se
+
+=head1 CONTRIBUTORS
+
+None required yet.
+
+=head1 COPYRIGHT
+
+Copyright 2011 B<music_query>s L</AUTHOR> and L</CONTRIBUTORS> as listed above.
+
+=head1 LICENSE
+
+This program is free software; you may redistribute it and/or modify it under
+the same terms as Perl itself.
+
+=cut
