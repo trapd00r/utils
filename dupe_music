@@ -1,0 +1,181 @@
+#!/usr/bin/perl
+use strict;
+our $VERSION = '0.001';
+
+use Storable;
+use File::Find::Rule;
+use Term::ExtendedColor qw[:attributes];
+use Getopt::Long;
+#use Text::Wrap;
+#use File::PatternMatch qw[patternmatch];
+use File::LsColor qw[ls_color];
+
+my $music_db = "$ENV{HOME}/.music.db";
+
+my @disks = map { qq[/mnt/Music_$_] } ( 1 .. 7 );
+
+my %r = %{ retrieve_db() };
+
+GetOptions(
+  'a|artist'   => \&by_artist,
+  'i|a|all'    => \&print_all,
+  'd|dupe'     => \&dupe,
+
+  'g|gen'      => \&generate_db,
+
+  'h|help'     => sub { pod2usage(verbose => 1) and exit; },
+  'm|man'      => sub { pod2usage(verbose => 3) and exit; },
+  'v|version'  => sub { print "dupe_music v$VERSION\n" and exit; },
+);
+
+sub by_artist {
+  my($prev);
+
+  my %artist_dump;
+  #local $Text::Wrap::columns = 80;
+  #local $Text::Wrap::break  = '[\s,]';
+
+  for my $album(sort(keys(%r))) {
+    my($artist) = $album =~ m|^.+/(\w+)|;
+    push(@{$artist_dump{$artist}}, "$r{$album}/$album");
+  }
+  for my $artist(sort(keys(%artist_dump))) {
+    if($prev ne $artist) {
+      $prev = $artist;
+    }
+    else {
+      print "\n\n";
+    }
+    my $artist_friendly = $artist;
+    $artist_friendly =~ s/_/ /g;
+
+    my $no_albums = scalar(@{$artist_dump{$artist}}); 
+
+    if($ENV{TERM} =~ m/^xterm/) {
+
+      $no_albums = sprintf(" (%d album%s)",
+        $no_albums, ($no_albums == 1) ? '' : 's',
+      );
+
+      printf("%s\n%s\n",
+        "\e#3" . fg('yellow9', $artist_friendly)
+          . $no_albums
+          . "\n\e#4" . fg('yellow17', $artist_friendly)
+          . $no_albums,
+
+        join("\n", map { ls_color($_) } @{$artist_dump{$artist}}),
+      );
+    }
+    else {
+      printf("%s ($no_albums album%s)\n%s\n",
+        $artist_friendly,
+        ($no_albums == 1) ? '' : 's',
+        join("\n", map { ls_color($_) } @{$artist_dump{$artist}}),
+      );
+    }
+  }
+}
+
+
+sub print_all {
+  my($prev);
+
+  for my $album(sort(keys(%r))) {
+    my($c) = $album =~ m/^(.)/;
+    if($prev ne $c) {
+      $prev = $c;
+      print "\n", fg('red1', bold($c)), "\n\n";
+    }
+    print "$album\n";
+  }
+}
+
+sub dupe {
+  my($prev_a, $prev_d, $dupe);
+  for my $album(sort(keys(%r))) {
+    if($prev_a =~ m/\Q$album\E/i) {
+      if( (-d "$prev_d/$prev_a") and (-d "$r{$album}/$album") ) {
+        print "$prev_d/$prev_a\n";
+        print "\t$r{$album}/$album\n";
+        print "\n";
+        $dupe++;
+      }
+    }
+    else {
+      $prev_a = $album;
+      $prev_d = $r{$album};
+    }
+    #printf("%s/%s\n", $r{$album}, $album);
+  }
+  printf("%d duplicate albums found in @disks\n", $dupe);
+  return;
+}
+
+
+sub retrieve_db {
+  if(-f $music_db) {
+    return retrieve($music_db);
+  }
+  generate_db();
+}
+
+sub generate_db {
+  my $struct;
+  my $i = 0;
+  for my $d(@disks) {
+    my $rule = File::Find::Rule->new;
+    $rule->directory;
+    $rule->maxdepth(1);
+
+    for my $album($rule->in( glob("$d/*" ))) {
+      my($base) = $album =~ m|.*/(.+/.+)$|;
+      $struct->{$base} = $d;
+      print "$album\n";
+    }
+  }
+  store($struct, $music_db);
+  return $struct;
+}
+
+
+__END__
+
+=pod
+
+=head1 NAME
+
+dupe_music
+
+=head1 OPTIONS
+
+  -a,   --artist    list all albums, by artist
+  -i,   --all       list all albums, sorted
+  -d,   --dupe      list all duplicate albums
+
+  -g,   --gen       regenerate the database
+
+  -v,   --version   show version info and exit
+  -h,   --help      show the help and exit
+  -m,   --man       show the manpage and exit
+
+=head1 AUTHOR
+
+  Magnus Woldrich
+  CPAN ID: WOLDRICH
+  magnus@trapd00r.se
+  http://japh.se
+
+=head1 CONTRIBUTORS
+
+None required yet.
+
+=head1 COPYRIGHT
+
+Copyright 2011 B<dupe_music>s L</AUTHOR> and L</CONTRIBUTORS> as listed above.
+
+=head1 LICENSE
+
+This program is free software; you may redistribute it and/or modify it under
+the same terms as Perl itself.
+
+=cut
