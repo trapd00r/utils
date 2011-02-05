@@ -17,6 +17,5 @@ sub _mkdir {
     printf("mkdir: created directory '%s'\n", fg('red1', fg('bold', $dir)));
   }
   else {
-    print "mkdir: $!\n";
   }
 }
