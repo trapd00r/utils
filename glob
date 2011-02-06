@@ -1,0 +1,69 @@
+#!/usr/bin/perl
+use strict;
+use vars qw($VERSION);
+$VERSION = '0.002';
+
+use File::LsColor qw(ls_color);
+use subs qw(glob);
+
+
+my $where = shift // '.';
+
+print ls_color($_), "\n" for sort(glob( shift ));
+
+
+
+sub glob {
+  my $re    = shift // '.*';
+
+  opendir(my $dir, $where) or die $!;
+  return grep{!/^..?$/} grep{ /$re/ } readdir($dir);
+}
+
+
+
+
+
+__END__
+
+
+=pod
+
+=head1 NAME
+
+glob
+
+=head1 USAGE
+
+  glob [DIR] [PATTERN]
+
+=head1 DESCRIPTION
+
+=head1 OPTIONS
+
+=head1 AUTHOR
+
+  Magnus Woldrich
+  CPAN ID: WOLDRICH
+  magnus@trapd00r.se
+  http://japh.se
+
+=head1 CONTRIBUTORS
+
+None required yet.
+
+=head1 COPYRIGHT
+
+Copyright 2011 B<THIS APPLICATION>s L</AUTHOR> and L</CONTRIBUTORS> as listed
+above.
+
+=head1 LICENSE
+
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=head1 SEE ALSO
+
+=cut
+
+# vim: set ts=2 et sw=2:
