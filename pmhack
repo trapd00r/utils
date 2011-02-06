@@ -1,0 +1,138 @@
+#!/usr/bin/perl
+use strict;
+use vars qw($VERSION);
+my $APP  = 'pmhack';
+$VERSION = '0.012';
+
+use Carp              qw(croak);
+use File::Copy        qw(cp);
+use File::Path        qw(make_path);
+use Getopt::Long      qw(GetOptions);
+use File::Find::Rule; qw();
+
+
+# module_colon => Term::ExtendedColor
+# module_slash => Term/ExtendedColor
+
+sub load {
+  my $module_colon = shift // 'Term::ExtendedColor';
+  my $module_slash = get_slashed_module( $module_colon );
+
+  # $HOME/hacklib/  => $HOME/hacklib/lib
+
+  my $PERL5HACKLIB = $ENV{PERL5HACKLIB} // '.';
+
+  if( ($PERL5HACKLIB !~ /lib/) or (!('lib' ~~ glob("$PERL5HACKLIB/*"))) ) {
+    $PERL5HACKLIB .= '/lib';
+  }
+  if(!-d "$PERL5HACKLIB/$module_slash") {
+    if(make_path("$PERL5HACKLIB/$module_slash")) {
+      #printf("mkdir '$PERL5HACKLIB/$module_slash'\n");
+    }
+  }
+
+  my ($module_in_inc) = ( grep {
+    -f "$_/$module_slash.pm" and $_ = "$_/$module_slash.pm"
+  } @INC);
+
+  if(!defined($module_in_inc)) {
+    croak "No such module '$module_colon' in \@INC\n";
+  }
+
+  unshift(@INC, $PERL5HACKLIB);
+
+  my $base = get_base_class( $module_slash );
+
+  if(copy_module($module_in_inc, "$PERL5HACKLIB/$base")) {
+  }
+
+  if(load_module($module_colon)) {
+    return 1;
+    # printf("%s v%s loaded from %s\n",
+    #   $module_colon, $module_colon->VERSION, $INC{"$module_slash.pm"},
+    # );
+  }
+  return;
+}
+
+sub copy_module {
+  my ($from, $to) = @_;
+
+  if(cp($from, $to)) {
+    return 1;
+  }
+  croak($!);
+}
+
+
+sub load_module {
+  my $module = shift;
+  eval "require $module";
+  croak($@) if $@;
+
+  1;
+}
+
+# Term::ExtendedColor::Xresources => Term/ExtendedColor
+sub get_base_class {
+  my $module = shift;
+  my($base) = $module =~ m|^(.+)/.*$|;
+  return $base;
+}
+
+sub get_slashed_module {
+  my $module = shift;
+  $module =~ s|::|/|g;
+  return $module;
+}
+
+
+
+
+__END__
+
+
+=pod
+
+=head1 NAME
+
+pmhack - hack on modules in a safe environment
+
+=head1 USAGE
+
+=head1 DESCRIPTION
+
+=head1 OPTIONS
+
+=head1 REPORTING BUGS
+
+Report bugs and/or feature requests on rt.cpan.org, the repository issue tracker
+or directly to L<magnus@trapd00r.se>
+
+=head1 AUTHOR
+
+  Magnus Woldrich
+  CPAN ID: WOLDRICH
+  magnus@trapd00r.se
+  http://japh.se
+
+=head1 CONTRIBUTORS
+
+None required yet.
+
+=head1 COPYRIGHT
+
+Copyright 2011 B<THIS APPLICATION>s L</AUTHOR> and L</CONTRIBUTORS> as listed
+above.
+
+=head1 LICENSE
+
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=head1 SEE ALSO
+
+=cut
+
+# vim: set ts=2 et sw=2:
+
