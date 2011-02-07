@@ -1,0 +1,24 @@
+#!/usr/bin/perl
+use strict;
+
+# Given number n:
+#   If n is 1 - return 1
+#   If n is 0 - return 0
+# If n is odd, the last bit is 1
+# If n is even, the last bit is 0
+#
+# 42 = 2 * 21       = 10101 . 0 = 101010
+# 21 = 2 * 10 + 1   = 1010  . 1 = 10101
+
+my $runs = 0;
+sub binary {
+  my ($n) = shift;
+  return $n if $n == 1 || $n == 0;
+  my $k = int($n/2);
+  my $b = $n % 2;
+
+  my $r = binary($k);
+  return $r . $b;
+}
+
+print binary(@ARGV), "\n";
