@@ -1,0 +1,11 @@
+#!/usr/bin/perl
+use strict;
+use encoding 'utf8';
+use Text::UpsideDown;
+
+if(@ARGV) {
+  print upside_down(@ARGV), "\n";
+  exit;
+}
+
+print upside_down($_), "\n" while <>;
