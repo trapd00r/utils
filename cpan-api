@@ -1,0 +1,21 @@
+#!/usr/bin/perl
+use strict;
+
+use JSON::XS;
+use LWP::Simple;
+use Data::Dumper;
+$Data::Dumper::Terse     = 1;
+$Data::Dumper::Indent    = 1;
+$Data::Dumper::Useqq     = 1;
+$Data::Dumper::Deparse   = 1;
+$Data::Dumper::Quotekeys = 0;
+$Data::Dumper::Sortkeys  = 1;
+
+
+my $author = shift // 'woldrich';
+my $url_author = 'http://api.metacpan.org/module/_search?q=author:';
+
+#my $str = decode_json( get("$url_author$author") );
+my $str = decode_json( get("$url_author/$author") );
+
+print Dumper $str;
