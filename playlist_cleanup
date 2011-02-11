@@ -1,0 +1,17 @@
+#!/usr/bin/perl
+use strict;
+use Tie::File;
+
+my @playlists = glob("/mnt/Music_1/Playlists/*");
+
+
+for my $p(@playlists) {
+  tie(my @songs, 'Tie::File', $p) or die("Cant tie: $!");
+  my $i = 0;
+  for my $s(@songs) {
+    if(! -f "/mnt/Music_1/$s") {
+      print "/mnt/Music_1/$s\n";
+      splice(@songs, $i, 1) or die($!)
+    }
+  }
+}
