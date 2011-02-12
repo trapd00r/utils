@@ -1,0 +1,2 @@
+#!/usr/bin/perl 
+system($ENV{PAGER} // 'less', "/usr/share/doc/rfc/txt/rfc" . shift // 2324);
