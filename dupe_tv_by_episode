@@ -1,0 +1,75 @@
+#!/usr/bin/perl
+use strict;
+
+# Remove duplicate TV show episodes.
+# Prefer 1080 and 720 over SD.
+#
+# Given these:
+#   Antikrundan.S22E05.SWEDiSH.720p.HDTV.x264-xD2V/
+#   Antikrundan.S22E05.SWEDiSH.HDTV.XviD-D2V/
+# Remove this:
+#   Antikrundan.S22E05.SWEDiSH.HDTV.XviD-D2V/
+# Keep this:
+#   Antikrundan.S22E05.SWEDiSH.720p.HDTV.x264-xD2V/
+
+use Carp                qw(croak);
+use File::Path          qw(remove_tree);
+use Data::Dumper        qw(Dumper);
+use Term::ExtendedColor qw(:attributes);
+
+{
+  package Data::Dumper;
+  no strict 'vars';
+  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
+  $Quotekeys = 0;
+}
+
+my $dir = shift // '/mnt/TV_1/.new';
+
+my %files;
+$files{$_}++ for(glob("$dir/*"));
+
+my %show;
+for my $f(sort(keys(%files))) {
+  my ($base) = $f =~ m{.*/(.+)$};
+  my ($show, $episode) = $base =~ m{^(.+)\.(S[0-9]+E[0-9]+)};
+  next if !defined($episode);
+
+  push(@{$show{$show}->{episode}{$episode}},  $f);
+}
+
+my @hd;
+for my $s(sort(keys(%show))) {
+  for my $e(keys(%{$show{$s}->{episode}})) {
+    if(scalar(@{$show{$s}->{episode}{$e}}) > 1) {
+
+      my $i = 0;
+      for my $dupe(sort(@{$show{$s}->{episode}{$e}})) {
+        if($dupe =~ m{(?:720|1080)}) {
+          push(@hd, $dupe);
+          splice(@{$show{$s}->{episode}{$e}}, $i, 1);
+          next;
+        }
+        else {
+          print "Remove ",
+            bold(fg('red1', sprintf("%67.67s", $dupe))), " [y/N] ";
+          chomp(my $answer = <STDIN>);
+          if(lc($answer) eq 'y') {
+            if(remove_tree($dupe)) {
+              print "removed '$dupe'\n";
+            }
+            else {
+              Carp::croak("remove_tree($dupe) - $!\n");
+            }
+          }
+          else {
+            next;
+          }
+        }
+        $i++;
+      }
+    }
+  }
+}
+
+print Dumper \@hd;
