@@ -1,0 +1,6 @@
+#!/bin/sh
+
+prename 's{\s+}{_}g'       * && prename 's{\s+}{_}g'       */*
+prename 's{[åä]}{a}g'      * && prename 's{[åä]}{a}g'      */*
+prename "s{['#\]\[]}{_}g"  * && prename "s{['#\]\[]}{_}g"  */*
+prename "s{_+}{_}g"        * && prename "s{_+}{_}g"        */*
