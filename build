@@ -2,8 +2,10 @@
 # install missing modules automagically
 
 su -c "cpanm $(
-  perl "./Build.pl" 2>&1 |
+  perl "./Build.PL" 2>&1 |
     grep -P '^\s{4}' |
     perl -pe 's/^\s+!\s+(.+) is.+/$1/' |
     perl -pe 's/\n/ /'
 )"
+
+perl "./Build.PL" && ./Build && su -c './Build install' && printf "\n> Done!\n"
