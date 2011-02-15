@@ -1,0 +1,234 @@
+#!/usr/bin/perl
+use strict;
+use vars qw($VERSION);
+my $APP  = 'vrms';
+$VERSION = '0.001';
+
+use ALPM qw(/etc/pacman.conf);
+
+use LWP::Simple;
+
+my $db = ALPM->localdb;
+my @pkg = map { $_->name } $db->packages;
+
+my $bad_url = 'http://repo.parabolagnulinux.org/docs/blacklist.txt';
+my %non_free;
+
+if(my @blacklist = split(/\n/, get($bad_url))) {
+  for my $p(@blacklist) {
+    if($p =~ m{([A-Za-z0-9-_]+$)}) {
+      $non_free{$1} = 'No reason given';
+    }
+    elsif($p=~ m{([A-Za-z0-9-_]+)::(.+)$}) {
+      $non_free{$1} = $2;
+    }
+  }
+}
+else {
+  warn "Using cached blacklist\n";
+  while(<DATA>) {
+    if($_ =~ m{([A-Za-z0-9-_]+$)}) {
+      $non_free{$1} = 'No reason given';
+    }
+    elsif($_ =~ m{([A-Za-z0-9-_]+)::(.+)$}) {
+      $non_free{$1} = $2;
+    }
+  }
+}
+
+for my $p(sort(@pkg)) {
+  if(exists($non_free{$p})) {
+    printf("%25.25s %s\n", $p, ($non_free{$p} == 1) ? '' : ': ' .$non_free{$p});
+  }
+}
+
+__DATA__
+abs:abs-libre:have to change default rsync dir to abslibre
+grub:grub-libre:recommends ms windows on default menu.lst
+abyssws
+aqua-data-studio
+archlinux-artwork
+b43-fwcutter
+bass:: freeware
+blobwars
+boinc:: non-free files including and relating to api/texfont.{cpp,h} and possible other license issues
+boinc-nox:: non-free files including and relating to api/texfont.{cpp,h} and possible other license issues
+chromium-bsu
+cinelerra-cv:cinelera-cv-libre: dependes of non-free package faac.
+crafty
+d4x
+darkice:darkice-libre: dependes of non-free package faac, Parabola use darkice-libre, whithout dependency of facc
+faac:: Is a gpl'ed package, but has non free code and so it can be distributed by GPL
+ffmpeg:ffmpeg-libre: dependes of non-free package faac.
+firefox-i18n
+firefox-spell-pt-br
+firefox-spell-ru
+firefox:icecat: "Firefox recommends non-free software"
+flashplugin
+fmodex
+foomatic-db-nonfree
+gstreamer0.10-bad
+gstreamer0.10-bad-plugins:gstreamer0.10-badplugins-libre: dependes of non-free package faac
+ipw2100-fw
+ipw2200-fw
+iwlwifi-1000-ucode
+iwlwifi-3945-ucode
+iwlwifi-4965-ucode
+iwlwifi-5000-ucode
+iwlwifi-5150-ucode
+iwlwifi-6000-ucode
+jdk
+jre
+kernel-headers:linux-api-headers
+kernel26:kernel26-libre:linux-libre
+kernel26-firmware
+kernel26-headers:kernel26-libre-headers
+kernel26-manpages:kernel26-libre-manpages
+kernel26-docs:kernel26-libre-docs
+kernel26-lts:kernel26-libre-lts
+kernel26-lts-headers:kernel26-libre-lts-headers
+lha
+lib32-nvidia-utils
+libflashsupport
+linux-firmware
+martian
+martian-utils
+mod_fastcgi
+mplayer:mplayer-libre: depends on non-free package faac, Parabola use mplayer-libre, whithout dependency of faac
+ndiswrapper
+ndiswrapper-utils
+nouveau-firmware
+nvidia
+nvidia-173xx
+nvidia-173xx-utils
+nvidia-96xx
+nvidia-96xx-utils
+nvidia-cg-toolkit
+nvidia-utils
+nxclient
+openttd-opensfx
+pacman-mirrorlist:pacman-mirrorlist-libre:points to mirrors containing unfree packages
+povray
+pypy
+qingy-theme-arch
+qstat
+rt2870usb-fw
+rt2x00-rt61-fw
+rt2x00-rt71w-fw
+sdlmame
+sfarkxtc
+skype
+skype-oss
+skype-staticqt
+snes9x
+snes9x-gtk:snes9x-gtk-libre: dependes of non-free packackge faac
+sopcast
+ttf-ms-fonts
+ttf-thai:ttf-thai-libre
+unarj:arj:
+unrar:unrar-libre:
+virtualbox-additions
+virtualbox-additions-modules
+warsow-data:: proprietary license
+xbmc:xbmc-libre: dependes of non-free package faac.
+xpdf-chinese-simplified
+xpdf-chinese-traditional
+xpdf-japanese
+xpdf-korean
+xsnow
+xv
+ghostscript:ghostscript-libre:non free cmap files
+psutils:psutils-libre
+tarsnap
+lib32-libflashsupport
+urbanterror:: GPL2, pero solo puede usarse con data privativa.
+urbanterror-data:: Privativa, solo permite distribucion con el juego.
+ttf-hannom
+zd1211-firmware::Libre, pero los drivers son propietarios y no están incluidos en linux-libre
+p7zip:p7zip-libre:Contains UNRAR
+font-bh-ttf:font-bh-ttf-libre:non libre font reported by borgo
+font-misc-meltho:font-misc-meltho-libre:non libre font reported by borgo
+dwarffortress:custom:dwarffortress
+xorg-fonts-type1:xorg-fonts-type1-libre:non free fonts
+xorg-fonts-75dpi:xorg-fonts-75dpi-libre:non free fonts
+xorg-fonts-100dpi:xorg-fonts-100dpi:non free fonts
+xf86-video-vmware::only useful with vmware (reported by henry jensen)
+xf86-input-vmmouse::only useful with vmware (reported by henry jensen)
+mplayer-vaapi:mplayer-vaapi-libre:depends on faac
+dina-font::using it for "for anything illegal" not allowed
+bladeenc:lame:based on non-free dist10 ISO source code
+font-mathematica
+profont
+monaco-linux-font
+mac::Monkey's Audio Source Code License Agreement, changes must be contributed back
+xchat:xchat-libre:Refers to a non-free browser in its URL handlers. 
+figlet:toilet:
+visualboyadvance::contains a non-free file http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=607598
+vbaexpress::see visualboyadvance
+dosemu::contains free software that can only be built using nonfree software
+xorg-xlsfonts::unclear license status
+mesa-demos::contains unfree files. libreplanet says it probably can be built without them
+nltk:nltk-libre:contains a method for downloading unfree corpora. it can be patched, please do!
+nltk-data:nltk-data-libre:contains unfree corpora. we'll have to remove those.
+licenses:licenses-libre:contains non copyleft friendly licenses
+python-reportlab:python-reportlab-libre:setup.py downloads adobe t1 fonts without license (reported by borgo)
+grub2:grub2:rebranding
+arch-wiki-docs::contains documentation recommending unfree software.
+slim-themes::copyrighted themes
+sqlite3-doc::"Portions of the documentation and some code used as part of the build process might fall under other licenses. The details here are unclear. We do not worry about the licensing of the documentation and build code so much because none of these things are part of the core deliverable SQLite library."
+netperf::license forbids commercial redistribution
+opera::unfree software
+arch-artwork::[[issue46]]
+arch-firefox-search::[[issue46]]
+archlinux-menus::[[issue46]]
+archlinux-themes-kde::[[issue46]]
+archlinux-themes-kdm::[[issue46]]
+archlinux-themes-slim::[[issue46]]
+archlinux-wallpaper::[[issue46]]
+xdm-archlinux::[[issue46]]
+nvidia-lts::
+java-sun::jdk and jre pkgbase
+filesystem:filesystem-2:parabola rebranding
+aif:aif-libre:parabola rebranding
+grub2-bios:grub2-bios:rebranding
+grub2-common:grub2-common:rebranding
+grub2-efi-i386:grub2-efi-i386:rebranding
+
+
+__END__
+
+=pod
+
+=head1 NAME
+
+vrms - vrms for archlinux
+
+=head1 SYNOPSIS
+
+  vrms
+
+=head1 OPTIONS
+
+None.
+
+=head1 AUTHOR
+
+  Magnus Woldrich
+  CPAN ID: WOLDRICH
+  magnus@trapd00r.se
+  http://japh.se
+
+=head1 CONTRIBUTORS
+
+None required yet.
+
+=head1 COPYRIGHT
+
+Copyright 2011 the B<vrms> L</AUTHOR> and L</CONTRIBUTORS> as listed above.
+
+=head1 LICENSE
+
+This program is free software; you may redistribute it and/or modify it under
+the same terms as Perl itself.
+
+=cut
