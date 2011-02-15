@@ -1,0 +1,11 @@
+#!/bin/sh
+
+dir=$HOME/devel
+
+gitbunch check $dir 2>&1|
+  uncolor |
+  grep -v 'is not a git repo' |
+  grep -v 'figure out result' |
+  perl -pe 's/(untracked)/\e[38;5;59m$1\e[m/' |
+  perl -pe 's/(commit)/\e[38;5;130m$1\e[m/'
+
