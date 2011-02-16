@@ -15,6 +15,7 @@ if(lc($yes) ne 'y') {
 
 for my $f(@ARGV) {
   (my $n = $f) =~ s{([A-Z][a-zåäö0-9]*)}{$1_}g;
+  $n =~ s{Mvids__2}{Mvids_2};
   if(!rename($f, $n)) {
     warn("Could not rename($f, $n) - $!\n");
   }
