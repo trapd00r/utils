@@ -1,0 +1,61 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use TAP::Harness;
+use Data::Dumper;
+use Term::ExtendedColor qw(:attributes);
+
+my @tests = glob('t/*.t');
+
+die "No tests found!\n" if !@tests;
+
+
+my $harness = TAP::Harness->new( { verbosity => -9, lib => ['blib/lib'] } );
+
+# $aggregate is a TAP::Parser::Aggregator
+my $aggregate = $harness->runtests(@tests);
+
+test_report( $aggregate );
+
+sub test_report {
+  my $test_results = shift or return;
+
+  printf("Test time start  %s\n",
+    fg('green4', scalar( localtime( $test_results->{start_time}->[0]) ) )
+  );
+  printf("Test time finish %s\n",
+    fg('green14', scalar( localtime( $test_results->{start_time}->[0]) ) )
+  );
+
+  printf("> %s tests planned\n",
+    fg('blue4', bold( $test_results->{planned} ))
+  );
+  printf("> %s tests failed\n",
+    ($test_results->{failed} == 0)
+      ? bold(fg('green22', 0))
+      : bold(fg('red1', $test_results->{failed})),
+    );
+
+  print "Parsed in order: \n";
+  for my $t(@{$test_results->{parse_order}}) {
+    printf("  %s\n", $t);
+  }
+
+  my $tf = $test_results->{parser_for};
+
+  print "\n";
+  printf("%s  %s\n", underline('PASS'), underline('TEST'));
+  for my $t(keys(%{$tf})) { # file
+    my ($run, $planned) = ($tf->{$t}->{tests_run}, $tf->{$t}->{tests_planned});
+
+    printf("% 43s %s\n",
+      ($run == $planned)
+        ? fg('green22', $run) . '/' . fg('green22', bold($planned))
+        : ':(',
+        $t,
+      );
+  }
+}
+
+#print Dumper($aggregate);
