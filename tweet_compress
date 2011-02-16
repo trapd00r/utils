@@ -1,0 +1,22 @@
+#!/usr/bin/perl
+
+# Sneaky way to get more information in your tweets
+
+use strict;
+use utf8;
+
+sub tweet_compress {
+    my $tweet = shift;
+
+    my @orig = ( qw/cc ms ns ps in ls fi fl ffl ffi iv ix vi oy ii xi nj/, '. ', ', ' );
+
+    my @new = qw/㏄ ㎳ ㎱ ㎰ ㏌ ʪ ﬁ ﬂ ﬄ ﬃ ⅳ ⅸ ⅵ ѹ ⅱ ⅺ ǌ ． ，/;
+
+    $tweet =~ s/\Q$orig[$_]\E/$new[$_]/g for 0 .. $#orig;
+
+    return $tweet;
+}
+
+binmode STDOUT, ':utf8';
+
+print tweet_compress( join '', @ARGV ), "\n";
