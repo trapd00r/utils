@@ -1,0 +1,21 @@
+#!/usr/bin/perl
+use strict;
+# rename files downloaded with clive to something a bit more sensible
+
+@ARGV = (glob("/mnt/Mvids_2/*.flv"), glob("/mnt/Mvids_2/*.mp4"));
+
+print "Do you want to operate on " ,
+  scalar(@ARGV),
+  " files in /mnt/Mvids_2 ? [y/N] ";
+chomp(my $yes = <STDIN>);
+
+if(lc($yes) ne 'y') {
+  exit;
+}
+
+for my $f(@ARGV) {
+  (my $n = $f) =~ s{([A-Z][a-zåäö0-9]*)}{$1_}g;
+  if(!rename($f, $n)) {
+    warn("Could not rename($f, $n) - $!\n");
+  }
+}
