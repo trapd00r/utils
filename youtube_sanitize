@@ -1,0 +1,3 @@
+#!/usr/bin/perl
+
+s/&.*// and print while <>;
