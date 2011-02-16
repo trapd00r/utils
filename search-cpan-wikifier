@@ -1,0 +1,29 @@
+#!/usr/bin/perl
+
+while(<DATA>) {
+  my($dist, $ver, $desc, $date) = m{
+    ^([A-Za-z-]+)-([0-9-_.]+)\s+(.+)\s+\[Download\]\s+\[Browse\]\s+(.+)$
+  }x;
+
+  $dist =~ s/-$//;
+  printf("* % 5s %30.30s %s <%s>\n",
+    $ver, $dist, $desc, "http://search.cpan.org/dist/$dist"
+  );
+}
+
+__DATA__
+App-Colorcoke-0.408   Modify the extended terminal colorset   [Download] [Browse]   20 Jan 2011
+App-Pimpd-0.203   Perl Interface for the Music Player Daemon 2  [Download] [Browse]   14 Feb 2011
+App-Skate-0.054   Cat with syntax highlighting powers   [Download] [Browse]   02 Feb 2011
+App-TTYcolor-0.11   Set the colors in the TTY / Linux Virtual Console   [Download] [Browse]   20 Jan 2011
+App-xkcd-0.078  Command-line interface to xkcd  [Download] [Browse]   13 Feb 2011
+Daemon-Mplayer-0.010  Daemonize mplayer   [Download] [Browse]   07 Feb 2011
+File-LsColor-0.130  Colorize input filenames just like ls does  [Download] [Browse]   13 Feb 2011
+File-Media-Sort-0.044   Sort media files based on their filename pattern  [Download] [Browse]   07 Feb 2011
+File-PatternMatch-0.044   parse media information from filenames  [Download] [Browse]   07 Feb 2011
+Mplayer-NowPlaying-0.030  Query a running Mplayer process for metadata  [Download] [Browse]   11 Feb 2011
+Parse-Flexget-0.014   Parse the flexget log format  [Download] [Browse]   07 Feb 2011
+Term-ExtendedColor-0.185  Color screen output using extended escape sequences   [Download] [Browse]   07 Feb 2011
+Term-ExtendedColor-TTY-0.023  Set colors in the Linux VC/TTY  [Download] [Browse]   07 Feb 2011
+Term-ExtendedColor-Xresources-0.052   Get, set and modify X resources   [Download] [Browse]   13 Feb 2011
+Xorg-XLFD-0.120   X logical font description interface  [Download] [Browse]   07 Feb 2011
