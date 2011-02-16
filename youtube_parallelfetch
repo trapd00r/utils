@@ -3,23 +3,182 @@ use strict;
 use Parallel::ForkManager;
 
 my @u = qw(
-
-  http://www.youtube.com/watch?v=_MKgk8n4DZA
-  http://www.youtube.com/watch?v=7JBamVtPtYM
-  http://www.youtube.com/watch?v=zmWXajFn3Qo
-  http://www.youtube.com/watch?v=geGW4xguI8o
-  http://www.youtube.com/watch?v=STBELS4_7WQ
+  http://www.youtube.com/watch?v=CB4rNj4iBOQ
+  http://www.youtube.com/watch?v=praYG-7OTDg
+  http://www.youtube.com/watch?v=UO5UvbcPJ0g
+  http://www.youtube.com/watch?v=9VV3upRhSuA
+  http://www.youtube.com/watch?v=toVndYguOFU
+  http://www.youtube.com/watch?v=wcsJJ1PpC2Q
   http://www.youtube.com/watch?v=JRLl2yVrJzE
-
-
+  http://www.youtube.com/watch?v=FDrPXmv2CC0
+  http://www.youtube.com/watch?v=XAwHaGu9EqA
+  http://www.youtube.com/watch?v=-NWqpd0DvAs
+  http://www.youtube.com/watch?v=7ngffwFEU78
+  http://www.youtube.com/watch?v=h3D0_oKkMUs
+  http://www.youtube.com/watch?v=oLIoh_34NJY
+  http://www.youtube.com/watch?v=EWH7wkrhFPM
+  http://www.youtube.com/watch?v=a4kRJ2tbzrs
+  http://www.youtube.com/watch?v=tAvQUJkKtmw
+  http://www.youtube.com/watch?v=UvycbdSPIlQ
+  http://www.youtube.com/watch?v=8gkyuxhhn8o
+  http://www.youtube.com/watch?v=rM2NrZxKOHU
+  http://www.youtube.com/watch?v=-re7_QCK83I
+  http://www.youtube.com/watch?v=dg4p586D0T0
+  http://www.youtube.com/watch?v=DFz6ZsTFI7c
+  http://www.youtube.com/watch?v=g-GPevAT4wI
+  http://www.youtube.com/watch?v=vj1Tf-g5OZI
+  http://www.youtube.com/watch?v=LjxgnlEtM4U
+  http://www.youtube.com/watch?v=hkSAXLak6TE
+  http://www.youtube.com/watch?v=PAijeM4l9LE
+  http://www.youtube.com/watch?v=pzX16m6sy_8
+  http://www.youtube.com/watch?v=XHTBxbEdOQs
+  http://www.youtube.com/watch?v=o7Xak2Wkf_c
+  http://www.youtube.com/watch?v=sqhPxbwHR-c
+  http://www.youtube.com/watch?v=xRr4zTgCabI
+  http://www.youtube.com/watch?v=NPCBw2uCSY8
+  http://www.youtube.com/watch?v=JykcKo7054E
+  http://www.youtube.com/watch?v=Vr22liI7YG4
+  http://www.youtube.com/watch?v=gX9BIyW9YQg
+  http://www.youtube.com/watch?v=SLXvoxwpVyg
+  http://www.youtube.com/watch?v=LjxgnlEtM4U
+  http://www.youtube.com/watch?v=zuAIeGLS5fU
+  http://www.youtube.com/watch?v=HLi5h6ukmNI
+  http://www.youtube.com/watch?v=fsG4PyNX-6E
+  http://www.youtube.com/watch?v=Y7sMnOJXTf4
+  http://www.youtube.com/watch?v=42JOswXMm64
+  http://www.youtube.com/watch?v=Pcz8MyQipIA
+  http://www.youtube.com/watch?v=VaW7EiSvjfM
+  http://www.youtube.com/watch?v=NLD1nxRVUwc
+  http://www.youtube.com/watch?v=DL1mjxo_QEM
+  http://www.youtube.com/watch?v=tAgMQSV6njQ
+  http://www.youtube.com/watch?v=-xMuf554vr4
+  http://www.youtube.com/watch?v=cTrQ8ACastw
+  http://www.youtube.com/watch?v=kiLcZviMx9Y
+  http://www.youtube.com/watch?v=-Cetul1tum0
+  http://www.youtube.com/watch?v=VfTZDMiZOcc
+  http://www.youtube.com/watch?v=1oZL0uhoUVg
+  http://www.youtube.com/watch?v=9ihVTxQ8-NI
+  http://www.youtube.com/watch?v=WQwLp0jDoak
+  http://www.youtube.com/watch?v=9yW4ZwXqHTA
+  http://www.youtube.com/watch?v=4F-0Pb_goVg
+  http://www.youtube.com/watch?v=7swUcrgLEWQ
+  http://www.youtube.com/watch?v=uMfc_9cJTV0
+  http://www.youtube.com/watch?v=lo9GOk-F2cw
+  http://www.youtube.com/watch?v=a4jUao0xdis
+  http://www.youtube.com/watch?v=eApN-WLa30o
+  http://www.youtube.com/watch?v=oMi4xOfHHbw
+  http://www.youtube.com/watch?v=q0DPtk8QbdQ
+  http://www.youtube.com/watch?v=FM5NbySAMnU
+  http://www.youtube.com/watch?v=LC5YtguSm60
+  http://www.youtube.com/watch?v=O2v7MORvMtk
+  http://www.youtube.com/watch?v=cEMN3UQGGzo
+  http://www.youtube.com/watch?v=YnDsZx_hVlk
+  http://www.youtube.com/watch?v=MR8mJPxmi88
+  http://www.youtube.com/watch?v=qNVSwGbSxNs
+  http://www.youtube.com/watch?v=QA3duX9BIwc
+  http://www.youtube.com/watch?v=nLuIpSKD38I
+  http://www.youtube.com/watch?v=1a2CW4fl1c0
+  http://www.youtube.com/watch?v=f-VPqHwEpPw
+  http://www.youtube.com/watch?v=Vozwl_jrlmY
+  http://www.youtube.com/watch?v=JKg-81ahXOw
+  http://www.youtube.com/watch?v=D8qyk_1xudA
+  http://www.youtube.com/watch?v=a2HDlqm5Muo
+  http://www.youtube.com/watch?v=l4ZhVAgWF8Q
+  http://www.youtube.com/watch?v=PoI9yVOb_xY
+  http://www.youtube.com/watch?v=Dt0sXRBLfJM
+  http://www.youtube.com/watch?v=XwsmB9wQyTY
+  http://www.youtube.com/watch?v=V7xrOO6A9U4
+  http://www.youtube.com/watch?v=C5V4LNHHFyA
+  http://www.youtube.com/watch?v=JM1DCIUR-nY
+  http://www.youtube.com/watch?v=tdbu7YV3h5Y
+  http://www.youtube.com/watch?v=Ua7vQfw9PCo
+  http://www.youtube.com/watch?v=pZyD9igjyNE
+  http://www.youtube.com/watch?v=iR9sq_laOg0
+  http://www.youtube.com/watch?v=0EBqaECRHg8
+  http://www.youtube.com/watch?v=3MmdeS7Qxek
+  http://www.youtube.com/watch?v=LMcBi6SJs_M
+  http://www.youtube.com/watch?v=Kf0aFygIDA4
+  http://www.youtube.com/watch?v=h7c0Hr0-Db0
+  http://www.youtube.com/watch?v=0j4Ce5DgQwQ
+  http://www.youtube.com/watch?v=vNPEprpyThg
+  http://www.youtube.com/watch?v=SIzIkNpiWPA
+  http://www.youtube.com/watch?v=AEGVu98Fm0M
+  http://www.youtube.com/watch?v=B-WcKAFVqt0
+  http://www.youtube.com/watch?v=btqoSPPfzlg
+  http://www.youtube.com/watch?v=xVrsAisqc0Q
+  http://www.youtube.com/watch?v=Z-03CntMAtQ
+  http://www.youtube.com/watch?v=iyLvvDG568A
+  http://www.youtube.com/watch?v=WNIDs7iUk6E
+  http://www.youtube.com/watch?v=4NRREUo5nxg
+  http://www.youtube.com/watch?v=Or4CEP-I8gI
+  http://www.youtube.com/watch?v=AWUoES3_cIw
+  http://www.youtube.com/watch?v=nA5E2va3xDM
+  http://www.youtube.com/watch?v=UUQ89dNfspM
+  http://www.youtube.com/watch?v=CdSs7rgcdR0
+  http://www.youtube.com/watch?v=6NVhkyccCXc
+  http://www.youtube.com/watch?v=svYd5xhRUgM
+  http://www.youtube.com/watch?v=EkfdKzXoRX8
+  http://www.youtube.com/watch?v=Ya6z54IHdu0
+  http://www.youtube.com/watch?v=ePK-KfPnVws
+  http://www.youtube.com/watch?v=XaZAn9wggWY
+  http://www.youtube.com/watch?v=KeiwnHTRPyk
+  http://www.youtube.com/watch?v=FcNWe8A4Y2k
+  http://www.youtube.com/watch?v=HxvPdMwdb4I
+  http://www.youtube.com/watch?v=JACCT25_OOI
+  http://www.youtube.com/watch?v=8YTcvMJVxj8
+  http://www.youtube.com/watch?v=S-zIu82L1qo
+  http://www.youtube.com/watch?v=DjHHMoumB08
+  http://www.youtube.com/watch?v=Dpd-kGJylws
+  http://www.youtube.com/watch?v=uBk7WPmrmD4
+  http://www.youtube.com/watch?v=67bnXtKPssc
+  http://www.youtube.com/watch?v=1uEusM2F4Fg
+  http://www.youtube.com/watch?v=jSy3UvVwQ8g
+  http://www.youtube.com/watch?v=n7tYMw5JL2w
+  http://www.youtube.com/watch?v=YjOBR01OTVw
+  http://www.youtube.com/watch?v=9T0ySNQNE58
+  http://www.youtube.com/watch?v=NS815JWq_BA
+  http://www.youtube.com/watch?v=ut5HXM-3Qyg
+  http://www.youtube.com/watch?v=WYPeTckOwfA
+  http://www.youtube.com/watch?v=LyRH5UETer4
+  http://www.youtube.com/watch?v=bZg7qhthw6g
+  http://www.youtube.com/watch?v=28JqQENMbeU
+  http://www.youtube.com/watch?v=ixwg85huffc
+  http://www.youtube.com/watch?v=BfzlrfswFC4
+  http://www.youtube.com/watch?v=eJ5SFHwNwjE
+  http://www.youtube.com/watch?v=N_DBDlyTCEg
+  http://www.youtube.com/watch?v=NuQbdRQnNvg
+  http://www.youtube.com/watch?v=VBw6Na-og3g
+  http://www.youtube.com/watch?v=F-NCdDfMX3o
+  http://www.youtube.com/watch?v=M8kX2yGILfY
+  http://www.youtube.com/watch?v=T3nCI_9uQfI
+  http://www.youtube.com/watch?v=xX72TCOANF4
+  http://www.youtube.com/watch?v=nhMz9HXGtM8
+  http://www.youtube.com/watch?v=lyYwr9NDg10
+  http://www.youtube.com/watch?v=fregObNcHC8
+  http://www.youtube.com/watch?v=3GI2YYahJIE
+  http://www.youtube.com/watch?v=kO4BF67pvsc
+  http://www.youtube.com/watch?v=VPGjnCE79wI
+  http://www.youtube.com/watch?v=EzIU2sDyO4E
+  http://www.youtube.com/watch?v=hok-eQoVW2Y
+  http://www.youtube.com/watch?v=FwCmNlMJdnE
+  http://www.youtube.com/watch?v=WVIWbmho6lQ
+  http://www.youtube.com/watch?v=PWyHxTgwGNc
+  http://www.youtube.com/watch?v=rTBjzcCtxo0
+  http://www.youtube.com/watch?v=GAIyA4eP9gU
+  http://www.youtube.com/watch?v=GAIyA4eP9gU
+  http://www.youtube.com/watch?v=UHyRBwez-_g
+  http://www.youtube.com/watch?v=Ts6gZFEiMkM
 );
 
+
 my $pm = Parallel::ForkManager->new( scalar(@u) );
+
+printf("> Downloading %d videos in parallel...\n", scalar(@u));
 
 for my $url(@u) {
   $pm->start and next;
   chdir('/mnt/Mvids_2') or die;
-  exec('clive', $url);
+  exec('clive','--format', 'best',  $url);
   $pm->finish;
 }
 $pm->wait_all_children;
