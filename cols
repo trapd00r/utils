@@ -1,0 +1,33 @@
+#!/usr/bin/perl
+
+my $n = shift;
+
+print_cols( 1..$n );
+
+sub print_cols {
+    my @list = @_;
+
+    my $width = 0;
+    for (@list) {
+        $width = length if $width < length;
+    }
+
+    my $ncols = int((@list-1)/10)+1;
+    $ncols = 4 if $ncols > 4;
+
+    my $nrows = int((@list-1)/$ncols)+1;
+
+    my @cols;
+    for my $colno ( 1..$ncols ) {
+        push( @cols, [ splice(@list,0,$nrows) ] );
+    }
+
+    my $mask = join( "  ", ("%-${width}.${width}s")x$ncols );
+    for $rowno ( 0..$nrows-1 ) {
+        my @row = map { shift @{$cols[$_]} } 0..$ncols - 1;
+        printf( "    $mask\n", @row );
+    }
+
+    use Data::Dumper;
+    print Dumper( \@cols );
+}
