@@ -1,0 +1,34 @@
+#!/usr/bin/perl
+
+use REST::Client;
+use JSON;
+use HTML::Entities qw(decode_entities);
+use strict;
+
+my $base     = 'https://www.googleapis.com/language/translate/v2?';
+my $key      = 'key=AIzaSyACJybEm6lyelnYHZzXfydtk-V6-Uz48bQ&';
+my $from     = 'en&';
+my $to       = 'target=sv&';
+my $query    = 'q=';
+
+my $full_url = join('', ($base, $key, $from, $to, $query));
+
+while (1) {
+  print "English: ";
+  chomp ( $_ = <STDIN>);
+
+  my $client = REST::Client->new();
+  $client->GET( $full_url . $_ );
+  my $response = $client->responseContent();
+
+  my $json_text = from_json( $response );
+
+  for my $swe(@{$json_text->{data}->{translations}}) {
+    my %ep;
+    $ep{translatedText} = "Swedish: $swe->{translatedText}";
+    while (my($key, $value) = each (%ep)) {
+      print decode_entities($value);
+    }
+  }
+  print "\n";
+}
