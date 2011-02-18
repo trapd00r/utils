@@ -46,6 +46,7 @@ sub pass_on {
     my ($project) = cwd() =~ m|.*/(.+)$|m;
     $project =~ s/::/-/g;
 
+
     if(-f 'Makefile') {
       system("/usr/bin/make clean");
     }
@@ -73,6 +74,7 @@ sub pass_on {
     }
   }
   elsif($_[0] eq 'test') {
+    $ENV{RELEASE} = 1;
     system("prove", qw(--count --timer -j 9 -f -o));
     #system("/usr/bin/make", 'test');
   }
