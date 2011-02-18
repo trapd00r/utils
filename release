@@ -1,0 +1,50 @@
+#!/usr/bin/perl
+use strict;
+use JSON::XS;
+use Data::Dumper;
+use LWP::Simple;
+use Term::ExtendedColor qw(bg);
+
+my @releases = reverse(glob("$ENV{HOME}/devel/Distributions/*.tar.gz"));
+
+die "All clear!\n" if !@releases;
+
+my %seen;
+printf("%40s %5s  %s\n\n", 'DIST', 'CPAN', 'LOCAL');
+for my $r(@releases) {
+  my($dist, $version) = $r =~ m{([A-Za-z_-]+)-([0-9._-]+)[.]tar[.]gz};
+  my($cpan_dist) = $dist;
+  $cpan_dist =~ s{-}{::}g;
+  # Will fail for App:: distributions.
+  my($cpan);
+  if($cpan_dist =~ m{^App::}) {
+    #$cpan_dist =~ s{^App::\L(.+)}{$1};
+    #$cpan = get(qq(http://api.metacpan.org/module/_search?q=distname:$cpan_dist));
+
+    next;
+  }
+
+  if(exists($seen{$cpan_dist})) {
+    next;
+  }
+
+  $seen{$cpan_dist}++;
+  $cpan = get(qq(http://api.metacpan.org/module/$cpan_dist));
+  if(!defined($cpan)) {
+    warn("'$cpan_dist' could not be found on CPAN\n")
+      unless(!defined($cpan_dist));
+    next;
+  }
+  $cpan = decode_json( $cpan );
+  my $cpan_version = $cpan->{_source}->{version};
+  printf("%40.40s %19s %19s\n",
+    $cpan_dist,
+    ($cpan_version eq $version)
+      ? bg('blue4', $cpan_version)
+      : bg('red3',  $cpan_version),
+    ($cpan_version eq $version)
+      ? bg('blue4', $version)
+      : bg('red3',  $version),
+  );
+}
+
