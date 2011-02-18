@@ -1,0 +1,46 @@
+#!/bin/bash
+
+#
+# raw json fetcher for the AUR
+#
+
+out() {
+  type -p json_reformat >/dev/null && json_reformat || cat
+}
+
+case $# in
+  1) qtype=info arg=$1 ;;
+  2) qtype=$1 arg=$2 ;;
+  *) exit 1 ;;
+esac
+
+[[ $qtype = @(info|?(m)search) ]] || exit 2
+
+# open connection
+exec 4<>/dev/tcp/aur.archlinux.org/80
+
+# send http request (avoid 1.1 so we don't have to handle a keep-alive)
+printf 'GET /rpc.php?type=%s&arg=%s HTTP/1.0\r
+User-Agent: bashium 0.1\r
+Host: aur.archlinux.org\r
+Accept: */*\r
+Accept-Encoding: deflate, gzip\r
+\r
+' "$qtype" "$arg" >&4
+
+# read http response code
+read -r -u 4 _ resp _
+if [[ $resp ]] && (( resp >= 300 )); then
+  echo "error: server responded with HTTP $resp"
+  exit 1
+fi
+
+# read response until the end of the headers
+while read -r -u 4 body; do
+  [[ $body = $'\r' ]] && break
+done
+
+# gunzip the remainder of the FD
+gzip -d <&4 | out
+
+
