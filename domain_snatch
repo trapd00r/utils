@@ -1,0 +1,28 @@
+use strict;
+use LWP::Simple ();
+
+my $u = 'http://www.iis.se/data/bardate_domains.txt';
+
+my $d = max_len_domain(shift(@ARGV) // 3, get($u));
+
+for my $domain(sort{ $d->{$b} cmp $d->{$a} } keys( %{ $d } )) {
+  printf("%5s - %s\n", $domain, $d->{$domain});
+}
+
+sub max_len_domain {
+  my $len = shift || 3;
+  $len += 3;
+  my $s   = shift or return;
+  my %h;
+
+  map { (length($_) <= $len) && ($h{$_} = $s->{$_}) } keys %$s;
+  return \%h;
+
+}
+
+sub get {
+  my %d;
+  map { m{([[a-z0-9-_.]+[.]se)\s+(.+)} and $d{$1} = $2 }
+    split(/\n/, LWP::Simple::get( $_[0] ));
+  return \%d;
+}
