@@ -3,18 +3,37 @@
 use REST::Client;
 use JSON;
 use HTML::Entities qw(decode_entities);
+use Getopt::Long;
 use strict;
 
 my $base     = 'https://www.googleapis.com/language/translate/v2?';
 my $key      = 'key=AIzaSyACJybEm6lyelnYHZzXfydtk-V6-Uz48bQ&';
-my $from     = 'en&';
-my $to       = 'target=sv&';
+my $from     = 'sv';
+my $to       = 'en';
 my $query    = 'q=';
+
+my %lang = (
+  en  => 'English',
+  sv  => 'Swedish',
+);
+
+GetOptions(
+  'from:s'  => \$from,
+  'to:s'    => \$to,
+);
+
+printf("%s -> %s\n", 
+  (exists($lang{$from})) ? $lang{$from} : $from,
+  (exists($lang{$to}))   ? $lang{$to}   : $to,
+);
+
+$from .= '&';
+$to = "target=$to&";
 
 my $full_url = join('', ($base, $key, $from, $to, $query));
 
 while (1) {
-  print "English: ";
+  print "From: ";
   chomp ( $_ = <STDIN>);
 
   my $client = REST::Client->new();
@@ -23,9 +42,9 @@ while (1) {
 
   my $json_text = from_json( $response );
 
-  for my $swe(@{$json_text->{data}->{translations}}) {
+  for my $t(@{$json_text->{data}->{translations}}) {
     my %ep;
-    $ep{translatedText} = "Swedish: $swe->{translatedText}";
+    $ep{translatedText} = "  To: $t->{translatedText}";
     while (my($key, $value) = each (%ep)) {
       print decode_entities($value);
     }
