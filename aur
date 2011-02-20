@@ -1,0 +1,74 @@
+#!/usr/bin/perl
+use strict;
+use vars qw($VERSION);
+my $APP  = 'aur';
+$VERSION = '0.001';
+
+#use Data::Dumper;
+#
+#{
+#  package Data::Dumper;
+#  no strict 'vars';
+#  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
+#  $Quotekeys = 0;
+#}
+
+# http://aur.archlinux.org/rpc.php?type=info&arg=jshon
+# http://aur3.org/rpc/$pkg
+
+use LWP::Simple;
+use JSON::XS;
+
+my $pkg = shift // 'pimpd2-git';
+my $url = "http://aur.archlinux.org/rpc.php?type=info&arg=$pkg";
+
+my %pkg = %{ decode_json( get($url) ) };
+
+
+
+for my $tag(keys(%{$pkg{results}})) {
+  printf("%12s: %s\n", $tag, $pkg{results}->{$tag});
+}
+
+__END__
+
+
+=pod
+
+=head1 NAME
+
+aur - aur client
+
+=head1 USAGE
+
+  aur <pkg>
+
+=head1 REPORTING BUGS
+
+Report bugs and/or feature requests on rt.cpan.org, the repository issue tracker
+or directly to L<magnus@trapd00r.se>
+
+=head1 AUTHOR
+
+  Magnus Woldrich
+  CPAN ID: WOLDRICH
+  magnus@trapd00r.se
+  http://japh.se
+
+=head1 CONTRIBUTORS
+
+None required yet.
+
+=head1 COPYRIGHT
+
+Copyright 2011 The B<aur> L</AUTHOR> and L</CONTRIBUTORS> as listed
+above.
+
+=head1 LICENSE
+
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
+
+# vim: set ts=2 et sw=2:
