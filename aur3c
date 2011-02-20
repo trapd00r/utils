@@ -13,6 +13,9 @@ use Data::Dumper;
   $Quotekeys = 0;
 }
 
+# http://aur.archlinux.org/rpc.php?type=info&arg=jshon
+# http://aur3.org/rpc/$pkg
+
 use LWP::Simple;
 
 my $pkg = shift // 'pimpd2-git';
