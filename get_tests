@@ -1,0 +1,2 @@
+#!/bin/sh
+sync_cpantesters -a WOLDRICH -d /home/scp1/devel/CPANTS
