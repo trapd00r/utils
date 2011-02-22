@@ -1,0 +1,3 @@
+#!/bin/sh
+
+git log -1 -- "$@" > /tmp/git_log && v /tmp/git_log
