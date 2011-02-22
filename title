@@ -1,0 +1,8 @@
+#!/usr/bin/perl
+use strict;
+use WWW::Mechanize;
+
+use feature 'say';
+
+map { $_ = "http://" . $_ unless $_ =~ /http:/ } @ARGV;
+say WWW::Mechanize->new->get(@ARGV)->title;
