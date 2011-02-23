@@ -1,0 +1,63 @@
+#!/usr/bin/perl
+use strict;
+use vars qw($VERSION);
+my $APP  = 'nod';
+$VERSION = '0.001';
+
+# Get music suggestions suitable for nodding from our friends over at fb
+
+use WWW::Mechanize;
+
+my $base = 'https://www.flashback.org/t1016591';
+
+my $m = WWW::Mechanize->new(
+  onwarn  => undef,
+  onerror => sub { 0 },
+);
+
+$m->get($base);
+
+my @urls;
+
+for my $u($m->find_all_links) {
+  push(@urls, $u->url_abs) if ($u->url_abs =~ m{$base#\d+});
+}
+
+my %youtube;
+for my $u(@urls) {
+  $m->get($u);
+  for my $y(grep { /youtube/i } map{ $_->url_abs} $m->find_all_links) {
+    $y =~ s{.+[.]php\?u=(.+)}{$1};
+    $y =~ s{%3A}{:}g;
+    $y =~ s{%2F}{/}g;
+    $y =~ s{%3D}{=}g;
+    $y =~ s{%3F}{?}g;
+    $y =~ s{(.+)%26.+}{$1};
+
+    if($m->get($y)) {
+      my $title = $m->title;
+      $title =~ s{^Youtube  }{};
+      $youtube{$y} = $title;
+    }
+  }
+}
+
+for my $v(sort{ $youtube{$b} cmp $youtube{$a} } keys(%youtube)) {
+  printf("%55.55s => %s\n", $v, $youtube{$v});
+}
+
+
+
+__END__
+
+
+__DATA__
+Example output:
+
+http://www.youtube.com/watch?v=UdYRzH10L2M => Stevie Ray Vaughan - Little Wing
+http://www.youtube.com/watch?v=tkJNyQfAprY => Pink Floyd The Wall - Pink Floyd - Comfortably Numb
+http://www.youtube.com/watch?v=tsgssfjqA0k => Not an addict
+http://www.youtube.com/watch?v=k0t0EW6z8a0 => Neil Young - Needle and the Damage Done
+http://www.youtube.com/watch?v=tNwQeedQfZE => Coldplay - The Scientist
+http://www.youtube.com/watch?v=TBO6_u6Mb6s => Coldplay - Fix you
+http://www.youtube.com/watch?v=-4w7an00vGI => Coldplay - Don't Panic
