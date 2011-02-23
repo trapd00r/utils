@@ -15,14 +15,20 @@ my $query    = 'q=';
 my %lang = (
   en  => 'English',
   sv  => 'Swedish',
+  swe => 'Swedish',
 );
 
 GetOptions(
   'from:s'  => \$from,
   'to:s'    => \$to,
+  'swe'     => sub { ($from, $to) = ('en', 'sv'); },
+  'sv'      => sub { ($from, $to) = ('en', 'sv'); },
+  'en'      => sub { ($from, $to) = ('sv', 'en'); },
 );
 
-printf("%s -> %s\n", 
+$from eq 'swe' and $from = 'sv';
+
+printf("%s -> %s\n",
   (exists($lang{$from})) ? $lang{$from} : $from,
   (exists($lang{$to}))   ? $lang{$to}   : $to,
 );
@@ -32,9 +38,20 @@ $to = "target=$to&";
 
 my $full_url = join('', ($base, $key, $from, $to, $query));
 
-while (1) {
-  print "From: ";
+TRANSLATE: while (1) {
+  print " > ";
   chomp ( $_ = <STDIN>);
+
+  if( ($_ eq 'en') or ($_ eq 'swe') ) {
+    my $new_lang = $_;
+    my ($old_lang) = $to =~ m{target=(.+)&};
+    $full_url = join('',
+      ($base, $key, $_ . '&',
+        ($_ eq 'swe') ? 'target=en&' : 'target=swe&',
+      $query)
+    );
+    next TRANSLATE;
+  }
 
   my $client = REST::Client->new();
   $client->GET( $full_url . $_ );
@@ -43,11 +60,7 @@ while (1) {
   my $json_text = from_json( $response );
 
   for my $t(@{$json_text->{data}->{translations}}) {
-    my %ep;
-    $ep{translatedText} = "  To: $t->{translatedText}";
-    while (my($key, $value) = each (%ep)) {
-      print decode_entities($value);
-    }
+    printf("\e[36m>>\e[m %s", decode_entities($t->{translatedText}));
   }
   print "\n";
 }
