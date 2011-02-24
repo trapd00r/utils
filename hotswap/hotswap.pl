@@ -1,19 +1,19 @@
 #!/usr/bin/perl
 # hotswap
 use strict;
-use Term::ExtendedColor;
+use Term::ExtendedColor qw(fg);
 
 my $config = './config.conf';
 our @c;
 
+print "> ";
 while(chomp(my  $line = <STDIN>)) {
-  print "\n";
-  print "> ";
   if($line =~ /^r/) {
     delete($INC{'config.conf'});
     print Dumper \%INC;
     reload();
   }
+  print "> ";
 }
 
 
