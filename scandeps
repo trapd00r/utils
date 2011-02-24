@@ -1,0 +1,21 @@
+#!/usr/bin/perl
+# This was initially a debugging aid for Module::LocalLoad
+use strict;
+use Module::ScanDeps;
+use Data::Dumper;
+
+my $data = scan_deps(
+  files   => [ '/usr/lib/perl5/core_perl/IO/File.pm'],
+  recurse => 0,
+);
+
+print "- Real dependencies for IO::File\n";
+for my $basename(sort((@{$data->{'IO/File.pm'}{uses}}))) {
+  printf("%s\n", _2module($basename));
+}
+
+sub _2module {
+  my $file = shift;
+  s{/}{::}g, s{\.pm$}{} for $file;
+  return $file;
+}
