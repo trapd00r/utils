@@ -1,0 +1,11 @@
+#!/usr/bin/perl
+use strict;
+use WWW::Mechanize;
+
+my $w = WWW::Mechanize->new;
+
+open(my $l, '<', "$ENV{HOME}/doc/links") or die($!);
+while(<$l>) {
+  $w->get($_) or die($!);
+  printf("%s\n\t%s", $w->title, $_);
+}
