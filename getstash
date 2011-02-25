@@ -1,0 +1,23 @@
+#!/usr/bin/perl
+
+use strict;
+use Data::Dumper;
+
+{
+  package Data::Dumper;
+  no strict 'vars';
+
+  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
+  $Quotekeys = 0;
+}
+
+print Dumper get_stash( shift // 'IO::File' );
+
+sub get_stash {
+  eval "require $_[0]" or return $@;
+
+  {
+    no strict 'refs';
+    \%{"$_[0]::"};
+  }
+}
