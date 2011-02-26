@@ -1,0 +1,14 @@
+#!/usr/bin/perl
+use strict;
+
+print << 'EOF'
+use Data::Dumper;
+
+{
+  package Data::Dumper;
+  no strict "vars";
+
+  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
+  $Quotekeys = 0;
+}
+EOF
