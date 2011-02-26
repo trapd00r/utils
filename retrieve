@@ -1,0 +1,8 @@
+#!/usr/bin/perl
+
+use Storable;
+use Data::Dumper;
+
+my $db = shift // "$ENV{HOME}/.music_full.db";
+
+print Dumper retrieve( $db );
