@@ -1,0 +1,39 @@
+#!/usr/bin/perl
+# Is <release> already present in collection?
+
+use Storable;
+use Data::Dumper;
+use File::Path qw(rmtree);
+
+my $db = retrieve( shift // "$ENV{HOME}/.music.db" );
+
+my @q = glob("/mnt/Music_1/.new/*");
+
+my @existing = map{ s!.+/(.+)!$1!; $1 } keys(%$db);
+
+my (%add, %delete);
+
+print scalar(@q) , " new items\n";
+for my $new(@q) {
+  $new =~ s{.+/(.+)$}{$1};
+  if($new ~~ @existing) {
+    $delete{$new}++;
+    next;
+  }
+  else {
+    $add{$new}++;
+  }
+}
+print scalar(keys(%add)), " new items to be added \n";
+
+#print Dumper \%add;
+
+for my $d( map{ "/mnt/Music_1/.new/$_" } keys(%delete)) {
+  print "$d\n";
+  #if(rmtree($d)) {
+  #  print "removed $d\n";
+  #}
+  #else {
+  #  die $@;
+  #}
+}
