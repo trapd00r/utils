@@ -1,0 +1,6 @@
+#!/bin/sh
+latex cv.tex
+dvips -Ppdf cv.dvi -o
+ps2pdf cv.ps
+apvlv cv.pdf
+pdffonts cv.pdf
