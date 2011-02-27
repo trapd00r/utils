@@ -1,0 +1,14 @@
+#!/usr/bin/perl
+use strict;
+use Term::ExtendedColor::Xresources qw(get_xterm_color);
+
+my $c = get_xterm_color({
+  index => [0 .. 255],
+  type  => 'hex',
+});
+
+my $prefix = shift // 'URxvt.shiva';
+
+for my $index(0 .. 255) {
+  printf("%s.color%s: #%s\n", $prefix, $index, $c->{$index}->{rgb});
+}
