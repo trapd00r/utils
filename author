@@ -1,0 +1,18 @@
+#!/usr/bin/perl
+use strict;
+
+print << 'EOF';
+
+    \ \ | / /
+     \ \ - /
+      \ | /
+      (O O)
+      ( < )
+      (-=-)
+
+  Magnus Woldrich
+  CPAN ID: WOLDRICH
+  magnus@trapd00r.se
+  http://japh.se
+
+EOF
