@@ -11,6 +11,8 @@ $Data::Dumper::Deparse   = 1;
 $Data::Dumper::Quotekeys = 0;
 $Data::Dumper::Sortkeys  = 1;
 
+#http://api.metacpan.org/dist/_search\?q\=name:colorcoke
+
 
 my $author = shift // 'woldrich';
 my $url_author = 'http://api.metacpan.org/module/_search?q=author:';
