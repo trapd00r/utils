@@ -1,0 +1,104 @@
+#!/usr/bin/perl
+use strict;
+our $VERSION = '0.010';
+
+use Storable;
+use File::Find::Rule;
+use Term::ExtendedColor qw[:attributes];
+use Getopt::Long;
+use File::LsColor qw[ls_color];
+use Getopt::Long;
+
+use Data::Dumper;
+$Data::Dumper::Terse     = 1;
+$Data::Dumper::Indent    = 1;
+$Data::Dumper::Useqq     = 1;
+$Data::Dumper::Deparse   = 1;
+$Data::Dumper::Quotekeys = 0;
+$Data::Dumper::Sortkeys  = 1;
+
+
+
+
+my $music_db = "$ENV{HOME}/.music_full.db";
+
+my @disks = map { qq[/mnt/Music_$_] } ( 1 .. 7 );
+
+
+my $r = generate_db();
+
+dupe( $r );
+
+GetOptions(
+  'artist:s' => sub { shift; artist_query( $r, shift ); },
+);
+
+#artist_query('Laleh');
+
+#my $artist = shift // 'Laleh';
+#print Dumper $r{artist}{$artist};
+
+sub artist_query {
+  my($s, $artist) = @_;
+  print Dumper $s->{artist}{$artist};
+}
+
+sub dupe {
+  my $s = shift;
+  print Dumper $s;
+  while(my $release = <DATA>) {
+    chomp($release);
+  }
+}
+
+#  for my $artist(sort(keys(%{$s->{artist}}))) {
+#    print bg('red3', $artist), "\n";
+#    for my $year(sort(keys(%{$s->{artist}{$artist}->{year}}))) {
+#      my @albums = map { m|.+/(.+)$| } @{$s->{artist}{$artist}->{year}{$year}};
+#      printf("%s   %s\n", fg('blue4', bold($year)), join("\n  '--> ", @albums));
+#    }
+#    print "\n\n\n";
+#  }
+#}
+
+
+sub generate_db {
+  if(-f $music_db) {
+    return retrieve($music_db);
+  }
+  my $struct;
+  my $i = 0;
+  for my $d(@disks) {
+    my $rule = File::Find::Rule->new;
+    $rule->directory;
+    $rule->maxdepth(1);
+
+    for my $album($rule->in( glob("$d/*" ))) {
+      # Biogenesis_-_Escape_The_Illusion-2010-UPE
+      my($base) = $album =~ m|.*/(.+/.+)$|;
+
+      my($year, $group, $artist) = (0, 'UNKNOWN', undef);
+      if($base =~ m|-(\d{4})-(.+)$|) {
+        $year  = $1;
+        $group = $2;
+      }
+      if($base =~ m|(\w+)-|) {
+        $artist = $1;
+        $artist =~ s/_/ /g;
+      }
+      $artist =~ s/\s+$//;
+      $artist =~ s/^\s+//;
+      # Consider globbing later.
+      push(
+        @{$struct->{artist}{$artist}->{year}{$year}->{album}{$album}},
+        glob("$album/*")
+      );
+    }
+  }
+  store($struct, $music_db);
+  return $struct;
+}
+
+
+__DATA__
+Foo_Bar-Baz-FOOBAR
