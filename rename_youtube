@@ -2,11 +2,22 @@
 use strict;
 # rename files downloaded with clive to something a bit more sensible
 
-@ARGV = (glob("/mnt/Mvids_2/*.flv"), glob("/mnt/Mvids_2/*.mp4"));
+my $where;
+if(!@ARGV) {
+  $where = '.';
+  warn "Operating on ./*.{flv,mp4}\n";
+}
+else {
+  if(! -d ($where = $ARGV[0])) {
+    ($where) = $ARGV[0] =~ m{(/.+)/.*[.](flv|mp4)$}i
+  }
+}
+@ARGV = (glob("$where/*.flv"), glob("$where/*.mp4"));
+die("No files found\n") if !@ARGV;
 
-print "Do you want to operate on " ,
-  scalar(@ARGV),
-  " files in /mnt/Mvids_2 ? [y/N] ";
+printf("Do you want to operate on %d files matching *.{flv,mp4} in %s [y/N] ",
+  scalar(@ARGV), $where,
+);
 chomp(my $yes = <STDIN>);
 
 if(lc($yes) ne 'y') {
@@ -15,7 +26,9 @@ if(lc($yes) ne 'y') {
 
 for my $f(@ARGV) {
   (my $n = $f) =~ s{([A-Z][a-zåäö0-9]*)}{$1_}g;
-  $n =~ s{Mvids__2}{Mvids_2};
+  $n =~ s/_{2,}/_/g;
+  $n =~ s{_+/}{/}g;
+  $n =~ s{_+([.](?:flv|mp4))$}{$1};
   if(!rename($f, $n)) {
     warn("Could not rename($f, $n) - $!\n");
   }
