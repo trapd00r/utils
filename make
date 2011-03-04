@@ -74,7 +74,8 @@ sub pass_on {
     }
   }
   elsif($_[0] eq 'test') {
-    $ENV{RELEASE} = 1;
+    $ENV{RELEASE_TESTING} = 1;
+    $ENV{RELEASE} = 1; # for backwards compatibility
     system("prove", qw(--count --timer -j 9 -f -o));
     #system("/usr/bin/make", 'test');
   }
