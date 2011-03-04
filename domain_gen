@@ -1,0 +1,11 @@
+#!/usr/bin/perl
+use strict;
+
+open(my $fh, '<', '/usr/share/dict/cracklib-small') or die($!);
+my @words = grep{ (length($_) > 4) && lc(chomp($_)) } (<$fh>);
+
+my $tld =  (shift // 'se');
+
+for my $w( sort{ length($b) <=> length($a) } grep{ m/$tld/ } @words) {
+  $w =~ s{$tld$}{.$tld} and print "$w\n";
+}
