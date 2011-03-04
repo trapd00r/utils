@@ -21,6 +21,7 @@ my @pm = File::Find::Rule->file()
                          ->in('.');
 if(scalar(@pm) < 1) {
   system("/usr/bin/make", @ARGV);
+  exit;
 }
 
 pass_on(@ARGV);
