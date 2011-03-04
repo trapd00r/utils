@@ -8,12 +8,20 @@ use File::Copy;
 use File::Path qw(make_path);
 use Term::ExtendedColor ':attributes';
 use File::LsColor qw(ls_color);
+use File::Find::Rule;
 
 
 my $remote_host   = '192.168.1.100';
 my $remote_port   = '19216';
 my $remote_user   = 'scp1';
 my $remote_dest   = 'http/japh.se/perl/devel';
+
+my @pm = File::Find::Rule->file()
+                         ->name('*.pm')
+                         ->in('.');
+if(scalar(@pm) < 1) {
+  system("/usr/bin/make", @ARGV);
+}
 
 pass_on(@ARGV);
 
