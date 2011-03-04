@@ -1,0 +1,7 @@
+#!/usr/bin/perl
+
+my $dir = shift // '.';
+for(glob("$dir/*.mp4")) {
+  (my $fname = $_) =~ s/mp4/flac/;
+  system('ffmpeg', '-i', $_, $fname);
+}
