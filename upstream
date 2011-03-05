@@ -1,0 +1,24 @@
+#!/usr/bin/perl
+# Keep upstream up to date
+use Cwd qw(cwd);
+
+my $upstream = "$ENV{HOME}/bin/upstream";
+
+my @projects = grep{ -d $_ } glob("$upstream/*");
+
+chdir($upstream);
+
+for my $p(@projects) {
+  if(-d "$p/.git") {
+    chdir( $p ) and print "chdir $p\n";
+    system('git', qw(pull));
+  }
+  elsif(-d "$p/.svn") {
+    chdir( $p ) and print "chdir $p\n";
+    system('svn', qw(update));
+  }
+  else {
+    warn($p);
+  }
+}
+
