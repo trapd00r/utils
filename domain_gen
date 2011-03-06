@@ -7,7 +7,7 @@ my @words = grep{ (length($_) > 4) && lc(chomp($_)) } (<$fh>);
 
 my $tld =  (shift // 'se');
 
-for my $w( sort{ length($b) <=> length($a) } grep{ m/$tld/ } @words) {
+for my $w( sort{ length($a) <=> length($b) } grep{ m/$tld/ } @words) {
   if($w =~ s{$tld$}{.$tld}) {
     if(_not_registred( $w )) {
       print "\e[33m$w\e[0m\n";
