@@ -1,0 +1,81 @@
+#!/usr/bin/perl
+use strict;
+use warnings FATAL => 'all';
+
+use JSON::XS;
+use LWP::UserAgent;
+
+use Data::Dumper;
+
+{
+  package Data::Dumper;
+  no strict "vars";
+
+  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
+  $Quotekeys = 0;
+}
+
+use Term::ExtendedColor qw(:attributes);
+
+my $base = 'http://api.cpanauthors.org/kwalitee';
+my $author = shift || 'WOLDRICH';
+$author = uc($author);
+
+my @important = qw(
+  extractable
+  has_readme
+  have_manifest
+  have_meta_yml
+  have_buildtool
+  have_changelog
+  no_symlinks
+  have_tests
+  proper_libs
+  no_pod_errors
+  use_strict
+  have_test_pod
+  have_test_pod_coverage
+);
+
+my $kwalitee = _get( qq[$base/$author] );
+my($k_dist, $k_author) = ($kwalitee->{distributions}, $kwalitee->{info});
+
+for my $dist(sort(keys(%{ $k_dist }))) {
+  print bold(fg('yellow17', $dist)), "\n";
+
+  for my $d(sort(keys(%{ $k_dist->{$dist}->{details} }))) {
+    my($ok) = $k_dist->{$dist}->{details}->{$d};
+
+    if($d ~~ @important) {
+      printf("%54.54s => %s\n",
+        bold(fg('paleturquoise4', $d)),
+        ($ok eq 'ok') ? fg('lightgreen', bold('ok')) : fg('indianred', $ok),
+      );
+    }
+    else {
+      printf("%30.30s => %s\n",
+        $d,
+        ($ok eq 'ok') ? fg('lightgreen', bold('ok')) : fg('indianred', $ok),
+      );
+    }
+  }
+}
+
+printf("\n %30s %s --\n\n", ' -- Author', $author);
+
+for my $d(sort(keys( %{ $k_author } ))) {
+  printf("%30.30s => %s\n", $d, $k_author->{$d});
+}
+
+sub _get {
+  my($url) = shift;
+  my $ua   = LWP::UserAgent->new;
+
+  my $response = $ua->get( $url );
+  if($response->is_success) {
+    return decode_json( $response->decoded_content );
+  }
+  else {
+    return;
+  }
+}
