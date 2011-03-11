@@ -1,0 +1,8 @@
+#!/usr/bin/perl
+use strict;
+
+for my $w(qw(abc), 42, 3.1415) {
+  for(qw(a A Z b B h H c C W s S l L i I n N v V j J f d F u U w)) {
+    printf("%s: %s (%s)\n", $w, unpack("$_*", $w), $_);
+  }
+}
