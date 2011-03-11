@@ -1,0 +1,8 @@
+#!/bin/bash
+# Filter torrents in the rtorrent ui
+#
+# s => string
+# t => tracker
+# f => file
+
+( set +x && sleep .05 && rtcontrol -q -V "$@" ) &
