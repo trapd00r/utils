@@ -2,27 +2,16 @@
 use strict;
 use Data::Dumper;
 use Term::ExtendedColor qw(fg);
-use Text::ASCIITable;
 
 
 my $themes = _vim_colors( _get_vim_themes() );
 
-my $previous;
-for my $theme(sort(keys(%{$themes}))) {
-  my $t = Text::ASCIITable->new(
-    {
-      headingText => $theme,
-    },
-  );
-  $t->setOptions('allowANSI' => 1);
-  $t->setCols(2);
-  $t->setColWidth(2, 80, 1);
-  $t->addRow($theme);
-
-  for my $tag(sort(keys(%{$themes->{$theme}}))) {
-    $t->addRow($tag);
+for my $cs(keys(%{ $themes })) {
+  print ">  $cs\n";
+  for my $k(keys( %{ $themes->{$cs} } )) {
+    print "$k\n";
   }
-  print $t;
+  print $themes->{$cs};
 }
 
 sub _vim_colors {
