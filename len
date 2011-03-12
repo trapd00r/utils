@@ -1,0 +1,7 @@
+#!/usr/bin/perl
+use strict;
+
+while(<>) {
+  chomp;
+  printf("% 4d %s\n", length($_), $_);
+}
