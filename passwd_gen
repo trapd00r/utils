@@ -1,0 +1,8 @@
+#!/usr/bin/perl
+use strict;
+use warnings FATAL => 'all';
+use List::Util qw(shuffle);
+
+my @chars = shuffle( ( ('a'..'z'), (0 .. 9), qw(? ! " ¤ % & / ( ) - _) ) );
+
+print my $word = substr(join('', @chars), 0, 30), "\n";
