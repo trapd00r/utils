@@ -1,0 +1,76 @@
+#!/usr/bin/perl
+use 5.010;
+use utf8;
+use strict;
+use warnings;
+
+use Encode qw(decode);
+use I18N::Langinfo qw(langinfo CODESET); 
+
+use charnames ();
+use List::Util;
+
+binmode STDOUT, ':utf8';
+
+my %r = (
+	u => qr/(?:U\+?(?<hex>[0-9A-F]+))/i,
+	h => qr/(?:0x(?<hex>[0-9A-F]+))/i,
+	d => qr/(?:(?<int>[0-9]+))/,
+	);
+
+my %transformation = (
+	'hex' => sub { hex $_[0] },
+	'int' => sub { $_[0] },
+	);
+
+my $codeset = langinfo(CODESET);
+@ARGV = map { decode $codeset, $_ } @ARGV;
+
+foreach ( @ARGV ) {
+	say "Processing $_";
+	my( $code, $match );
+
+	when( / \A (?: $r{u} | $r{h} | $r{d} ) \z /x ) {
+		$match = 'code point';
+		my( $key ) = keys %+;
+		$code = $transformation{$key}( $+{$key} );		
+		continue;
+		}
+	when( / \A ([A-Z\s]+) \z /ix ) {
+		$match = 'name';
+		$code = charnames::vianame( uc($1) );
+		continue;
+		}
+	when( / \A (\X) \z /x ) {
+		$match = 'grapheme';
+		$code = ord( $1 );
+		continue;
+		}
+	default {
+		unless( $code ) {
+			say "\tInvalid character or codepoint --> $_\n";
+			next;
+			}
+		continue;
+		}
+	
+	my $hex  = sprintf 'U+%04X', $code;
+	my $char = chr( $code );
+	$char = '<unprintable>' if $char =~ /\p{Print}/;
+	$char = '<whitespace>'  if $char =~ /\p{Space}/;
+	$char = '<control>'  if $char =~ /\p{Control}/;
+
+	my $name = charnames::viacode( $code ) // '<no name found>';
+	
+	print <<"HERE";
+	match       $match
+	code point  $hex
+	decimal     $code
+	name        $name
+	character   $char
+
+HERE
+	
+	}
+		
+	
