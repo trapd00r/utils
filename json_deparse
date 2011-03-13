@@ -1,0 +1,29 @@
+#!/usr/bin/perl
+use strict;
+
+use open qw(:utf8);
+use utf8;
+
+use JSON::XS;
+use LWP::UserAgent;
+
+use Data::Dumper;
+
+{
+  package Data::Dumper;
+  no strict "vars";
+
+  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
+  $Quotekeys = 0;
+}
+
+
+my $url = shift || 'http://api.cpanauthors.org/kwalitee/WOLDRICH';
+
+my $u = LWP::UserAgent->new;
+
+my $r = $u->get( $url );
+
+if($r->is_success) {
+  print Dumper decode_json( $r->decoded_content ) ;
+}
