@@ -1,0 +1,20 @@
+#!/usr/bin/perl
+#
+use strict;
+use warnings FATAL => 'all';
+
+my %perl = (
+  'current' => '/usr/bin/perl',
+  '5.8.9'   => '/home/scp1/bin/perl5.8.9',
+  '5.10.0'  => '/home/scp1/bin/perl5.10.0',
+  '5.10.1'  => '/home/scp1/bin/perl5.10.1',
+  '5.13.9'  => '/home/scp1/bin/perl5.13.9',
+);
+
+my $file = shift;
+
+for my $p(keys(%perl)) {
+  print "> $p\n";
+  open(my $popen, '-|', "$perl{$p} $file") or die($!);
+  print while <$popen>;
+}
