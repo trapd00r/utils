@@ -1,0 +1,11 @@
+#!/bin/sh
+
+sshfs -p 19216 scp1@192.168.1.100:irclogs           /mnt/irclogs
+sshfs -p 19216 scp1@192.168.1.100:/var/log/lighttpd /mnt/lighttpd
+sshfs -p 19216 scp1@192.168.1.100:/mnt/Music_1      /mnt/Music_1
+sshfs -p 19216 scp1@192.168.1.100:/mnt/Music_2      /mnt/Music_2
+sshfs -p 19216 scp1@192.168.1.100:/mnt/Music_3      /mnt/Music_3
+sshfs -p 19216 scp1@192.168.1.100:/mnt/Music_4      /mnt/Music_4
+sshfs -p 19216 scp1@192.168.1.100:/mnt/Music_5      /mnt/Music_5
+sshfs -p 19216 scp1@192.168.1.100:/mnt/Music_6      /mnt/Music_6
+sshfs -p 19216 scp1@192.168.1.100:/mnt/Music_7      /mnt/Music_7
