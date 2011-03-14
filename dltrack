@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# track a file while it is being downloaded
+# usage: dltrack /path/to/file-that-is-being-downloaded.ext
+
+perl -e 'BEGIN{$|=1;$f="@ARGV";$s=(stat$f)[7];$t=time}while(sleep 1){printf"\r$f %s bytes at %.2f Kb/s   ",$_=(stat$f)[7],($_-$s)/1024/(time-$t)}' $1
