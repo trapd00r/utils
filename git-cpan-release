@@ -1,0 +1,3 @@
+#!/bin/sh
+# print the most recent CPAN release tag (looks like "v0.03").
+git tag | perl -ne'$s{$_}++ if /^v\d+\.\d+/; END { print ((sort keys %s)[-1]) }'
