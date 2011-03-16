@@ -1,3 +1,7 @@
 #!/bin/sh
 PAGER=""
-git log --pretty=format:"%h%x09%an%x09%ad%x09%s" --date=short
+git log  --date=short --shortstat --summary --color=auto --abbrev=5          \
+          --ignore-space-at-eol                                               \
+          --pretty=format:"%Cgreen--%Creset%n %C(137)%s%Creset%n %C(108)%ar%Creset by %C(243)%an%Creset%n "      \
+          --abbrev-commit --date=short  --date-order --reverse |
+          perl -pe 's{(\d+) insertions}{\e[38;5;106;1m$1\e[m insertions};s{, (\d+) deletions}{\e[38;5;124;1m $1\e[m deletions}'
