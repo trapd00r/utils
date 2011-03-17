@@ -1,0 +1,27 @@
+#!/usr/bin/perl
+use strict;
+
+use Data::Dumper;
+
+{
+  package Data::Dumper;
+  no strict "vars";
+
+  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
+  $Quotekeys = 0;
+}
+
+my $person = shift // 'scp1';
+
+my $twat = '/mnt/irclogs/192/#twitter_wantarray.log';
+
+open(my $fh, '<', $twat) or die("Cannot open $twat: $!\n");
+
+my %all;
+while(<$fh>) {
+  chomp;
+  my($who, $msg) = $_ =~ m{ [0-9]{2}:[0-9]{2}\s@?\s+(\w+)\s+(.+) }x;
+  push(@{$all{$who}}, $msg);
+}
+
+print Dumper $all{ $person };
