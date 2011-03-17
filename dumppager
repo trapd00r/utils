@@ -1,0 +1,68 @@
+#!/usr/bin/perl
+# Copyright 2011, Olof Johansson <olof@ethup.se>
+#
+# dumppager.pl, a mutt pager that dumps the rendered mail to file
+# 1. Edit the config variables in the script to suite your needs.
+# 2. Set the mutt variable "pager" to the path of this script.
+# 3. Open mutt, and then read the mails you want to dump, one by
+#    one, in the order you want them dumped.
+#
+# Copying and distribution of this file, with or without
+# modification, are permitted in any medium without royalty
+# provided the copyright notice are preserved. This file is
+# offered as-is, without any warranty.
+
+use strict;
+use warnings;
+use File::Path();
+
+use open qw(:utf8);
+use encoding 'utf8';
+
+# BEGIN CONFIG
+my $path = '/mnt/Docs/Mail/mutt_dump';
+my $inbox = '/mnt/Docs/Mail/inbox/cur';
+
+my $fmt = '%f → %s';
+
+if(!-d $path) {
+  File::Path::make_path($path) or die("Cant mkdir $path: $!\n");
+  warn("$path created\n");
+}
+
+my @mail = <>;
+
+my($p_from, $p_subject, $p_date) = ('unknown', 'no subject', 0);
+for my $l(@mail) {
+  $p_from    = $1 if $l =~ m/^From: .*<(.+)>/;
+  $p_subject = $1 if $l =~ m/^Subject: (.+)/;
+  $p_date    = $1 if $l =~ m/^Date: (.+)/;
+}
+
+my $fname = mkfname($p_from, $p_subject, $p_date);
+
+open(my $fh, '>', $fname) or die("Can not open $fname: $!\n");
+
+do {
+  print $_;
+  print $fh $_;
+} for @mail;
+
+exit 0;
+
+sub mkfname {
+  my ($from, $subject, $date) = @_;
+
+  $subject =~ s/([;<>\*\|`&\$!#\(\)\[\]\{\}'"])/_/gm;
+  $subject =~ s/://g;
+  $subject =~ s/_+/_/g;
+
+  $from = sprintf("% 20.20s", $from); 
+
+  my $fname = $fmt;
+  $fname =~ s/%f/$from/g;
+  $fname =~ s/%s/$subject/g;
+  $fname =~ s/%d/$date/g;
+
+  return sprintf("%s/%.80s", $path, lc($fname));
+}
