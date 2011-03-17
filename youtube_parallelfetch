@@ -177,8 +177,7 @@ printf("> Downloading %d videos in parallel...\n", scalar(@u));
 
 for my $url(@u) {
   $pm->start and next;
-  chdir('/mnt/Mvids_2') or die;
-  exec('clive','--format', 'best',  $url);
+  exec('clive', $url);
   $pm->finish;
 }
 $pm->wait_all_children;
