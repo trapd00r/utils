@@ -1,0 +1,33 @@
+#!/usr/bin/perl
+use strict;
+use Linux::Inotify2;
+
+my $log = '/mnt/irclogs/192/bitlbee_current.log';
+
+my $in = Linux::Inotify2->new;
+$in->watch($log, IN_MODIFY);
+
+while(1) {
+  my @e = $in->read;
+  my $c = reopen($log);
+  print $_->fullname, "\n" for @e;
+  osd( $c->[-1] ) and next;
+};
+
+sub reopen {
+  my $f = shift;
+  open(my $fh, '<', $f) or die($!);
+  my @c = <$fh>;
+  close($fh);
+  return \@c;
+}
+
+
+sub osd {
+  my ($msg) = @_;
+  my $color = '\#a8ff00';
+  # yeah, yeah. I'll fix
+  system("echo '$msg' | osd_cat -A right -p bottom -c $color -s 3 ");
+}
+
+
