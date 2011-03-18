@@ -5,6 +5,7 @@ use open qw(:utf8);
 use utf8;
 
 use Data::Dumper;
+use JSON::XS;
 
 {
   package Data::Dumper;
