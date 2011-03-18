@@ -1,11 +1,94 @@
 #!/usr/bin/perl
 use strict;
+use open qw(:utf8);
+use utf8;
+use encoding 'utf8';
+
 use WWW::Mechanize;
+use Storable;
+use WWW::Shorten::Simple;
+use Getopt::Long;
+use Tie::File;
 
-my $w = WWW::Mechanize->new;
+use Data::Dumper;
 
-open(my $l, '<', "$ENV{HOME}/doc/links") or die($!);
-while(<$l>) {
-  $w->get($_) or die($!);
-  printf("%s\n\t%s", $w->title, $_);
+{
+  package Data::Dumper;
+  no strict "vars";
+
+  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
+  $Quotekeys = 0;
+}
+
+
+
+my $m = WWW::Mechanize->new(
+  onwarn  => undef,
+  onerror => undef,
+);
+$m->agent_alias('Linux Mozilla');
+
+my $bm_raw = "$ENV{HOME}/doc/links";
+my $bm_db  = "$ENV{HOME}/doc/links_db";
+
+my %bookmarks = ();
+
+my $opt;
+$opt->{cached} = 0;
+GetOptions(
+  rehash  => sub { %bookmarks = %{ process_url($bm_raw) }; },
+);
+
+if(-f $bm_db) {
+  $opt->{cached} = 1;
+  %bookmarks = %{ retrieve($bm_db) };
+}
+else {
+  warn "Generating bookmarks database...\n";
+  %bookmarks = %{ process_url($bm_raw) };
+  _store( \%bookmarks ); 
+}
+
+printf("%s titles shown:\n", ($opt->{cached}) ? 'Cached' : 'Fresh');
+
+my(%seen, %dupe);
+for my $u(sort{ $bookmarks{$a} cmp $bookmarks{$b} } keys(%bookmarks)) {
+  if($seen{ $bookmarks{$u} } > 1) {
+    $dupe{ $bookmarks{$u} }++;
+    next;
+  }
+  $seen{ $bookmarks{$u} }++;
+  printf("%60.60s %s\n", $bookmarks{$u}, $u);
+}
+
+printf("\n'$_' was seen %d times\n", $dupe{$_} + 1) for keys %dupe;
+
+
+sub process_url {
+  my $raw = shift;
+  my %result;
+
+  $opt->{cached} = 0;
+
+  open(my $fh, '<', $raw) or die($!);
+
+  while(my $url = <$fh>) {
+    chomp($url);
+    $m->get($url) or next;
+
+    my $short_url;
+    do {
+      my $ss = WWW::Shorten::Simple->new('Googl');
+
+      $short_url = eval { $ss->shorten($url); };
+      not defined $short_url and next;
+    };
+    $result{ $short_url } = $m->title;
+  }
+  return \%result;
+}
+
+sub _store {
+  my $ref = shift;
+  store( $ref, $bm_db );
 }
