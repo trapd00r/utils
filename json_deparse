@@ -4,9 +4,6 @@ use strict;
 use open qw(:utf8);
 use utf8;
 
-use JSON::XS;
-use LWP::UserAgent;
-
 use Data::Dumper;
 
 {
@@ -17,13 +14,6 @@ use Data::Dumper;
   $Quotekeys = 0;
 }
 
-
-my $url = shift || 'http://api.cpanauthors.org/kwalitee/WOLDRICH';
-
-my $u = LWP::UserAgent->new;
-
-my $r = $u->get( $url );
-
-if($r->is_success) {
-  print Dumper decode_json( $r->decoded_content ) ;
-}
+$/ = "";
+my $j = <>;
+print Dumper decode_json( $j );
