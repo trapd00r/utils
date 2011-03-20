@@ -1,0 +1,8 @@
+#!/usr/bin/perl
+use strict;
+use Text::Autoformat;
+
+while(<>) { 
+  print autoformat($_, { left => 2, right => 80, justify => 'left' });
+}
+
