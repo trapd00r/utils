@@ -36,7 +36,7 @@ my %bookmarks = ();
 my $opt;
 $opt->{cached} = 0;
 GetOptions(
-  rehash  => sub { %bookmarks = %{ process_url($bm_raw) }; },
+  rehash  => sub { unlink($bm_db) },
 );
 
 if(-f $bm_db) {
