@@ -15,6 +15,7 @@
 use strict;
 use warnings;
 use File::Path();
+use Term::ExtendedColor qw(:attributes);
 
 use open qw(:utf8);
 use encoding 'utf8';
@@ -44,7 +45,27 @@ my $fname = mkfname($p_from, $p_subject, $p_date);
 open(my $fh, '>', $fname) or die("Can not open $fname: $!\n");
 
 do {
-  print $_;
+  if($_ =~ m/Date: (.+)/) {
+    printf("      Date: %s\n", fg('green24', $1));
+  }
+  elsif($_ =~ m/From: (.+)? <(.+)>/) {
+    printf("      From: %s [ %s ]\n",
+      bold(fg('green25', $1)), fg('deeppink2', $2)
+    );
+  }
+  elsif($_ =~ m/To: (.+)/) {
+    printf("        To: %s\n", fg('cyan15', $1));
+  }
+  elsif($_ =~ m/Subject: (.+)/) {
+    printf("   Subject: %s\n", fg('wheat4', bold($1)));
+  }
+  elsif($_ =~ m/User-Agent: (.+)/) {
+    printf("User-Agent: %s\n", fg('grey39', $1));
+  }
+
+  else {
+    print $_;
+  }
   print $fh $_;
 } for @mail;
 
