@@ -1,0 +1,2 @@
+#!/bin/sh
+lynx -dump "$@" --nolist | /usr/bin/vim -R -
