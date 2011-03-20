@@ -1,0 +1,83 @@
+#!/usr/bin/perl
+use strict;
+
+my $ip = shift // '83.177.28.44';
+
+printf("%s\n", $_) for (
+  ip2bin4($ip),
+  ip2bin3($ip),
+  ip2bin2($ip),
+  ip2bin1($ip),
+  is_rfc_private($ip),
+  is_class_d($ip),
+  is_class_e($ip),
+  is_localhost($ip),
+  is_linklocal($ip),
+  is_testnet($ip),
+);
+
+
+sub ip2bin4 {
+  my $ip = shift;  # ip format: a.b.c.d
+  return(unpack("N", pack("C4", split(/\D/, $ip))));
+}
+sub ip2bin3 {
+  my $ip = shift;  # ip format: a.b.c
+  return(unpack("N", pack("C2S", split(/\D/, $ip))));
+}
+sub ip2bin2 {
+  my $ip = shift;  # ip format: a.b
+  return(unpack("N", pack("CL", split(/\D/, $ip))));
+}
+sub ip2bin1 {
+  my $ip = shift;  # ip format: a - for consistancy
+  return($ip);
+}
+sub is_rfc_private {
+  my $address = shift;
+  return(1) 
+    if ((0x10000000 <= $address) and 
+      ($address <= 0x10FFFFFF)); # 10.0.0.0/8
+  return(1)
+    if ((0xAC100000 <= $address) and 
+      ($address <= 0xAC101FFF)); # 172.16.0.0/12
+  return(1)
+    if ((0xC0A80000 <= $address) and 
+      ($address <= 0xC0A8FFFF)); # 192.168.0.0/16
+  return(0);
+}
+sub is_class_d {
+  my $address = shift;
+  return(1) 
+    if ((0xE0000000 <= $address) and 
+      ($address <= 0xEFFFFFFF)); # 224.0.0.0/4
+  return(0);
+}
+sub is_class_e {
+  my $address = shift;
+  return(1) 
+    if ((0xF0000000 <= $address) and 
+      ($address <= 0xFFFFFFFF)); # 240.0.0.0/4
+  return(0);
+}
+sub is_localhost {
+  my $address = shift;
+  return(1) 
+    if ((0x7F000000 <= $address) and 
+      ($address <= 0x7FFFFFFF)); # 127.0.0.0/8
+  return(0);
+}
+sub is_linklocal {
+  my $address = shift;
+  return(1)
+    if ((0xA9FE0000 <= $address) and 
+      ($address <= 0xA9FEFFFF)); # 169.254.0.0/16
+  return(0);
+}
+sub is_testnet {
+  my $address = shift;
+  return(1) 
+    if ((0xC0000200 <= $address) and 
+      ($address <= 0xC00002FF)); # 192.0.2.0/24
+  return(0);
+}
