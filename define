@@ -1,0 +1,11 @@
+#!/usr/bin/perl
+use strict;
+
+use Net::Dict;
+
+my $word = shift;
+my $dict = Net::Dict->new('dict.org');
+$dict->setDicts('wn', 'web1913');
+
+my $defs = $dict->define( $word );
+print $defs->[0]->[1];
