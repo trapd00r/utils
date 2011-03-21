@@ -1,0 +1,8 @@
+#!/usr/bin/perl
+
+use LWP::Simple;
+
+my $url = shift || 'http://graph.facebook.com/'; # 75 2011-03-21
+$url = "http://$url" if $url !~ /^http/;
+
+print get( "http://graph.facebook.com/$url" );
