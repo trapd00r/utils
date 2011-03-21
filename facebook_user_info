@@ -1,0 +1,7 @@
+#!/usr/bin/perl
+
+use LWP::Simple;
+
+my $user = shift // 'zibri';
+
+print get( "http://graph.facebook.com/$user" );
