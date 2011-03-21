@@ -1,0 +1,35 @@
+#!/usr/bin/perl
+# Remove various non-file records from the vim-times db
+use strict;
+use Storable;
+
+
+my %h = %{ retrieve("$ENV{HOME}/.local/share/time_spent_in_vim.db") };
+
+for my $k(keys(%h)) {
+  if($k =~ m/^:?[sl]et/) {
+    delete($h{$k});
+  }
+  if($k =~ m/^-/) {
+    delete($h{$k});
+  }
+  if($k =~ m/^: ?/) {
+    delete($h{$k});
+  }
+  if($k =~ m/^http/) {
+    delete($h{$k});
+  }
+  if($k =~ m/bufdo/) {
+    delete($h{$k});
+  }
+  if($k =~ m/^\s+$/) {
+    delete($h{$k});
+  }
+  if($k eq '' or !$k or !defined($k)) {
+    delete($h{$k});
+  }
+
+  print "$k: $h{$k}\n";
+}
+
+store(\%h, './time_spent_in_vim.db');
