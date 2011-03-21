@@ -1,3 +1,0 @@
-#!/bin/sh
-#GTK2_RC_FILES=$HOME/configs/gtkrc-firefox /usr/bin/firefoxx
-/usr/bin/firefox
