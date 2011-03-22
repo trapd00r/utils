@@ -1,0 +1,13 @@
+#!/usr/bin/perl
+use strict;
+
+use Acme::CPANAuthors;
+
+my $query = shift // 'wo.*';
+
+my @authors = Acme::CPANAuthors->look_for($query);
+die("Not a known author\n") if !@authors;
+
+printf("%s (%s) belongs to %s.\n",
+  $_->{id}, $_->{name}, $_->{category}
+) for @authors;
