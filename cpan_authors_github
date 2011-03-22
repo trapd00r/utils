@@ -1,0 +1,28 @@
+#!/usr/bin/perl
+use strict;
+use warnings FATAL => 'all';
+
+use Acme::CPANAuthors;
+
+my $author = uc( shift // 'woldrich' );
+
+
+if(!Acme::CPANAuthors->look_for($author)) {
+  die("Not a known author: $author\n");
+}
+
+my $authors = Acme::CPANAuthors->new('GitHub');
+
+printf("%d CPAN authors with GitHub repositories found.\n", $authors->count);
+
+print "$author:\n";
+printf("- Name: %s\n",     $authors->name($author));
+printf("- Avatar: %s\n",   $authors->avatar_url($author));
+printf("- Kwalitee:\n");
+for my $k(qw(Average_Kwalitee CPANTS_Game_Kwalitee Email Liga Rank)) {
+  printf("    - %s: %s\n", $k, map { $_->{info}->{$k} } $authors->kwalitee($author));
+}
+
+
+print " - Distributions:\n";
+printf("    - %s\n", $_) for map { $_->dist } $authors->distributions($author);
