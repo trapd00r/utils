@@ -13,7 +13,10 @@ my $mpd = Audio::MPD->new(
   port => 6600,
 );
 
-my $agent = $mpd->current->title // 'Laleh';
+my $agent = do {
+  $mpd->current ? $mpd->current->title : 'Laleh';
+};
+
 $agent =~ s{[åä]+}{a}g;
 $agent =~ s{[ö]}{o}g;
 
