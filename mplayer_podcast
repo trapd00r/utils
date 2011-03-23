@@ -1,0 +1,3 @@
+#!/bin/sh
+
+mplayer -af scaletempo -speed 1.8 "$@"
