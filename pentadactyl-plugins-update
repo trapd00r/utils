@@ -23,7 +23,8 @@ chdir($penta_plugins) or warn("Can not chdir to $penta_plugins: $!\nUsing .\n");
 
 my $success = 0;
 for my $plugin(@plugins) {
-  if($m->get("$base_uri/$plugin")) {
+  $m->get("$base_uri/$plugin");
+  if($m->success) {
     if(-f $plugin) {
       printf("There's no more recent version of %s, skipping\n", $plugin);
       next;
