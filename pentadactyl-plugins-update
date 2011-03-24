@@ -1,0 +1,38 @@
+#!/usr/bin/perl
+# update all installed Pentadactyl plugins in one go.
+use WWW::Mechanize;
+
+my $m = WWW::Mechanize->new(
+  agent     => 'WWW-Mechanize/Thanks for the hard work on Pentadactyl',
+  onerror   => sub { warn "@_\n"; },
+  onwarning => sub { warn "@_\n"; },
+);
+
+my $penta_home    = "$ENV{HOME}/.pentadactyl";
+my $penta_plugins = "$penta_home/plugins";
+
+my $base_uri = 'http://dactyl.sourceforge.net/plugins';
+
+my @plugins = map { _basename($_) } glob("$penta_plugins/*");
+
+die("No plugins found!\n") if !@plugins;
+
+printf("Trying to update %d plugins...\n", scalar(@plugins));
+
+chdir($penta_plugins) or warn("Can not chdir to $penta_plugins: $!\nUsing .\n");
+
+my $success = 0;
+for my $plugin(@plugins) {
+  if($m->get("$base_uri/$plugin")) {
+    if(-f $plugin) {
+      printf("There's no more recent version of %s, skipping\n", $plugin);
+      next;
+    }
+    $m->save_content($plugin) and $success++;
+  }
+}
+
+printf("[%d / %d] plugins updated.\n", $success, scalar(@plugins));
+
+
+sub _basename { map { m!.*/(.+)$! } @_ }
