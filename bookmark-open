@@ -1,0 +1,9 @@
+#!/usr/bin/perl
+
+my $bookmarks = "$ENV{HOME}/doc/links";
+
+open(my $fh, '<', $bookmarks) or die($!);
+chomp(my @u = <$fh>);
+for my $url(@u) {
+  system("firefox", $url);
+}
