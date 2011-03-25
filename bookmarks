@@ -36,7 +36,7 @@ my %bookmarks = ();
 my $opt;
 $opt->{cached} = 0;
 GetOptions(
-  rehash  => sub { unlink($bm_db) },
+  'rehash|regen'  => sub { unlink($bm_db) },
 );
 
 if(-f $bm_db) {
