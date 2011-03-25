@@ -1,0 +1,38 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use open qw(:utf8);
+use encoding 'utf8';
+use Term::ExtendedColor qw(:attributes);
+
+my @mail = <>;
+
+do {
+  if($_ =~ m/Date: (.+)/) {
+    printf("      Date: %s\n", fg('green24', $1));
+  }
+  elsif($_ =~ m/From: (.+)? <(.+)>/) {
+    printf("      From: %s [ %s ]\n",
+      bold(fg('green25', $1)), fg('deeppink2', $2)
+    );
+  }
+  elsif($_ =~ m/To: (.+)/) {
+    printf("        To: %s\n", fg('cyan15', $1));
+  }
+  elsif($_ =~ m/Subject: (.+)/) {
+    printf("   Subject: %s\n", fg('wheat4', bold($1)));
+  }
+  elsif($_ =~ m/User-Agent: (.+)/) {
+    printf("User-Agent: %s\n", fg('grey39', $1));
+  }
+  elsif($_ =~ m/X-Mailer: (.+)/) {
+    printf("  X-Mailer: %s\n", fg('steelblue', $1));
+  }
+  else {
+    print $_;
+  }
+} for @mail;
+
+exit 0;
