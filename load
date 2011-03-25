@@ -1,0 +1,5 @@
+#!/bin/sh
+printf %b '\033[?7l'
+
+ps aux | sort -k3 | tail -10 |
+  perl -e '@_=<>; for(@_){ print if /^USER/ } print for reverse grep{!/^USER/} @_'
