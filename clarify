@@ -1,0 +1,33 @@
+use strict;
+use Term::ANSIColor;
+
+my $CR = "\x0d";
+my $LF = "\x0a";
+
+my %rep = (
+  $CR => color('bold magenta') . "\\r",
+  $LF => color('bold yellow')  . "\\n",
+  ''  => color('bold black'),  # If you can't read bright black on your terminal,
+                               # replace "bold black" with "reset"
+);
+
+sub clarified {
+  my ($str) = @_;
+
+  my @lines = split /($CR$LF|$CR|$LF)/, $str;
+
+  my $return;
+
+  for my $line (@lines) {
+    unless ($line =~ /$CR|$LF/) {
+      $return .= $line;
+      next;
+    }
+    $return .= $rep{$_} for split //, $line;
+    $return .= $rep{''} . "\n";
+  }
+
+  return $return;
+}
+
+print clarified($_) for <>;
