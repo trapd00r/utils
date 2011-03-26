@@ -1,0 +1,21 @@
+#!/usr/bin/perl
+use strict;
+
+my $chown = 'chown root:lp';
+my $chmod = 'chmod 660';
+
+my $device;
+
+open(my $fh, '-|', 'lsusb') or die($!);
+while(<$fh>) {
+  if($_ =~ m/PIXMA/) {
+    my($bus, $device) = $_ =~ m{Bus (\d+) Device (\d+)};
+    print "Printer found on $bus/$device\n\n";
+    print "chmod 660 /dev/bus/usb/$bus/$device \\ \n";
+    print "chown root:lp /dev/bus/usb/$bus/$device \\ \n";
+    print "/etc/rc.d/cups restart \\ \n\n-\n";
+    print "http://localhost:631/admin/\n";
+
+    last;
+  }
+}
