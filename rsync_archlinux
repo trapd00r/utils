@@ -1,0 +1,53 @@
+#!/usr/bin/perl
+use strict;
+
+system('rsync', qw(
+  -a
+  --delete
+  rsync://mirror.archlinux.fi/archlinux/
+  /home/scp1/http/japh.se/archlinux
+  --log-file=/home/scp1/.rsync_archlinux.log
+  )
+) == 0 or report($@);
+
+my $index = '/home/scp1/http/japh.se/archlinux/index.html';
+
+open(my $fh, '>', $index) or die($!);
+while(<DATA>) {
+  print $fh $_;
+}
+close $fh;
+
+
+sub report {
+  my ($err) = @_;
+  $err = sprintf("This error was reported on %s\n\n%s",
+    scalar(localtime()), $err,
+  );
+  my $recipient = 'magnus@trapd00r.se';
+  my $content = sprintf("Subject:archlinux.japh.se mirror FAILURE\n\n$err\n");
+  system("printf \"$content\"|msmtp -a gmail \"$recipient\"");
+  exit;
+}
+
+__DATA__
+<html>
+  <head>
+    <title>archlinux.japh.se</title>
+  </head>
+  <body>
+    <h1>archlinux.japh.se</h1>
+    <p>We're hosting a full mirror of all <a href="http://www.archlinux.org/">Arch Linux</a> repositories, installation ISO files etc.</p>
+    <p>The mirror is updated every three hours and located in Norrkoping, Sweden.</p>
+    <p>You can access the mirror by http</p>
+    <ul>
+      <li><a href="http://archlinux.japh.se">http://mirror.archlinux.fi/archlinux/</a></li>
+    </ul>
+    <p>To use this mirror, add <p/>
+    <pre>
+      Mirror = http://archlinux.japh.se/$repo/os/$architecture
+    </pre>
+    <p>to /etc/pacman.d/mirrorlist</p>
+    <p>If you encounter any problems, you can contact the mirror administrator via <a href="mailto:magnus@trapd00r.se">magnus@trapd00r.se</a></p>
+  </body>
+</html>
