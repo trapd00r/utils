@@ -1,0 +1,26 @@
+#!/usr/bin/perl
+use strict;
+use Regexp::Common qw(profanity);
+use Term::ExtendedColor qw(:attributes);
+
+if(@ARGV) {
+  for my $f(@ARGV) {
+    my $seen = 0;
+    open(my $fh, '<', $f) or die("Cant open $f: $!\n");
+
+    while(<$fh>) {
+      if($_ =~ m/($RE{profanity})/) {
+        my $bad = $1;
+        $seen++;
+        print bold($f), "\n" unless $seen >=2;
+        printf("@{[fg(85, '% 6d:')]}: %s\n", $., $bad);
+      }
+    }
+  }
+  exit;
+}
+
+
+while(<>) {
+  m/($RE{profanity})/ and print "$.: $1\n";
+}
