@@ -1,0 +1,34 @@
+#!/usr/bin/perl
+
+use JSON::XS;
+use LWP::Simple;
+
+use Data::Dumper;
+
+{
+  package Data::Dumper;
+  no strict "vars";
+
+  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
+  $Quotekeys = 0;
+}
+
+use Term::ExtendedColor qw(:attributes);
+
+
+my $user = shift // 'trapd00r';
+my $url = "http://identi.ca/api/statuses/friends_timeline/$user.json";
+
+{
+  for my $sent(@{ decode_json( get($url) ) }) {
+    my $str = $sent->{text};
+    my $who = $sent->{user}{screen_name};
+
+    $str =~ s/(@\w+)/fg('steelblue1', bold($1))/eg;
+    $str =~ s/(@?\Q$user\E)/fg('red1', bold($1))/eg;
+    $str =~ s/([!|#]\w+)/fg(142, bold($1))/eg;
+
+    printf("%20.20s: %s\n", $who, $str);
+  }
+}
+
