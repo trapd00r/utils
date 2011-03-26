@@ -21,6 +21,8 @@ use Data::Dumper;
 }
 
 
+my $pattern = shift;
+
 
 my $m = WWW::Mechanize->new(
   onwarn  => undef,
@@ -58,6 +60,13 @@ for my $u(sort{ $bookmarks{$a} cmp $bookmarks{$b} } keys(%bookmarks)) {
     next;
   }
   $seen{ $bookmarks{$u} }++;
+
+  if($pattern) {
+    if( ($bookmarks{$u} =~ m/$pattern/i) or ($u =~ m/$pattern/) ) {
+      printf("%60.60s %s\n", $bookmarks{$u}, $u);
+    }
+    next;
+  }
   printf("%60.60s %s\n", $bookmarks{$u}, $u);
 }
 
