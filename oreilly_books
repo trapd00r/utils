@@ -1,0 +1,29 @@
+#!/usr/bin/perl
+use strict;
+use Storable;
+
+use WWW::OReillyMedia::Store;
+
+my $books_db = "$ENV{HOME}/doc/oreilly_books.db";
+
+my %oreilly;
+if(-f $books_db and !@ARGV) {
+  %oreilly = %{ retrieve($books_db) };
+  for my $p(sort(keys(%oreilly))) {
+    printf("%20.20s  %s\n", $oreilly{$p}, $p);
+  }
+  exit;
+}
+
+else {
+  my $store = WWW::OReillyMedia::Store->new;
+  my $books = $store->get_all_books;
+
+  for my $book(@{$books}) {
+    $oreilly{ $book->{desc} } = $book->{released};
+    printf("%20.20s  %s\n", $book->{released}, $book->{desc});
+  }
+  store(\%oreilly, "$ENV{HOME}/doc/oreilly_books.db");
+}
+
+__END__
