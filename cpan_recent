@@ -1,0 +1,16 @@
+#!/usr/bin/perl
+use strict;
+use LWP::Simple;
+
+my $recent = 'http://cpan.japh.se/RECENT';
+
+my %r;
+for(split(/\n/, get($recent))) {
+  if($_ =~ m{.+/(.+)[.]tar[.]gz$}) {
+    $r{ $1 } = 1 unless $1 =~ m/^perl-?5[.]/;
+  }
+}
+
+for my $d(sort(keys(%r))) {
+  printf("%s\n", $d);
+}
