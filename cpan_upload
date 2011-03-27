@@ -1,0 +1,17 @@
+#!/usr/bin/perl
+use strict;
+use warnings FATAL => 'all';
+
+use CPAN::Uploader;
+
+my $file = shift or die("Usage: $0 [FILE...]\n");
+
+my $uploader = CPAN::Uploader->new(
+  {
+    user     => 'WOLDRICH',
+    password => do { $_ = `smokingkills`; chomp $_; $_ },
+    debug    => 1,
+  },
+);
+
+$uploader->upload_file( $file );
