@@ -21,7 +21,6 @@ use Data::Dumper;
 }
 
 
-my $pattern = shift;
 
 
 my $m = WWW::Mechanize->new(
@@ -40,6 +39,8 @@ $opt->{cached} = 0;
 GetOptions(
   'rehash|regen'  => sub { unlink($bm_db) },
 );
+
+my $pattern = shift;
 
 if(-f $bm_db) {
   $opt->{cached} = 1;
