@@ -17,7 +17,7 @@ my $remote_user   = 'scp1';
 my $remote_dest   = 'http/japh.se/perl/devel';
 
 my @pm = File::Find::Rule->file()
-                         ->name('*.pm')
+                         ->name('*.PL')
                          ->in('.');
 if(scalar(@pm) < 1) {
   system("/usr/bin/make", @ARGV);
