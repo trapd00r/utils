@@ -1,9 +1,0 @@
-use strict;
-use warnings FATAL => 'all';
-
-
-this_does_not_compile();
-sub this_does_not_compile {
-  42/0
-  3/2;
-}
