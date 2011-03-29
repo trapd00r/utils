@@ -8,7 +8,7 @@ system('rsync', qw(
   /home/scp1/http/japh.se/archlinux
   --log-file=/home/scp1/.rsync_archlinux.log
   )
-) == 0 or report($@);
+) == 0 or report($!);
 
 my $index = '/home/scp1/http/japh.se/archlinux/index.html';
 
