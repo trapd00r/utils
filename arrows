@@ -1,0 +1,14 @@
+#!/usr/bin/perl
+use strict;
+use warnings FATAL => 'all';
+use vars qw($VERSION);
+my $APP  = '';
+$VERSION = '0.001';
+use utf8;
+use open qw(:utf8 :std);
+
+use charnames qw(:ful);
+
+for my $u(0x2190 .. 0x21ff) {
+  printf("%s %s %s\n", $u, chr($u), charnames::viacode($u));
+}
