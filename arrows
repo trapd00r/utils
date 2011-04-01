@@ -7,7 +7,7 @@ $VERSION = '0.001';
 use utf8;
 use open qw(:utf8 :std);
 
-use charnames qw(:ful);
+use charnames qw(:full);
 
 for my $u(0x2190 .. 0x21ff) {
   printf("%s %s %s\n", $u, chr($u), charnames::viacode($u));
