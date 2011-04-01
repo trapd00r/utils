@@ -1,0 +1,3 @@
+#!/bin/sh
+
+lp -d Canon_MP150 "$@"
