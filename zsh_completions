@@ -1,0 +1,41 @@
+#!/usr/bin/perl
+use strict;
+
+my $comps = $ENV{ZSH_ACTIVE_COMPLETIONS};
+
+not defined $comps and die(
+  'Set ZSH_ACTIVE_COMPLETIONS=$( echo ${(kv)_comps[@]} )', "\n",
+);
+
+
+my(@compl, @apps, %c);
+for(split(/ /, $comps)) {
+  if($_ =~ m/^_/) {
+    push(@compl, $_);
+  }
+  else {
+    push(@apps, $_);
+  }
+}
+
+@c{ @apps } = @compl;
+
+for my $application(sort(keys(%c))) {
+  printf("%25.25s: %s\n", $application, $c{$application});
+}
+
+__END__
+                    eview: _vim
+                     evim: _vim
+                     exim: _vim
+                      gex: _vim
+                    gview: _vim
+                     gvim: _vim
+                 gvimdiff: _vim
+                   rgview: _vim
+                    rgvim: _vim
+                    rview: _vim
+                     rvim: _vim
+                      vim: _vim
+               vim-addons: _vim-addons
+                  vimdiff: _vim
