@@ -1,0 +1,13 @@
+#!/usr/bin/perl
+use strict;
+use feature 'say';
+use File::Find::Rule;
+
+my @pm = sort(
+  File::Find::Rule->file()
+                  ->name('*.pm')
+                  ->in(@INC)
+);
+
+
+say for @pm;
