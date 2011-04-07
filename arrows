@@ -9,6 +9,6 @@ use open qw(:utf8 :std);
 
 use charnames qw(:full);
 
-for my $u(0x2190 .. 0x21ff) {
+for my $u( (0x2190 .. 0x21ff), (0x2900 .. 0x297f), (0x2b00 .. 0x2b59) ) {
   printf("%s %s %s\n", $u, chr($u), charnames::viacode($u));
 }
