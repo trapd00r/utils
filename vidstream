@@ -1,0 +1,38 @@
+#!/bin/bash
+
+port="2000"
+
+usage() {
+   echo "Usage: vidstream <files>..."
+   echo "       vidstream <host> [<port>]"
+   exit 1
+}
+
+if (($# < 1)); then
+    usage
+fi
+
+if [[ -f "$1" ]]; then
+
+    for video; do
+    if [[ ! -d "$video" ]]; then
+        echo "Streaming $video on port $port..."
+        netcat -l -p $port < "$video"
+    fi
+    done
+else 
+    host="$1"
+    port="${2:-$port}"
+    
+    echo -e "Watching streams from $host:$port\n"
+    
+    while :; do
+        echo "Press any key to play or 'q' to quit" 
+        read -n1 cmd
+
+        if [[ "$cmd" == "q" ]]; then
+            exit 0
+        fi
+        netcat "$host" "$port" | mplayer -fs -
+    done
+fi
