@@ -1,0 +1,18 @@
+#!/usr/bin/perl
+use strict;
+use Net::DNS;
+
+my $res = Net::DNS::Resolver->new;
+
+print wikipedia( @ARGV ? @ARGV : 'laleh' ), "\n";
+
+sub wikipedia {
+  my($name) = @_;
+  my $q = $res->query("$name.wp.dg.cx", "TXT");
+  if($q) {
+    for my $rr($q->answer) {
+      next unless $rr->type eq "TXT";
+      return join "", $rr->char_str_list;
+    }
+  }
+}
