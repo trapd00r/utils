@@ -1,0 +1,11 @@
+#!/usr/bin/perl
+use strict;
+use warnings FATAL => 'all';
+
+use File::LsColor qw(get_ls_colors ls_color);
+
+for my $e(sort(keys(%{ get_ls_colors() }))) {
+  printf("%s\n", ls_color("file.$e", ));
+}
+
+__END__
