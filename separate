@@ -1,0 +1,16 @@
+#!/usr/bin/perl
+
+use strict;
+
+
+my $old;
+while(<>) {
+  my($current) = $_ =~ m{(.*/).+};
+  if($current ne $old) {
+    print "\n";
+    $old = $current;
+    print;
+    next;
+  }
+  print;
+}
