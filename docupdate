@@ -1,0 +1,2 @@
+#!/bin/sh
+scp -r -P 19216 $HOME/doc/* scp1@192.168.1.100:http/japh.se/doc
