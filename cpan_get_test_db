@@ -1,2 +1,4 @@
 #!/bin/sh
 wget http://devel.cpantesters.org./cpanstats.db.gz
+wget http://devel.cpantesters.org./uploads/uploads.csv.gz
+wget http://devel.cpantesters.org./release/release.db.gz
