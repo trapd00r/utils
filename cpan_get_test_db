@@ -1,0 +1,2 @@
+#!/bin/sh
+wget http://devel.cpantesters.org./cpanstats.db.gz
