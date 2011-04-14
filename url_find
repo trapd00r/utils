@@ -1,0 +1,24 @@
+#!/usr/bin/perl
+use strict;
+
+use Regexp::Common qw(URI);
+
+
+my $filter = shift;
+$filter = qr{$filter};
+
+while(<>) {
+  chomp $_;
+   if($_ =~ m/($RE{URI})/) {
+     my $uri = $1;
+     if($filter) {
+       if($uri =~ m/$filter/) {
+         print "$uri\n";
+       }
+     }
+     else {
+       print "$uri\n";
+     }
+   }
+ }
+
