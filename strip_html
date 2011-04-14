@@ -1,0 +1,8 @@
+#!/usr/bin/perl
+use strict;
+
+# No - use a real HTML Parser
+
+while(<>) {
+  s{<(?>/?)(?:[^\s>/])[^>]*>}{}g and print;
+}
