@@ -1,2 +1,2 @@
 #!/bin/sh
-echo "$@" >> $HOME/doc/links
+echo "$@" >> $HOME/etc/doc/links
