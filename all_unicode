@@ -5,6 +5,6 @@ use open qw(:utf8 :std);
 
 use charnames qw(:full);
 
-for my $u(0x080 .. 0x10ffff) {
+for my $u(0x000 .. 0x10ffff) {
   printf("%s %s %s\n", $u, chr($u), charnames::viacode($u));
 }
