@@ -29,8 +29,8 @@ my $m = WWW::Mechanize->new(
 );
 $m->agent_alias('Linux Mozilla');
 
-my $bm_raw = "$ENV{HOME}/doc/links";
-my $bm_db  = "$ENV{HOME}/doc/links_db";
+my $bm_raw = "$ENV{HOME}/devel/doc/links";
+my $bm_db  = "$ENV{HOME}/devel/doc/links_db";
 
 my %bookmarks = ();
 
