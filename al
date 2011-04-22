@@ -1,2 +1,2 @@
 #!/bin/sh
-echo "$2 => $1" >> $HOME/devel/doc/links
+echo "$2 => $1" >> ~/usr/share/doc/links
