@@ -1,0 +1,3162 @@
+#!/usr/bin/env perl
+
+
+#########################################################################
+# uniquote - escape special characters using various quoting conventions
+#
+# Tom Christiansen <tchrist@perl.com>
+# Sun Feb 27 18:25:14 MST 2011
+#########################################################################
+
+use utf8;
+use 5.10.1;
+use strict;
+use warnings;
+
+use charnames qw[:full];
+
+#################################################################
+
+use Carp qw[ confess cluck ];
+use Getopt::Long qw[ GetOptions ];
+use Pod::Usage;
+
+#################################################################
+
+sub main;
+sub atexit(&);
+sub convert_to_U_numbers(_);
+sub convert_to_backslashes(_);
+sub convert_to_bytes(_);
+sub convert_to_hex(_);
+sub convert_to_html4(_);
+sub convert_to_html5(_);
+sub convert_to_names(_);
+sub convert_to_octal(_);
+sub convert_to_xml(_);
+sub debug($);
+sub find_converters();
+sub load_options();
+sub num2name($);
+sub process_input;
+sub set_encoding(*$);
+sub yuck($);
+
+#################################################################
+
+use constant  TOO_MANY_ERRORS => 24;
+
+our %Opt;
+our $VERSION = "1.1";
+our $Errors = 0;
+
+# either non-ASCII, or ASCII controls 'cept newline
+our $Ugly_RX = qr{
+    \P{ASCII} | (?= \p{ASCII} )
+                (?= [^\n]     )
+                \p{Control}
+}x;
+
+#################################################################
+
+main();
+exit($Errors > 0 ? 1 : 0);
+
+#################################################################
+
+sub main {
+    load_options();
+    set_backtrace() if $Opt{"stack-trace"};
+    prepare_output();
+    process_input();
+}
+
+#################################################################
+
+# utility functions
+
+sub debug($) {
+    return unless $Opt{debug};
+    my $trace_msg = $_[0];
+    print STDERR "$0: [DEBUG] $trace_msg\n";
+}
+
+sub yuck($) {
+    my $errmsg = $_[0];
+    $errmsg =~ s/(?<=[^\n])\z/\n/;
+    print STDERR "$0: $errmsg";
+    if ($Errors++ > TOO_MANY_ERRORS) {
+        panic("too many errors");
+    }
+}
+
+sub panic($) {
+    confess "$0: [INTERNAL ERROR] @_";
+}
+
+sub atexit(&) {
+    my $coderef = shift();
+    eval q{ END { &$coderef } };
+    die if $@;
+}
+
+sub set_backtrace {
+
+    $SIG{__WARN__} = sub {
+        cluck("WARNING");
+        print STDERR "\n";
+    };
+
+    $SIG{__DIE__}  = sub {
+        panic("UNCAUGHT EXCEPTION")     unless $^S;
+    };
+}
+
+#################################################################
+
+sub prepare_output {
+    atexit { close STDOUT };
+    $| = 1 if $Opt{unbuffer};
+}
+
+#################################################################
+
+sub process_input {
+
+    my $enc;
+
+    if (@ARGV == 0 && -t) {
+	warn "$0: reading from stdin, type ^D to end or ^C to kill.\n";
+    }
+
+    sub stringify(_);
+
+    given (%Opt) {
+	when (["octal"])    { *stringify = \&convert_to_octal	  }
+	when (["bytes"])    { *stringify = \&convert_to_bytes	  }
+	when (["hex"]) 	    { *stringify = \&convert_to_hex  	  }
+	when (["html4"])     { *stringify = \&convert_to_html4	  }
+	when (["html5"])     { *stringify = \&convert_to_html5	  }
+	when (["xml"])      { *stringify = \&convert_to_xml	  }
+	when (["names"])    { *stringify = \&convert_to_names	  }
+	default		    { *stringify = \&convert_to_U_numbers }
+    }
+
+
+    unshift(@ARGV, "-") if @ARGV == 0;
+
+FILE:
+
+    for my $quasi_filename (@ARGV) {
+        # don't let magic open make an output handle
+        my $file = $quasi_filename;
+        $file = "standard input" if $file eq q(-);
+
+        debug("opening $file");
+
+        $quasi_filename =~ s/^(?=\s*[>|])/< /;
+
+    # Down the rabbit hole: I'm using filehandle names that match
+    # the handles themselves to aid in debugging message. Silly
+    # perl thinks this is somehow symbolic dereferencing.
+
+        no strict "refs";
+        my $fh = $file;   # is *so* a lexical filehandle! ☺
+        unless (open($fh, $quasi_filename)) {
+            yuck("couldn't open $quasi_filename: $!");
+            next FILE;
+        }
+        set_encoding($fh, $file) || next FILE;
+
+LINE:
+        for(;;) {
+            my $line = eval {
+                use warnings "FATAL" => "all";
+                scalar <$fh>;
+            };
+            if ($@) {
+                $@ =~ s/ at \K.*? line \d+.*/$file line $./;
+                yuck($@);
+                if ($. == 0) { last LINE }
+                else         { next LINE }
+            }
+
+            last LINE unless defined $line;
+            last LINE unless length $line;
+
+	    $line =~ s/\R/\n/g if $Opt{"fix-newlines"};
+            if ($Opt{endings}) {
+                $line =~ s/\n\K(?=[^n])/\$/g if $Opt{"fix-newlines"};
+                $line =~ s/$/\$/;
+            }
+
+	    $line = convert_to_backslashes($line) if $Opt{backslash};
+            print stringify($line);
+        } # foreach line
+
+        unless (close $fh) {
+            yuck("couldn't close $quasi_filename at line $.: $!");
+            next FILE;
+        }
+
+    } # foreach file
+
+}
+
+sub num2name($) {
+    my $num  =  shift();
+    my $name =  do {
+        local $SIG{__WARN__} = sub {};
+        charnames::viacode($num);
+    } || sprintf("U+%02X", $num);
+    return $name;
+}
+
+sub set_encoding(*$) {
+    my ($handle, $path) = @_;
+
+    my $enc_name;
+
+    if (%Opt ~~ ["bytes", "octal"]) {
+        $enc_name = "bytes";
+    }
+    elsif (my $enc = $Opt{encoding}) {
+        $enc =~ s/^://;
+        if ($enc ~~ [qw(bytes crlf utf8)]) {
+            $enc_name = $enc;
+        } else {
+            $enc_name = "encoding($enc)";
+        }
+    }
+    elsif ($path && $path =~ m{ \. ([^\s.]+) \z }x) {
+        my $ext = $1;
+        require Encode;
+        if (my $enc_obj = Encode::find_encoding($ext)) {
+            my $name = $enc_obj->name;
+            $enc_name = "encoding($name)";
+        }
+    }
+    else {
+        $enc_name = "utf8";
+    }
+
+    debug("setting encoding on $handle to $enc_name") if $enc_name;
+
+    return 1 if eval {
+        use warnings FATAL => "all";
+        no strict "refs";
+        binmode($handle, ":$enc_name") if $enc_name;
+        1;
+    };
+
+    for ($@) {
+        s/ at .* line \d+\.//;
+        s/$/ for $path/;
+    }
+
+    yuck("set_encoding: $@");
+
+    return undef;
+}
+
+sub find_converters() {
+    state $aref = [
+        qw{
+            names hex octal backslash
+            bytes
+            html4
+            html5
+	    xml
+        }
+    ];
+
+    return wantarray() ? @$aref : $aref;
+}
+
+sub convert_to_names(_) {
+    my $string = shift();
+    no warnings "utf8";
+    $string =~ s/($Ugly_RX)/sprintf("\\N{%s}", num2name(ord $1))/ge;
+    return $string;;
+}
+
+sub convert_to_backslashes(_) {
+
+    my $_ = shift();
+
+    s,\\,\\\\,g if $Opt{backslashes};
+    s,\0,\\0,g;
+    s,\a,\\a,g;
+    s,\t,\\t,g;
+    s,\r,\\r,g;
+  # s,\n,\\n,g;
+    s,\f,\\f,g;
+    s,\e,\\e,g;
+    s/(?!\n)([\0-\37\177])/sprintf("\\c%s", chr(ord($1) ^ 64))/ge;
+
+    return $_;;
+}
+
+
+UNITCHECK {
+
+my %html4_2unicode = (
+
+# Number aliases: these are \p{Other_Number}
+      "sup1" => "SUPERSCRIPT ONE",                            # ¹ U+00B9
+      "sup2" => "SUPERSCRIPT TWO",                            # ² U+00B2
+      "sup3" => "SUPERSCRIPT THREE",                          # ³ U+00B3
+    "frac12" => "VULGAR FRACTION ONE HALF",                   # ½ U+00BD
+    "frac14" => "VULGAR FRACTION ONE QUARTER",                # ¼ U+00BC
+    "frac34" => "VULGAR FRACTION THREE QUARTERS",             # ¾ U+00BE
+
+# Currency sign aliases: \p{Currency_Symbol}
+
+    "curren" => "CURRENCY SIGN",                              # ¤ U+00A4
+      "cent" => "CENT SIGN",                                  # ¢ U+00A2
+     "pound" => "POUND SIGN",                                 # £ U+00A3
+       "yen" => "YEN SIGN",                                   # ¥ U+00A5
+      "euro" => "EURO SIGN",                                  # € U+20AC
+
+# Latin letter aliases in NFC and grouped by first letter
+#
+#   NOTE: some like BLACK LETTER blah and the trademark
+#         symbol are only Latin in NFKD form.
+
+      "ordf" => "FEMININE ORDINAL INDICATOR",                 # ª U+00AA
+    "Aacute" => "LATIN CAPITAL LETTER A WITH ACUTE",          # Á U+00C1
+    "aacute" => "LATIN SMALL LETTER A WITH ACUTE",            # á U+00E1
+    "Agrave" => "LATIN CAPITAL LETTER A WITH GRAVE",          # À U+00C0
+    "agrave" => "LATIN SMALL LETTER A WITH GRAVE",            # à U+00E0
+     "Acirc" => "LATIN CAPITAL LETTER A WITH CIRCUMFLEX",     # Â U+00C2
+     "acirc" => "LATIN SMALL LETTER A WITH CIRCUMFLEX",       # â U+00E2
+     "Aring" => "LATIN CAPITAL LETTER A WITH RING ABOVE",     # Å U+00C5
+     "aring" => "LATIN SMALL LETTER A WITH RING ABOVE",       # å U+00E5
+      "Auml" => "LATIN CAPITAL LETTER A WITH DIAERESIS",      # Ä U+00C4
+      "auml" => "LATIN SMALL LETTER A WITH DIAERESIS",        # ä U+00E4
+    "Atilde" => "LATIN CAPITAL LETTER A WITH TILDE",          # Ã U+00C3
+    "atilde" => "LATIN SMALL LETTER A WITH TILDE",            # ã U+00E3
+     "AElig" => "LATIN CAPITAL LETTER AE",                    # Æ U+00C6
+     "aelig" => "LATIN SMALL LETTER AE",                      # æ U+00E6
+
+    "Ccedil" => "LATIN CAPITAL LETTER C WITH CEDILLA",        # Ç U+00C7
+    "ccedil" => "LATIN SMALL LETTER C WITH CEDILLA",          # ç U+00E7
+
+       "ETH" => "LATIN CAPITAL LETTER ETH",                   # Ð U+00D0
+       "eth" => "LATIN SMALL LETTER ETH",                     # ð U+00F0
+
+    "Eacute" => "LATIN CAPITAL LETTER E WITH ACUTE",          # É U+00C9
+    "eacute" => "LATIN SMALL LETTER E WITH ACUTE",            # é U+00E9
+    "Egrave" => "LATIN CAPITAL LETTER E WITH GRAVE",          # È U+00C8
+    "egrave" => "LATIN SMALL LETTER E WITH GRAVE",            # è U+00E8
+     "Ecirc" => "LATIN CAPITAL LETTER E WITH CIRCUMFLEX",     # Ê U+00CA
+     "ecirc" => "LATIN SMALL LETTER E WITH CIRCUMFLEX",       # ê U+00EA
+      "Euml" => "LATIN CAPITAL LETTER E WITH DIAERESIS",      # Ë U+00CB
+      "euml" => "LATIN SMALL LETTER E WITH DIAERESIS",        # ë U+00EB
+
+      "fnof" => "LATIN SMALL LETTER F WITH HOOK",             # ƒ U+0192
+
+     "image" => "BLACK-LETTER CAPITAL I",                     # ℑ U+2111
+    "Iacute" => "LATIN CAPITAL LETTER I WITH ACUTE",          # Í U+00CD
+    "iacute" => "LATIN SMALL LETTER I WITH ACUTE",            # í U+00ED
+    "Igrave" => "LATIN CAPITAL LETTER I WITH GRAVE",          # Ì U+00CC
+    "igrave" => "LATIN SMALL LETTER I WITH GRAVE",            # ì U+00EC
+     "Icirc" => "LATIN CAPITAL LETTER I WITH CIRCUMFLEX",     # Î U+00CE
+     "icirc" => "LATIN SMALL LETTER I WITH CIRCUMFLEX",       # î U+00EE
+      "Iuml" => "LATIN CAPITAL LETTER I WITH DIAERESIS",      # Ï U+00CF
+      "iuml" => "LATIN SMALL LETTER I WITH DIAERESIS",        # ï U+00EF
+
+    "Ntilde" => "LATIN CAPITAL LETTER N WITH TILDE",          # Ñ U+00D1
+    "ntilde" => "LATIN SMALL LETTER N WITH TILDE",            # ñ U+00F1
+
+      "ordm" => "MASCULINE ORDINAL INDICATOR",                # º U+00BA
+    "Oacute" => "LATIN CAPITAL LETTER O WITH ACUTE",          # Ó U+00D3
+    "oacute" => "LATIN SMALL LETTER O WITH ACUTE",            # ó U+00F3
+    "Ograve" => "LATIN CAPITAL LETTER O WITH GRAVE",          # Ò U+00D2
+    "ograve" => "LATIN SMALL LETTER O WITH GRAVE",            # ò U+00F2
+     "Ocirc" => "LATIN CAPITAL LETTER O WITH CIRCUMFLEX",     # Ô U+00D4
+     "ocirc" => "LATIN SMALL LETTER O WITH CIRCUMFLEX",       # ô U+00F4
+      "Ouml" => "LATIN CAPITAL LETTER O WITH DIAERESIS",      # Ö U+00D6
+      "ouml" => "LATIN SMALL LETTER O WITH DIAERESIS",        # ö U+00F6
+    "Otilde" => "LATIN CAPITAL LETTER O WITH TILDE",          # Õ U+00D5
+    "otilde" => "LATIN SMALL LETTER O WITH TILDE",            # õ U+00F5
+    "Oslash" => "LATIN CAPITAL LETTER O WITH STROKE",         # Ø U+00D8
+    "oslash" => "LATIN SMALL LETTER O WITH STROKE",           # ø U+00F8
+     "OElig" => "LATIN CAPITAL LIGATURE OE",                  # Œ U+0152
+     "oelig" => "LATIN SMALL LIGATURE OE",                    # œ U+0153
+
+      "real" => "BLACK-LETTER CAPITAL R",                     # ℜ U+211C
+
+    "Scaron" => "LATIN CAPITAL LETTER S WITH CARON",          # Š U+0160
+    "scaron" => "LATIN SMALL LETTER S WITH CARON",            # š U+0161
+     "szlig" => "LATIN SMALL LETTER SHARP S",                 # ß U+00DF
+
+     "trade" => "TRADE MARK SIGN",                            # ™ U+2122
+
+    "Uacute" => "LATIN CAPITAL LETTER U WITH ACUTE",          # Ú U+00DA
+    "uacute" => "LATIN SMALL LETTER U WITH ACUTE",            # ú U+00FA
+    "Ugrave" => "LATIN CAPITAL LETTER U WITH GRAVE",          # Ù U+00D9
+    "ugrave" => "LATIN SMALL LETTER U WITH GRAVE",            # ù U+00F9
+     "Ucirc" => "LATIN CAPITAL LETTER U WITH CIRCUMFLEX",     # Û U+00DB
+     "ucirc" => "LATIN SMALL LETTER U WITH CIRCUMFLEX",       # û U+00FB
+      "Uuml" => "LATIN CAPITAL LETTER U WITH DIAERESIS",      # Ü U+00DC
+      "uuml" => "LATIN SMALL LETTER U WITH DIAERESIS",        # ü U+00FC
+
+    "Yacute" => "LATIN CAPITAL LETTER Y WITH ACUTE",          # Ý U+00DD
+    "yacute" => "LATIN SMALL LETTER Y WITH ACUTE",            # ý U+00FD
+      "Yuml" => "LATIN CAPITAL LETTER Y WITH DIAERESIS",      # Ÿ U+0178
+      "yuml" => "LATIN SMALL LETTER Y WITH DIAERESIS",        # ÿ U+00FF
+
+     "THORN" => "LATIN CAPITAL LETTER THORN",                 # Þ U+00DE
+     "thorn" => "LATIN SMALL LETTER THORN",                   # þ U+00FE
+
+# This is *not* the same as the HEBREW LETTER ALEF (aleph),
+# although it is a \p{Other_Letter} not a \p{Symbol}.
+   "alefsym" => "ALEF SYMBOL",                                # ℵ U+2135
+
+# Greek letter aliases, or things that sort with them
+
+     "Alpha" => "GREEK CAPITAL LETTER ALPHA",                 # Α U+0391
+     "alpha" => "GREEK SMALL LETTER ALPHA",                   # α U+03B1
+      "Beta" => "GREEK CAPITAL LETTER BETA",                  # Β U+0392
+      "beta" => "GREEK SMALL LETTER BETA",                    # β U+03B2
+     "Gamma" => "GREEK CAPITAL LETTER GAMMA",                 # Γ U+0393
+     "gamma" => "GREEK SMALL LETTER GAMMA",                   # γ U+03B3
+     "Delta" => "GREEK CAPITAL LETTER DELTA",                 # Δ U+0394
+     "delta" => "GREEK SMALL LETTER DELTA",                   # δ U+03B4
+   "Epsilon" => "GREEK CAPITAL LETTER EPSILON",               # Ε U+0395
+   "epsilon" => "GREEK SMALL LETTER EPSILON",                 # ε U+03B5
+      "Zeta" => "GREEK CAPITAL LETTER ZETA",                  # Ζ U+0396
+      "zeta" => "GREEK SMALL LETTER ZETA",                    # ζ U+03B6
+       "Eta" => "GREEK CAPITAL LETTER ETA",                   # Η U+0397
+       "eta" => "GREEK SMALL LETTER ETA",                     # η U+03B7
+     "Theta" => "GREEK CAPITAL LETTER THETA",                 # Θ U+0398
+  "thetasym" => "GREEK THETA SYMBOL",                         # ϑ U+03D1
+     "theta" => "GREEK SMALL LETTER THETA",                   # θ U+03B8
+      "Iota" => "GREEK CAPITAL LETTER IOTA",                  # Ι U+0399
+      "iota" => "GREEK SMALL LETTER IOTA",                    # ι U+03B9
+     "Kappa" => "GREEK CAPITAL LETTER KAPPA",                 # Κ U+039A
+     "kappa" => "GREEK SMALL LETTER KAPPA",                   # κ U+03BA
+    "Lambda" => "GREEK CAPITAL LETTER LAMDA",                 # Λ U+039B
+    "lambda" => "GREEK SMALL LETTER LAMDA",                   # λ U+03BB
+        "Mu" => "GREEK CAPITAL LETTER MU",                    # Μ U+039C
+     "micro" => "MICRO SIGN",                                 # µ U+00B5
+        "mu" => "GREEK SMALL LETTER MU",                      # μ U+03BC
+        "Nu" => "GREEK CAPITAL LETTER NU",                    # Ν U+039D
+        "nu" => "GREEK SMALL LETTER NU",                      # ν U+03BD
+        "Xi" => "GREEK CAPITAL LETTER XI",                    # Ξ U+039E
+        "xi" => "GREEK SMALL LETTER XI",                      # ξ U+03BE
+   "Omicron" => "GREEK CAPITAL LETTER OMICRON",               # Ο U+039F
+   "omicron" => "GREEK SMALL LETTER OMICRON",                 # ο U+03BF
+        "Pi" => "GREEK CAPITAL LETTER PI",                    # Π U+03A0
+       "piv" => "GREEK PI SYMBOL",                            # ϖ U+03D6
+        "pi" => "GREEK SMALL LETTER PI",                      # π U+03C0
+       "Rho" => "GREEK CAPITAL LETTER RHO",                   # Ρ U+03A1
+       "rho" => "GREEK SMALL LETTER RHO",                     # ρ U+03C1
+     "sigma" => "GREEK SMALL LETTER SIGMA",                   # σ U+03C3
+    "sigmaf" => "GREEK SMALL LETTER FINAL SIGMA",             # ς U+03C2
+       "Tau" => "GREEK CAPITAL LETTER TAU",                   # Τ U+03A4
+       "tau" => "GREEK SMALL LETTER TAU",                     # τ U+03C4
+     "upsih" => "GREEK UPSILON WITH HOOK SYMBOL",             # ϒ U+03D2
+   "Upsilon" => "GREEK CAPITAL LETTER UPSILON",               # Υ U+03A5
+   "upsilon" => "GREEK SMALL LETTER UPSILON",                 # υ U+03C5
+       "Phi" => "GREEK CAPITAL LETTER PHI",                   # Φ U+03A6
+       "phi" => "GREEK SMALL LETTER PHI",                     # φ U+03C6
+       "Chi" => "GREEK CAPITAL LETTER CHI",                   # Χ U+03A7
+       "chi" => "GREEK SMALL LETTER CHI",                     # χ U+03C7
+       "Psi" => "GREEK CAPITAL LETTER PSI",                   # Ψ U+03A8
+       "psi" => "GREEK SMALL LETTER PSI",                     # ψ U+03C8
+     "Omega" => "GREEK CAPITAL LETTER OMEGA",                 # Ω U+03A9
+     "omega" => "GREEK SMALL LETTER OMEGA",                   # ω U+03C9
+
+# \p{Format} characters
+
+       "zwj" => "ZERO WIDTH JOINER",                          # ‍ U+200D
+      "zwnj" => "ZERO WIDTH NON-JOINER",                      # ‌ U+200C
+       "rlm" => "RIGHT-TO-LEFT MARK",                         # ‏ U+200F
+       "lrm" => "LEFT-TO-RIGHT MARK",                         # ‎ U+200E
+
+# Various punctuation and symbols in UCA order.
+# None of these is a combining Mark.
+
+     "oline" => "OVERLINE",                                   # ‾ U+203E
+      "ensp" => "EN SPACE",                                   #   U+2002
+      "nbsp" => "NO-BREAK SPACE",                             #   U+00A0
+     "cedil" => "CEDILLA",                                    # ¸ U+00B8
+       "uml" => "DIAERESIS",                                  # ¨ U+00A8
+     "acute" => "ACUTE ACCENT",                               # ´ U+00B4
+     "tilde" => "SMALL TILDE",                                # ˜ U+02DC
+      "emsp" => "EM SPACE",                                   #   U+2003
+      "macr" => "MACRON",                                     # ¯ U+00AF
+    "thinsp" => "THIN SPACE",                                 #   U+2009
+       "shy" => "SOFT HYPHEN",                                # ­ U+00AD
+     "ndash" => "EN DASH",                                    # – U+2013
+     "mdash" => "EM DASH",                                    # — U+2014
+     "iexcl" => "INVERTED EXCLAMATION MARK",                  # ¡ U+00A1
+    "iquest" => "INVERTED QUESTION MARK",                     # ¿ U+00BF
+    "hellip" => "HORIZONTAL ELLIPSIS",                        # … U+2026
+    "middot" => "MIDDLE DOT",                                 # · U+00B7
+      "apos" => "APOSTROPHE",                                 # ' U+0027
+     "lsquo" => "LEFT SINGLE QUOTATION MARK",                 # ‘ U+2018
+     "rsquo" => "RIGHT SINGLE QUOTATION MARK",                # ’ U+2019
+     "sbquo" => "SINGLE LOW-9 QUOTATION MARK",                # ‚ U+201A
+    "lsaquo" => "SINGLE LEFT-POINTING ANGLE QUOTATION MARK",  # ‹ U+2039
+    "rsaquo" => "SINGLE RIGHT-POINTING ANGLE QUOTATION MARK", # › U+203A
+      "quot" => "QUOTATION MARK",                             # " U+0022
+     "ldquo" => "LEFT DOUBLE QUOTATION MARK",                 # “ U+201C
+     "rdquo" => "RIGHT DOUBLE QUOTATION MARK",                # ” U+201D
+     "bdquo" => "DOUBLE LOW-9 QUOTATION MARK",                # „ U+201E
+     "laquo" => "LEFT-POINTING DOUBLE ANGLE QUOTATION MARK",  # « U+00AB
+     "raquo" => "RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK", # » U+00BB
+      "lang" => "LEFT-POINTING ANGLE BRACKET",                # 〈 U+2329
+      "rang" => "RIGHT-POINTING ANGLE BRACKET",               # 〉 U+232A
+      "sect" => "SECTION SIGN",                               # § U+00A7
+      "para" => "PILCROW SIGN",                               # ¶ U+00B6
+      "copy" => "COPYRIGHT SIGN",                             # © U+00A9
+       "reg" => "REGISTERED SIGN",                            # ® U+00AE
+     "frasl" => "FRACTION SLASH",                             # ⁄ U+2044
+       "amp" => "AMPERSAND",                                  # & U+0026
+    "permil" => "PER MILLE SIGN",                             # ‰ U+2030
+    "dagger" => "DAGGER",                                     # † U+2020
+    "Dagger" => "DOUBLE DAGGER",                              # ‡ U+2021
+      "bull" => "BULLET",                                     # • U+2022
+     "prime" => "PRIME",                                      # ′ U+2032
+     "Prime" => "DOUBLE PRIME",                               # ″ U+2033
+      "circ" => "MODIFIER LETTER CIRCUMFLEX ACCENT",          # ˆ U+02C6
+       "deg" => "DEGREE SIGN",                                # ° U+00B0
+    "weierp" => "SCRIPT CAPITAL P",                           # ℘ U+2118
+      "larr" => "LEFTWARDS ARROW",                            # ← U+2190
+      "rarr" => "RIGHTWARDS ARROW",                           # → U+2192
+      "uarr" => "UPWARDS ARROW",                              # ↑ U+2191
+      "darr" => "DOWNWARDS ARROW",                            # ↓ U+2193
+      "harr" => "LEFT RIGHT ARROW",                           # ↔ U+2194
+     "crarr" => "DOWNWARDS ARROW WITH CORNER LEFTWARDS",      # ↵ U+21B5
+      "lArr" => "LEFTWARDS DOUBLE ARROW",                     # ⇐ U+21D0
+      "uArr" => "UPWARDS DOUBLE ARROW",                       # ⇑ U+21D1
+      "rArr" => "RIGHTWARDS DOUBLE ARROW",                    # ⇒ U+21D2
+      "dArr" => "DOWNWARDS DOUBLE ARROW",                     # ⇓ U+21D3
+      "hArr" => "LEFT RIGHT DOUBLE ARROW",                    # ⇔ U+21D4
+    "forall" => "FOR ALL",                                    # ∀ U+2200
+      "part" => "PARTIAL DIFFERENTIAL",                       # ∂ U+2202
+     "exist" => "THERE EXISTS",                               # ∃ U+2203
+     "empty" => "EMPTY SET",                                  # ∅ U+2205
+     "nabla" => "NABLA",                                      # ∇ U+2207
+      "isin" => "ELEMENT OF",                                 # ∈ U+2208
+     "notin" => "NOT AN ELEMENT OF",                          # ∉ U+2209
+        "ni" => "CONTAINS AS MEMBER",                         # ∋ U+220B
+      "prod" => "N-ARY PRODUCT",                              # ∏ U+220F
+       "sum" => "N-ARY SUMMATION",                            # ∑ U+2211
+    "plusmn" => "PLUS-MINUS SIGN",                            # ± U+00B1
+    "divide" => "DIVISION SIGN",                              # ÷ U+00F7
+     "times" => "MULTIPLICATION SIGN",                        # × U+00D7
+        "lt" => "LESS-THAN SIGN",                             # < U+003C
+        "ne" => "NOT EQUAL TO",                               # ≠ U+2260
+        "gt" => "GREATER-THAN SIGN",                          # > U+003E
+       "not" => "NOT SIGN",                                   # ¬ U+00AC
+    "brvbar" => "BROKEN BAR",                                 # ¦ U+00A6
+     "minus" => "MINUS SIGN",                                 # − U+2212
+    "lowast" => "ASTERISK OPERATOR",                          # ∗ U+2217
+     "radic" => "SQUARE ROOT",                                # √ U+221A
+      "prop" => "PROPORTIONAL TO",                            # ∝ U+221D
+     "infin" => "INFINITY",                                   # ∞ U+221E
+       "ang" => "ANGLE",                                      # ∠ U+2220
+       "and" => "LOGICAL AND",                                # ∧ U+2227
+        "or" => "LOGICAL OR",                                 # ∨ U+2228
+       "cap" => "INTERSECTION",                               # ∩ U+2229
+       "cup" => "UNION",                                      # ∪ U+222A
+       "int" => "INTEGRAL",                                   # ∫ U+222B
+    "there4" => "THEREFORE",                                  # ∴ U+2234
+       "sim" => "TILDE OPERATOR",                             # ∼ U+223C
+      "cong" => "APPROXIMATELY EQUAL TO",                     # ≅ U+2245
+     "asymp" => "ALMOST EQUAL TO",                            # ≈ U+2248
+     "equiv" => "IDENTICAL TO",                               # ≡ U+2261
+        "le" => "LESS-THAN OR EQUAL TO",                      # ≤ U+2264
+        "ge" => "GREATER-THAN OR EQUAL TO",                   # ≥ U+2265
+       "sub" => "SUBSET OF",                                  # ⊂ U+2282
+      "nsub" => "NOT A SUBSET OF",                            # ⊄ U+2284
+       "sup" => "SUPERSET OF",                                # ⊃ U+2283
+      "sube" => "SUBSET OF OR EQUAL TO",                      # ⊆ U+2286
+      "supe" => "SUPERSET OF OR EQUAL TO",                    # ⊇ U+2287
+     "oplus" => "CIRCLED PLUS",                               # ⊕ U+2295
+    "otimes" => "CIRCLED TIMES",                              # ⊗ U+2297
+      "perp" => "UP TACK",                                    # ⊥ U+22A5
+      "sdot" => "DOT OPERATOR",                               # ⋅ U+22C5
+     "lceil" => "LEFT CEILING",                               # ⌈ U+2308
+     "rceil" => "RIGHT CEILING",                              # ⌉ U+2309
+    "lfloor" => "LEFT FLOOR",                                 # ⌊ U+230A
+    "rfloor" => "RIGHT FLOOR",                                # ⌋ U+230B
+       "loz" => "LOZENGE",                                    # ◊ U+25CA
+    "spades" => "BLACK SPADE SUIT",                           # ♠ U+2660
+     "clubs" => "BLACK CLUB SUIT",                            # ♣ U+2663
+    "hearts" => "BLACK HEART SUIT",                           # ♥ U+2665
+     "diams" => "BLACK DIAMOND SUIT",                         # ♦ U+2666
+);
+
+my %html5_2unicode = (
+	   "curren" => "\N{CURRENCY SIGN}",	# ¤
+	     "cent" => "\N{CENT SIGN}",	# ¢
+	   "dollar" => q($),	# $
+	    "pound" => "\N{POUND SIGN}",	# £
+	      "yen" => "\N{YEN SIGN}",	# ¥
+	     "euro" => "\N{EURO SIGN}",	# €
+
+	     "sup1" => "\N{SUPERSCRIPT ONE}",	# ¹
+	     "sup2" => "\N{SUPERSCRIPT TWO}",	# ²
+	     "sup3" => "\N{SUPERSCRIPT THREE}",	# ³
+
+	   "frac12" => "\N{VULGAR FRACTION ONE HALF}",	# ½
+	     "half" => "\N{VULGAR FRACTION ONE HALF}",	# ½
+	   "frac13" => "\N{VULGAR FRACTION ONE THIRD}",	# ⅓
+	   "frac14" => "\N{VULGAR FRACTION ONE QUARTER}",	# ¼
+	   "frac15" => "\N{VULGAR FRACTION ONE FIFTH}",	# ⅕
+	   "frac16" => "\N{VULGAR FRACTION ONE SIXTH}",	# ⅙
+	   "frac18" => "\N{VULGAR FRACTION ONE EIGHTH}",	# ⅛
+	   "frac23" => "\N{VULGAR FRACTION TWO THIRDS}",	# ⅔
+	   "frac25" => "\N{VULGAR FRACTION TWO FIFTHS}",	# ⅖
+	   "frac34" => "\N{VULGAR FRACTION THREE QUARTERS}",	# ¾
+	   "frac35" => "\N{VULGAR FRACTION THREE FIFTHS}",	# ⅗
+	   "frac38" => "\N{VULGAR FRACTION THREE EIGHTHS}",	# ⅜
+	   "frac45" => "\N{VULGAR FRACTION FOUR FIFTHS}",	# ⅘
+	   "frac56" => "\N{VULGAR FRACTION FIVE SIXTHS}",	# ⅚
+	   "frac58" => "\N{VULGAR FRACTION FIVE EIGHTHS}",	# ⅝
+	   "frac78" => "\N{VULGAR FRACTION SEVEN EIGHTHS}",	# ⅞
+
+	     "Aopf" => "\N{MATHEMATICAL DOUBLE-STRUCK CAPITAL A}",	# 𝔸
+	      "Afr" => "\N{MATHEMATICAL FRAKTUR CAPITAL A}",	# 𝔄
+	     "Ascr" => "\N{MATHEMATICAL SCRIPT CAPITAL A}",	# 𝒜
+	     "aopf" => "\N{MATHEMATICAL DOUBLE-STRUCK SMALL A}",	# 𝕒
+	      "afr" => "\N{MATHEMATICAL FRAKTUR SMALL A}",	# 𝔞
+	     "ascr" => "\N{MATHEMATICAL SCRIPT SMALL A}",	# 𝒶
+	   "Atilde" => "\N{LATIN CAPITAL LETTER A WITH TILDE}",	# Ã
+	   "atilde" => "\N{LATIN SMALL LETTER A WITH TILDE}",	# ã
+	    "AElig" => "\N{LATIN CAPITAL LETTER AE}",	# Æ
+	    "aelig" => "\N{LATIN SMALL LETTER AE}",	# æ
+	   "Aacute" => "\N{LATIN CAPITAL LETTER A WITH ACUTE}",	# Á
+	   "aacute" => "\N{LATIN SMALL LETTER A WITH ACUTE}",	# á
+	   "Agrave" => "\N{LATIN CAPITAL LETTER A WITH GRAVE}",	# À
+	   "agrave" => "\N{LATIN SMALL LETTER A WITH GRAVE}",	# à
+	   "Abreve" => "\N{LATIN CAPITAL LETTER A WITH BREVE}",	# Ă
+	   "abreve" => "\N{LATIN SMALL LETTER A WITH BREVE}",	# ă
+	    "Aring" => "\N{LATIN CAPITAL LETTER A WITH RING ABOVE}",	# Å
+	    "angst" => "\N{LATIN CAPITAL LETTER A WITH RING ABOVE}",	# Å
+	    "aring" => "\N{LATIN SMALL LETTER A WITH RING ABOVE}",	# å
+	    "Aogon" => "\N{LATIN CAPITAL LETTER A WITH OGONEK}",	# Ą
+	    "aogon" => "\N{LATIN SMALL LETTER A WITH OGONEK}",	# ą
+	    "Amacr" => "\N{LATIN CAPITAL LETTER A WITH MACRON}",	# Ā
+	    "amacr" => "\N{LATIN SMALL LETTER A WITH MACRON}",	# ā
+	     "ordf" => "\N{FEMININE ORDINAL INDICATOR}",	# ª
+	     "Auml" => "\N{LATIN CAPITAL LETTER A WITH DIAERESIS}",	# Ä
+	     "auml" => "\N{LATIN SMALL LETTER A WITH DIAERESIS}",	# ä
+	    "iiota" => "\N{TURNED GREEK SMALL LETTER IOTA}",	# ℩
+	    "Acirc" => "\N{LATIN CAPITAL LETTER A WITH CIRCUMFLEX}",	# Â
+	    "acirc" => "\N{LATIN SMALL LETTER A WITH CIRCUMFLEX}",	# â
+
+	     "Bopf" => "\N{MATHEMATICAL DOUBLE-STRUCK CAPITAL B}",	# 𝔹
+	      "Bfr" => "\N{MATHEMATICAL FRAKTUR CAPITAL B}",	# 𝔅
+	     "Bscr" => "\N{SCRIPT CAPITAL B}",	# ℬ
+       "Bernoullis" => "\N{SCRIPT CAPITAL B}",	# ℬ
+	   "bernou" => "\N{SCRIPT CAPITAL B}",	# ℬ
+	     "bopf" => "\N{MATHEMATICAL DOUBLE-STRUCK SMALL B}",	# 𝕓
+	      "bfr" => "\N{MATHEMATICAL FRAKTUR SMALL B}",	# 𝔟
+	     "bscr" => "\N{MATHEMATICAL SCRIPT SMALL B}",	# 𝒷
+
+	   "Ccedil" => "\N{LATIN CAPITAL LETTER C WITH CEDILLA}",	# Ç
+	   "ccedil" => "\N{LATIN SMALL LETTER C WITH CEDILLA}",	# ç
+	     "Copf" => "\N{DOUBLE-STRUCK CAPITAL C}",	# ℂ
+	"complexes" => "\N{DOUBLE-STRUCK CAPITAL C}",	# ℂ
+	      "Cfr" => "\N{BLACK-LETTER CAPITAL C}",	# ℭ
+	  "Cayleys" => "\N{BLACK-LETTER CAPITAL C}",	# ℭ
+	     "Cscr" => "\N{MATHEMATICAL SCRIPT CAPITAL C}",	# 𝒞
+	     "copf" => "\N{MATHEMATICAL DOUBLE-STRUCK SMALL C}",	# 𝕔
+	      "cfr" => "\N{MATHEMATICAL FRAKTUR SMALL C}",	# 𝔠
+	     "cscr" => "\N{MATHEMATICAL SCRIPT SMALL C}",	# 𝒸
+	   "Cacute" => "\N{LATIN CAPITAL LETTER C WITH ACUTE}",	# Ć
+	   "cacute" => "\N{LATIN SMALL LETTER C WITH ACUTE}",	# ć
+	     "Cdot" => "\N{LATIN CAPITAL LETTER C WITH DOT ABOVE}",	# Ċ
+	     "cdot" => "\N{LATIN SMALL LETTER C WITH DOT ABOVE}",	# ċ
+	   "homtht" => "\N{HOMOTHETIC}",	# ∻
+	   "Ccaron" => "\N{LATIN CAPITAL LETTER C WITH CARON}",	# Č
+	   "ccaron" => "\N{LATIN SMALL LETTER C WITH CARON}",	# č
+	   "incare" => "\N{CARE OF}",	# ℅
+	  "angrtvb" => "\N{RIGHT ANGLE WITH ARC}",	# ⊾
+	 "profline" => "\N{ARC}",	# ⌒
+	    "Ccirc" => "\N{LATIN CAPITAL LETTER C WITH CIRCUMFLEX}",	# Ĉ
+	    "ccirc" => "\N{LATIN SMALL LETTER C WITH CIRCUMFLEX}",	# ĉ
+
+	       "DD" => "\N{DOUBLE-STRUCK ITALIC CAPITAL D}",	# ⅅ
+    "CapitalDifferentialD" => "\N{DOUBLE-STRUCK ITALIC CAPITAL D}",	# ⅅ
+	     "Dopf" => "\N{MATHEMATICAL DOUBLE-STRUCK CAPITAL D}",	# 𝔻
+	      "Dfr" => "\N{MATHEMATICAL FRAKTUR CAPITAL D}",	# 𝔇
+	     "Dscr" => "\N{MATHEMATICAL SCRIPT CAPITAL D}",	# 𝒟
+	       "dd" => "\N{DOUBLE-STRUCK ITALIC SMALL D}",	# ⅆ
+    "DifferentialD" => "\N{DOUBLE-STRUCK ITALIC SMALL D}",	# ⅆ
+	     "dopf" => "\N{MATHEMATICAL DOUBLE-STRUCK SMALL D}",	# 𝕕
+	      "dfr" => "\N{MATHEMATICAL FRAKTUR SMALL D}",	# 𝔡
+	     "dscr" => "\N{MATHEMATICAL SCRIPT SMALL D}",	# 𝒹
+	   "Dstrok" => "\N{LATIN CAPITAL LETTER D WITH STROKE}",	# Đ
+	   "dstrok" => "\N{LATIN SMALL LETTER D WITH STROKE}",	# đ
+	      "ETH" => "\N{LATIN CAPITAL LETTER ETH}",	# Ð
+	      "eth" => "\N{LATIN SMALL LETTER ETH}",	# ð
+	   "Dcaron" => "\N{LATIN CAPITAL LETTER D WITH CARON}",	# Ď
+	   "dcaron" => "\N{LATIN SMALL LETTER D WITH CARON}",	# ď
+
+	     "Eopf" => "\N{MATHEMATICAL DOUBLE-STRUCK CAPITAL E}",	# 𝔼
+	      "Efr" => "\N{MATHEMATICAL FRAKTUR CAPITAL E}",	# 𝔈
+      "expectation" => "\N{SCRIPT CAPITAL E}",	# ℰ
+	     "Escr" => "\N{SCRIPT CAPITAL E}",	# ℰ
+	       "ee" => "\N{DOUBLE-STRUCK ITALIC SMALL E}",	# ⅇ
+     "exponentiale" => "\N{DOUBLE-STRUCK ITALIC SMALL E}",	# ⅇ
+     "ExponentialE" => "\N{DOUBLE-STRUCK ITALIC SMALL E}",	# ⅇ
+	     "eopf" => "\N{MATHEMATICAL DOUBLE-STRUCK SMALL E}",	# 𝕖
+	      "efr" => "\N{MATHEMATICAL FRAKTUR SMALL E}",	# 𝔢
+	     "escr" => "\N{SCRIPT SMALL E}",	# ℯ
+	   "Eacute" => "\N{LATIN CAPITAL LETTER E WITH ACUTE}",	# É
+	   "eacute" => "\N{LATIN SMALL LETTER E WITH ACUTE}",	# é
+	   "Egrave" => "\N{LATIN CAPITAL LETTER E WITH GRAVE}",	# È
+	   "egrave" => "\N{LATIN SMALL LETTER E WITH GRAVE}",	# è
+	     "Edot" => "\N{LATIN CAPITAL LETTER E WITH DOT ABOVE}",	# Ė
+	     "edot" => "\N{LATIN SMALL LETTER E WITH DOT ABOVE}",	# ė
+	    "Eogon" => "\N{LATIN CAPITAL LETTER E WITH OGONEK}",	# Ę
+	    "eogon" => "\N{LATIN SMALL LETTER E WITH OGONEK}",	# ę
+	     "Euml" => "\N{LATIN CAPITAL LETTER E WITH DIAERESIS}",	# Ë
+	     "euml" => "\N{LATIN SMALL LETTER E WITH DIAERESIS}",	# ë
+	    "Ecirc" => "\N{LATIN CAPITAL LETTER E WITH CIRCUMFLEX}",	# Ê
+	    "ecirc" => "\N{LATIN SMALL LETTER E WITH CIRCUMFLEX}",	# ê
+
+	    "fflig" => "\N{LATIN SMALL LIGATURE FF}",	# ﬀ
+	   "ffilig" => "\N{LATIN SMALL LIGATURE FFI}",	# ﬃ
+	     "Fopf" => "\N{MATHEMATICAL DOUBLE-STRUCK CAPITAL F}",	# 𝔽
+	      "Ffr" => "\N{MATHEMATICAL FRAKTUR CAPITAL F}",	# 𝔉
+       "Fouriertrf" => "\N{SCRIPT CAPITAL F}",	# ℱ
+	     "Fscr" => "\N{SCRIPT CAPITAL F}",	# ℱ
+	     "fopf" => "\N{MATHEMATICAL DOUBLE-STRUCK SMALL F}",	# 𝕗
+	      "ffr" => "\N{MATHEMATICAL FRAKTUR SMALL F}",	# 𝔣
+	     "fscr" => "\N{MATHEMATICAL SCRIPT SMALL F}",	# 𝒻
+	   "ffllig" => "\N{LATIN SMALL LIGATURE FFL}",	# ﬄ
+	    "filig" => "\N{LATIN SMALL LIGATURE FI}",	# ﬁ
+	    "fllig" => "\N{LATIN SMALL LIGATURE FL}",	# ﬂ
+	     "fnof" => "\N{LATIN SMALL LETTER F WITH HOOK}",	# ƒ
+	    "fjlig" => "fj",	# fj
+
+	   "Gcedil" => "\N{LATIN CAPITAL LETTER G WITH CEDILLA}",	# Ģ
+	   "gacute" => "\N{LATIN SMALL LETTER G WITH ACUTE}",	# ǵ
+	   "Gbreve" => "\N{LATIN CAPITAL LETTER G WITH BREVE}",	# Ğ
+	   "gbreve" => "\N{LATIN SMALL LETTER G WITH BREVE}",	# ğ
+	     "Gdot" => "\N{LATIN CAPITAL LETTER G WITH DOT ABOVE}",	# Ġ
+	     "gdot" => "\N{LATIN SMALL LETTER G WITH DOT ABOVE}",	# ġ
+	     "Gopf" => "\N{MATHEMATICAL DOUBLE-STRUCK CAPITAL G}",	# 𝔾
+	      "Gfr" => "\N{MATHEMATICAL FRAKTUR CAPITAL G}",	# 𝔊
+	     "Gscr" => "\N{MATHEMATICAL SCRIPT CAPITAL G}",	# 𝒢
+	     "gopf" => "\N{MATHEMATICAL DOUBLE-STRUCK SMALL G}",	# 𝕘
+	      "gfr" => "\N{MATHEMATICAL FRAKTUR SMALL G}",	# 𝔤
+	     "gscr" => "\N{SCRIPT SMALL G}",	# ℊ
+	    "Gcirc" => "\N{LATIN CAPITAL LETTER G WITH CIRCUMFLEX}",	# Ĝ
+	    "gcirc" => "\N{LATIN SMALL LETTER G WITH CIRCUMFLEX}",	# ĝ
+
+	   "Hstrok" => "\N{LATIN CAPITAL LETTER H WITH STROKE}",	# Ħ
+	   "hstrok" => "\N{LATIN SMALL LETTER H WITH STROKE}",	# ħ
+	     "Hopf" => "\N{DOUBLE-STRUCK CAPITAL H}",	# ℍ
+      "quaternions" => "\N{DOUBLE-STRUCK CAPITAL H}",	# ℍ
+    "Poincareplane" => "\N{BLACK-LETTER CAPITAL H}",	# ℌ
+	      "Hfr" => "\N{BLACK-LETTER CAPITAL H}",	# ℌ
+     "HilbertSpace" => "\N{SCRIPT CAPITAL H}",	# ℋ
+	     "Hscr" => "\N{SCRIPT CAPITAL H}",	# ℋ
+	   "hamilt" => "\N{SCRIPT CAPITAL H}",	# ℋ
+	     "hopf" => "\N{MATHEMATICAL DOUBLE-STRUCK SMALL H}",	# 𝕙
+	      "hfr" => "\N{MATHEMATICAL FRAKTUR SMALL H}",	# 𝔥
+	     "hscr" => "\N{MATHEMATICAL SCRIPT SMALL H}",	# 𝒽
+	   "hslash" => "\N{PLANCK CONSTANT OVER TWO PI}",	# ℏ
+	   "planck" => "\N{PLANCK CONSTANT OVER TWO PI}",	# ℏ
+	     "hbar" => "\N{PLANCK CONSTANT OVER TWO PI}",	# ℏ
+	   "plankv" => "\N{PLANCK CONSTANT OVER TWO PI}",	# ℏ
+	  "planckh" => "\N{PLANCK CONSTANT}",	# ℎ
+	    "Hcirc" => "\N{LATIN CAPITAL LETTER H WITH CIRCUMFLEX}",	# Ĥ
+	    "hcirc" => "\N{LATIN SMALL LETTER H WITH CIRCUMFLEX}",	# ĥ
+
+	   "Itilde" => "\N{LATIN CAPITAL LETTER I WITH TILDE}",	# Ĩ
+	   "itilde" => "\N{LATIN SMALL LETTER I WITH TILDE}",	# ĩ
+	   "Iacute" => "\N{LATIN CAPITAL LETTER I WITH ACUTE}",	# Í
+	   "iacute" => "\N{LATIN SMALL LETTER I WITH ACUTE}",	# í
+	   "Igrave" => "\N{LATIN CAPITAL LETTER I WITH GRAVE}",	# Ì
+	   "igrave" => "\N{LATIN SMALL LETTER I WITH GRAVE}",	# ì
+	     "Idot" => "\N{LATIN CAPITAL LETTER I WITH DOT ABOVE}",	# İ
+	     "Iopf" => "\N{MATHEMATICAL DOUBLE-STRUCK CAPITAL I}",	# 𝕀
+	    "image" => "\N{BLACK-LETTER CAPITAL I}",	# ℑ
+	       "Im" => "\N{BLACK-LETTER CAPITAL I}",	# ℑ
+	      "Ifr" => "\N{BLACK-LETTER CAPITAL I}",	# ℑ
+	 "imagpart" => "\N{BLACK-LETTER CAPITAL I}",	# ℑ
+	 "imagline" => "\N{SCRIPT CAPITAL I}",	# ℐ
+	     "Iscr" => "\N{SCRIPT CAPITAL I}",	# ℐ
+	       "ii" => "\N{DOUBLE-STRUCK ITALIC SMALL I}",	# ⅈ
+       "ImaginaryI" => "\N{DOUBLE-STRUCK ITALIC SMALL I}",	# ⅈ
+	     "iopf" => "\N{MATHEMATICAL DOUBLE-STRUCK SMALL I}",	# 𝕚
+	      "ifr" => "\N{MATHEMATICAL FRAKTUR SMALL I}",	# 𝔦
+	     "iscr" => "\N{MATHEMATICAL SCRIPT SMALL I}",	# 𝒾
+	    "IJlig" => "\N{LATIN CAPITAL LIGATURE IJ}",	# Ĳ
+	    "ijlig" => "\N{LATIN SMALL LIGATURE IJ}",	# ĳ
+	    "Iogon" => "\N{LATIN CAPITAL LETTER I WITH OGONEK}",	# Į
+	    "iogon" => "\N{LATIN SMALL LETTER I WITH OGONEK}",	# į
+	    "Imacr" => "\N{LATIN CAPITAL LETTER I WITH MACRON}",	# Ī
+	    "imacr" => "\N{LATIN SMALL LETTER I WITH MACRON}",	# ī
+	     "Iuml" => "\N{LATIN CAPITAL LETTER I WITH DIAERESIS}",	# Ï
+	     "iuml" => "\N{LATIN SMALL LETTER I WITH DIAERESIS}",	# ï
+	    "Icirc" => "\N{LATIN CAPITAL LETTER I WITH CIRCUMFLEX}",	# Î
+	    "icirc" => "\N{LATIN SMALL LETTER I WITH CIRCUMFLEX}",	# î
+	    "imath" => "\N{LATIN SMALL LETTER DOTLESS I}",	# ı
+	   "inodot" => "\N{LATIN SMALL LETTER DOTLESS I}",	# ı
+
+	     "Jopf" => "\N{MATHEMATICAL DOUBLE-STRUCK CAPITAL J}",	# 𝕁
+	      "Jfr" => "\N{MATHEMATICAL FRAKTUR CAPITAL J}",	# 𝔍
+	     "Jscr" => "\N{MATHEMATICAL SCRIPT CAPITAL J}",	# 𝒥
+	     "jopf" => "\N{MATHEMATICAL DOUBLE-STRUCK SMALL J}",	# 𝕛
+	      "jfr" => "\N{MATHEMATICAL FRAKTUR SMALL J}",	# 𝔧
+	     "jscr" => "\N{MATHEMATICAL SCRIPT SMALL J}",	# 𝒿
+	    "Jcirc" => "\N{LATIN CAPITAL LETTER J WITH CIRCUMFLEX}",	# Ĵ
+	    "jcirc" => "\N{LATIN SMALL LETTER J WITH CIRCUMFLEX}",	# ĵ
+	    "jmath" => "\N{LATIN SMALL LETTER DOTLESS J}",	# ȷ
+
+	   "Kcedil" => "\N{LATIN CAPITAL LETTER K WITH CEDILLA}",	# Ķ
+	   "kcedil" => "\N{LATIN SMALL LETTER K WITH CEDILLA}",	# ķ
+	     "Kopf" => "\N{MATHEMATICAL DOUBLE-STRUCK CAPITAL K}",	# 𝕂
+	      "Kfr" => "\N{MATHEMATICAL FRAKTUR CAPITAL K}",	# 𝔎
+	     "Kscr" => "\N{MATHEMATICAL SCRIPT CAPITAL K}",	# 𝒦
+	     "kopf" => "\N{MATHEMATICAL DOUBLE-STRUCK SMALL K}",	# 𝕜
+	      "kfr" => "\N{MATHEMATICAL FRAKTUR SMALL K}",	# 𝔨
+	     "kscr" => "\N{MATHEMATICAL SCRIPT SMALL K}",	# 𝓀
+
+	   "Lcedil" => "\N{LATIN CAPITAL LETTER L WITH CEDILLA}",	# Ļ
+	   "lcedil" => "\N{LATIN SMALL LETTER L WITH CEDILLA}",	# ļ
+	   "Lstrok" => "\N{LATIN CAPITAL LETTER L WITH STROKE}",	# Ł
+	   "lstrok" => "\N{LATIN SMALL LETTER L WITH STROKE}",	# ł
+	   "Lacute" => "\N{LATIN CAPITAL LETTER L WITH ACUTE}",	# Ĺ
+	   "lacute" => "\N{LATIN SMALL LETTER L WITH ACUTE}",	# ĺ
+	     "Lopf" => "\N{MATHEMATICAL DOUBLE-STRUCK CAPITAL L}",	# 𝕃
+	      "Lfr" => "\N{MATHEMATICAL FRAKTUR CAPITAL L}",	# 𝔏
+       "Laplacetrf" => "\N{SCRIPT CAPITAL L}",	# ℒ
+	   "lagran" => "\N{SCRIPT CAPITAL L}",	# ℒ
+	     "Lscr" => "\N{SCRIPT CAPITAL L}",	# ℒ
+	     "lopf" => "\N{MATHEMATICAL DOUBLE-STRUCK SMALL L}",	# 𝕝
+	      "lfr" => "\N{MATHEMATICAL FRAKTUR SMALL L}",	# 𝔩
+	     "lscr" => "\N{MATHEMATICAL SCRIPT SMALL L}",	# 𝓁
+	      "ell" => "\N{SCRIPT SMALL L}",	# ℓ
+	   "Lcaron" => "\N{LATIN CAPITAL LETTER L WITH CARON}",	# Ľ
+	   "lcaron" => "\N{LATIN SMALL LETTER L WITH CARON}",	# ľ
+	   "Lmidot" => "\N{LATIN CAPITAL LETTER L WITH MIDDLE DOT}",	# Ŀ
+	   "lmidot" => "\N{LATIN SMALL LETTER L WITH MIDDLE DOT}",	# ŀ
+
+	    "Ocirc" => "\N{LATIN CAPITAL LETTER O WITH CIRCUMFLEX}",	# Ô
+	    "ocirc" => "\N{LATIN SMALL LETTER O WITH CIRCUMFLEX}",	# ô
+
+	    "Scirc" => "\N{LATIN CAPITAL LETTER S WITH CIRCUMFLEX}",	# Ŝ
+	    "scirc" => "\N{LATIN SMALL LETTER S WITH CIRCUMFLEX}",	# ŝ
+	       "ac" => "\N{INVERTED LAZY S}",	# ∾
+	   "mstpos" => "\N{INVERTED LAZY S}",	# ∾
+
+	   "Tcedil" => "\N{LATIN CAPITAL LETTER T WITH CEDILLA}",	# Ţ
+	   "tcedil" => "\N{LATIN SMALL LETTER T WITH CEDILLA}",	# ţ
+	     "Topf" => "\N{MATHEMATICAL DOUBLE-STRUCK CAPITAL T}",	# 𝕋
+	      "Tfr" => "\N{MATHEMATICAL FRAKTUR CAPITAL T}",	# 𝔗
+	     "Tscr" => "\N{MATHEMATICAL SCRIPT CAPITAL T}",	# 𝒯
+	     "topf" => "\N{MATHEMATICAL DOUBLE-STRUCK SMALL T}",	# 𝕥
+	      "tfr" => "\N{MATHEMATICAL FRAKTUR SMALL T}",	# 𝔱
+	     "tscr" => "\N{MATHEMATICAL SCRIPT SMALL T}",	# 𝓉
+	   "Tstrok" => "\N{LATIN CAPITAL LETTER T WITH STROKE}",	# Ŧ
+	   "tstrok" => "\N{LATIN SMALL LETTER T WITH STROKE}",	# ŧ
+
+	   "Utilde" => "\N{LATIN CAPITAL LETTER U WITH TILDE}",	# Ũ
+	   "utilde" => "\N{LATIN SMALL LETTER U WITH TILDE}",	# ũ
+	   "Udblac" => "\N{LATIN CAPITAL LETTER U WITH DOUBLE ACUTE}",	# Ű
+	   "udblac" => "\N{LATIN SMALL LETTER U WITH DOUBLE ACUTE}",	# ű
+	   "Uacute" => "\N{LATIN CAPITAL LETTER U WITH ACUTE}",	# Ú
+	   "uacute" => "\N{LATIN SMALL LETTER U WITH ACUTE}",	# ú
+	   "Ugrave" => "\N{LATIN CAPITAL LETTER U WITH GRAVE}",	# Ù
+	   "ugrave" => "\N{LATIN SMALL LETTER U WITH GRAVE}",	# ù
+	   "Ubreve" => "\N{LATIN CAPITAL LETTER U WITH BREVE}",	# Ŭ
+	   "ubreve" => "\N{LATIN SMALL LETTER U WITH BREVE}",	# ŭ
+	    "Uring" => "\N{LATIN CAPITAL LETTER U WITH RING ABOVE}",	# Ů
+	    "uring" => "\N{LATIN SMALL LETTER U WITH RING ABOVE}",	# ů
+	    "Uogon" => "\N{LATIN CAPITAL LETTER U WITH OGONEK}",	# Ų
+	    "uogon" => "\N{LATIN SMALL LETTER U WITH OGONEK}",	# ų
+	    "Umacr" => "\N{LATIN CAPITAL LETTER U WITH MACRON}",	# Ū
+	    "umacr" => "\N{LATIN SMALL LETTER U WITH MACRON}",	# ū
+	     "Uuml" => "\N{LATIN CAPITAL LETTER U WITH DIAERESIS}",	# Ü
+	     "uuml" => "\N{LATIN SMALL LETTER U WITH DIAERESIS}",	# ü
+	     "Uopf" => "\N{MATHEMATICAL DOUBLE-STRUCK CAPITAL U}",	# 𝕌
+	      "Ufr" => "\N{MATHEMATICAL FRAKTUR CAPITAL U}",	# 𝔘
+	     "Uscr" => "\N{MATHEMATICAL SCRIPT CAPITAL U}",	# 𝒰
+	     "uopf" => "\N{MATHEMATICAL DOUBLE-STRUCK SMALL U}",	# 𝕦
+	      "ufr" => "\N{MATHEMATICAL FRAKTUR SMALL U}",	# 𝔲
+	     "uscr" => "\N{MATHEMATICAL SCRIPT SMALL U}",	# 𝓊
+	    "Ucirc" => "\N{LATIN CAPITAL LETTER U WITH CIRCUMFLEX}",	# Û
+	    "ucirc" => "\N{LATIN SMALL LETTER U WITH CIRCUMFLEX}",	# û
+
+	     "Vopf" => "\N{MATHEMATICAL DOUBLE-STRUCK CAPITAL V}",	# 𝕍
+	      "Vfr" => "\N{MATHEMATICAL FRAKTUR CAPITAL V}",	# 𝔙
+	     "Vscr" => "\N{MATHEMATICAL SCRIPT CAPITAL V}",	# 𝒱
+	     "vopf" => "\N{MATHEMATICAL DOUBLE-STRUCK SMALL V}",	# 𝕧
+	      "vfr" => "\N{MATHEMATICAL FRAKTUR SMALL V}",	# 𝔳
+	     "vscr" => "\N{MATHEMATICAL SCRIPT SMALL V}",	# 𝓋
+
+	     "Wopf" => "\N{MATHEMATICAL DOUBLE-STRUCK CAPITAL W}",	# 𝕎
+	      "Wfr" => "\N{MATHEMATICAL FRAKTUR CAPITAL W}",	# 𝔚
+	     "Wscr" => "\N{MATHEMATICAL SCRIPT CAPITAL W}",	# 𝒲
+	     "wopf" => "\N{MATHEMATICAL DOUBLE-STRUCK SMALL W}",	# 𝕨
+	      "wfr" => "\N{MATHEMATICAL FRAKTUR SMALL W}",	# 𝔴
+	     "wscr" => "\N{MATHEMATICAL SCRIPT SMALL W}",	# 𝓌
+	    "Wcirc" => "\N{LATIN CAPITAL LETTER W WITH CIRCUMFLEX}",	# Ŵ
+	    "wcirc" => "\N{LATIN SMALL LETTER W WITH CIRCUMFLEX}",	# ŵ
+
+	   "Yacute" => "\N{LATIN CAPITAL LETTER Y WITH ACUTE}",	# Ý
+	   "yacute" => "\N{LATIN SMALL LETTER Y WITH ACUTE}",	# ý
+	     "Yuml" => "\N{LATIN CAPITAL LETTER Y WITH DIAERESIS}",	# Ÿ
+	     "yuml" => "\N{LATIN SMALL LETTER Y WITH DIAERESIS}",	# ÿ
+
+	   "Zacute" => "\N{LATIN CAPITAL LETTER Z WITH ACUTE}",	# Ź
+	   "zacute" => "\N{LATIN SMALL LETTER Z WITH ACUTE}",	# ź
+	     "Zdot" => "\N{LATIN CAPITAL LETTER Z WITH DOT ABOVE}",	# Ż
+	     "zdot" => "\N{LATIN SMALL LETTER Z WITH DOT ABOVE}",	# ż
+	   "Zcaron" => "\N{LATIN CAPITAL LETTER Z WITH CARON}",	# Ž
+	   "zcaron" => "\N{LATIN SMALL LETTER Z WITH CARON}",	# ž
+	     "Zopf" => "\N{DOUBLE-STRUCK CAPITAL Z}",	# ℤ
+	 "integers" => "\N{DOUBLE-STRUCK CAPITAL Z}",	# ℤ
+	   "zeetrf" => "\N{BLACK-LETTER CAPITAL Z}",	# ℨ
+	      "Zfr" => "\N{BLACK-LETTER CAPITAL Z}",	# ℨ
+	     "Zscr" => "\N{MATHEMATICAL SCRIPT CAPITAL Z}",	# 𝒵
+	     "zopf" => "\N{MATHEMATICAL DOUBLE-STRUCK SMALL Z}",	# 𝕫
+	      "zfr" => "\N{MATHEMATICAL FRAKTUR SMALL Z}",	# 𝔷
+	     "zscr" => "\N{MATHEMATICAL SCRIPT SMALL Z}",	# 𝓏
+	    "imped" => "\N{LATIN CAPITAL LETTER Z WITH STROKE}",	# Ƶ
+
+	    "THORN" => "\N{LATIN CAPITAL LETTER THORN}",	# Þ
+	    "thorn" => "\N{LATIN SMALL LETTER THORN}",	# þ
+
+	    "napos" => "\N{LATIN SMALL LETTER N PRECEDED BY APOSTROPHE}",	# ŉ
+
+	    "bepsi" => "\N{GREEK REVERSED LUNATE EPSILON SYMBOL}",	# ϶
+      "backepsilon" => "\N{GREEK REVERSED LUNATE EPSILON SYMBOL}",	# ϶
+	    "Alpha" => "\N{GREEK CAPITAL LETTER ALPHA}",	# Α
+	    "alpha" => "\N{GREEK SMALL LETTER ALPHA}",	# α
+	     "Beta" => "\N{GREEK CAPITAL LETTER BETA}",	# Β
+	     "beta" => "\N{GREEK SMALL LETTER BETA}",	# β
+	    "Gamma" => "\N{GREEK CAPITAL LETTER GAMMA}",	# Γ
+	    "gamma" => "\N{GREEK SMALL LETTER GAMMA}",	# γ
+	    "Delta" => "\N{GREEK CAPITAL LETTER DELTA}",	# Δ
+	    "delta" => "\N{GREEK SMALL LETTER DELTA}",	# δ
+       "varepsilon" => "\N{GREEK LUNATE EPSILON SYMBOL}",	# ϵ
+    "straightepsilon" => "\N{GREEK LUNATE EPSILON SYMBOL}",	# ϵ
+	    "epsiv" => "\N{GREEK LUNATE EPSILON SYMBOL}",	# ϵ
+	  "Epsilon" => "\N{GREEK CAPITAL LETTER EPSILON}",	# Ε
+	     "epsi" => "\N{GREEK SMALL LETTER EPSILON}",	# ε
+	  "epsilon" => "\N{GREEK SMALL LETTER EPSILON}",	# ε
+	   "Gammad" => "\N{GREEK LETTER DIGAMMA}",	# Ϝ
+	  "digamma" => "\N{GREEK SMALL LETTER DIGAMMA}",	# ϝ
+	   "gammad" => "\N{GREEK SMALL LETTER DIGAMMA}",	# ϝ
+	     "Zeta" => "\N{GREEK CAPITAL LETTER ZETA}",	# Ζ
+	     "zeta" => "\N{GREEK SMALL LETTER ZETA}",	# ζ
+	      "Eta" => "\N{GREEK CAPITAL LETTER ETA}",	# Η
+	      "eta" => "\N{GREEK SMALL LETTER ETA}",	# η
+	    "Theta" => "\N{GREEK CAPITAL LETTER THETA}",	# Θ
+	    "theta" => "\N{GREEK SMALL LETTER THETA}",	# θ
+	 "vartheta" => "\N{GREEK THETA SYMBOL}",	# ϑ
+	 "thetasym" => "\N{GREEK THETA SYMBOL}",	# ϑ
+	   "thetav" => "\N{GREEK THETA SYMBOL}",	# ϑ
+	     "Iota" => "\N{GREEK CAPITAL LETTER IOTA}",	# Ι
+	     "iota" => "\N{GREEK SMALL LETTER IOTA}",	# ι
+	    "Kappa" => "\N{GREEK CAPITAL LETTER KAPPA}",	# Κ
+	    "kappa" => "\N{GREEK SMALL LETTER KAPPA}",	# κ
+	 "varkappa" => "\N{GREEK KAPPA SYMBOL}",	# ϰ
+	   "kappav" => "\N{GREEK KAPPA SYMBOL}",	# ϰ
+	   "Lambda" => "\N{GREEK CAPITAL LETTER LAMDA}",	# Λ
+	   "lambda" => "\N{GREEK SMALL LETTER LAMDA}",	# λ
+	    "micro" => "\N{MICRO SIGN}",	# µ
+	       "Mu" => "\N{GREEK CAPITAL LETTER MU}",	# Μ
+	       "mu" => "\N{GREEK SMALL LETTER MU}",	# μ
+	       "Nu" => "\N{GREEK CAPITAL LETTER NU}",	# Ν
+	       "nu" => "\N{GREEK SMALL LETTER NU}",	# ν
+	       "Xi" => "\N{GREEK CAPITAL LETTER XI}",	# Ξ
+	       "xi" => "\N{GREEK SMALL LETTER XI}",	# ξ
+	  "Omicron" => "\N{GREEK CAPITAL LETTER OMICRON}",	# Ο
+	  "omicron" => "\N{GREEK SMALL LETTER OMICRON}",	# ο
+	       "Pi" => "\N{GREEK CAPITAL LETTER PI}",	# Π
+	       "pi" => "\N{GREEK SMALL LETTER PI}",	# π
+	    "varpi" => "\N{GREEK PI SYMBOL}",	# ϖ
+	      "piv" => "\N{GREEK PI SYMBOL}",	# ϖ
+	   "varrho" => "\N{GREEK RHO SYMBOL}",	# ϱ
+	     "rhov" => "\N{GREEK RHO SYMBOL}",	# ϱ
+	      "Rho" => "\N{GREEK CAPITAL LETTER RHO}",	# Ρ
+	      "rho" => "\N{GREEK SMALL LETTER RHO}",	# ρ
+	 "varsigma" => "\N{GREEK SMALL LETTER FINAL SIGMA}",	# ς
+	   "sigmaf" => "\N{GREEK SMALL LETTER FINAL SIGMA}",	# ς
+	   "sigmav" => "\N{GREEK SMALL LETTER FINAL SIGMA}",	# ς
+	    "Sigma" => "\N{GREEK CAPITAL LETTER SIGMA}",	# Σ
+	    "sigma" => "\N{GREEK SMALL LETTER SIGMA}",	# σ
+	      "Tau" => "\N{GREEK CAPITAL LETTER TAU}",	# Τ
+	      "tau" => "\N{GREEK SMALL LETTER TAU}",	# τ
+	    "upsih" => "\N{GREEK UPSILON WITH HOOK SYMBOL}",	# ϒ
+	     "Upsi" => "\N{GREEK UPSILON WITH HOOK SYMBOL}",	# ϒ
+	  "Upsilon" => "\N{GREEK CAPITAL LETTER UPSILON}",	# Υ
+	     "upsi" => "\N{GREEK SMALL LETTER UPSILON}",	# υ
+	  "upsilon" => "\N{GREEK SMALL LETTER UPSILON}",	# υ
+	      "Phi" => "\N{GREEK CAPITAL LETTER PHI}",	# Φ
+	      "phi" => "\N{GREEK SMALL LETTER PHI}",	# φ
+	   "varphi" => "\N{GREEK PHI SYMBOL}",	# ϕ
+      "straightphi" => "\N{GREEK PHI SYMBOL}",	# ϕ
+	     "phiv" => "\N{GREEK PHI SYMBOL}",	# ϕ
+	      "Chi" => "\N{GREEK CAPITAL LETTER CHI}",	# Χ
+	      "chi" => "\N{GREEK SMALL LETTER CHI}",	# χ
+	      "Psi" => "\N{GREEK CAPITAL LETTER PSI}",	# Ψ
+	      "psi" => "\N{GREEK SMALL LETTER PSI}",	# ψ
+	    "Omega" => "\N{GREEK CAPITAL LETTER OMEGA}",	# Ω
+	      "ohm" => "\N{GREEK CAPITAL LETTER OMEGA}",	# Ω
+	    "omega" => "\N{GREEK SMALL LETTER OMEGA}",	# ω
+
+	      "Acy" => "\N{CYRILLIC CAPITAL LETTER A}",	# А
+	      "acy" => "\N{CYRILLIC SMALL LETTER A}",	# а
+	      "Bcy" => "\N{CYRILLIC CAPITAL LETTER BE}",	# Б
+	      "bcy" => "\N{CYRILLIC SMALL LETTER BE}",	# б
+	      "Vcy" => "\N{CYRILLIC CAPITAL LETTER VE}",	# В
+	      "vcy" => "\N{CYRILLIC SMALL LETTER VE}",	# в
+	      "Gcy" => "\N{CYRILLIC CAPITAL LETTER GHE}",	# Г
+	      "gcy" => "\N{CYRILLIC SMALL LETTER GHE}",	# г
+	      "Dcy" => "\N{CYRILLIC CAPITAL LETTER DE}",	# Д
+	      "dcy" => "\N{CYRILLIC SMALL LETTER DE}",	# д
+	     "DJcy" => "\N{CYRILLIC CAPITAL LETTER DJE}",	# Ђ
+	     "djcy" => "\N{CYRILLIC SMALL LETTER DJE}",	# ђ
+	     "GJcy" => "\N{CYRILLIC CAPITAL LETTER GJE}",	# Ѓ
+	     "gjcy" => "\N{CYRILLIC SMALL LETTER GJE}",	# ѓ
+	     "IEcy" => "\N{CYRILLIC CAPITAL LETTER IE}",	# Е
+	     "iecy" => "\N{CYRILLIC SMALL LETTER IE}",	# е
+	     "IOcy" => "\N{CYRILLIC CAPITAL LETTER IO}",	# Ё
+	     "iocy" => "\N{CYRILLIC SMALL LETTER IO}",	# ё
+	    "Jukcy" => "\N{CYRILLIC CAPITAL LETTER UKRAINIAN IE}",	# Є
+	    "jukcy" => "\N{CYRILLIC SMALL LETTER UKRAINIAN IE}",	# є
+	     "ZHcy" => "\N{CYRILLIC CAPITAL LETTER ZHE}",	# Ж
+	     "zhcy" => "\N{CYRILLIC SMALL LETTER ZHE}",	# ж
+	      "Zcy" => "\N{CYRILLIC CAPITAL LETTER ZE}",	# З
+	      "zcy" => "\N{CYRILLIC SMALL LETTER ZE}",	# з
+	     "DScy" => "\N{CYRILLIC CAPITAL LETTER DZE}",	# Ѕ
+	     "dscy" => "\N{CYRILLIC SMALL LETTER DZE}",	# ѕ
+	      "Icy" => "\N{CYRILLIC CAPITAL LETTER I}",	# И
+	      "icy" => "\N{CYRILLIC SMALL LETTER I}",	# и
+	    "Iukcy" => "\N{CYRILLIC CAPITAL LETTER BYELORUSSIAN-UKRAINIAN I}",	# І
+	    "iukcy" => "\N{CYRILLIC SMALL LETTER BYELORUSSIAN-UKRAINIAN I}",	# і
+	     "YIcy" => "\N{CYRILLIC CAPITAL LETTER YI}",	# Ї
+	     "yicy" => "\N{CYRILLIC SMALL LETTER YI}",	# ї
+	      "Jcy" => "\N{CYRILLIC CAPITAL LETTER SHORT I}",	# Й
+	      "jcy" => "\N{CYRILLIC SMALL LETTER SHORT I}",	# й
+	   "Jsercy" => "\N{CYRILLIC CAPITAL LETTER JE}",	# Ј
+	   "jsercy" => "\N{CYRILLIC SMALL LETTER JE}",	# ј
+	      "Kcy" => "\N{CYRILLIC CAPITAL LETTER KA}",	# К
+	      "kcy" => "\N{CYRILLIC SMALL LETTER KA}",	# к
+	      "Lcy" => "\N{CYRILLIC CAPITAL LETTER EL}",	# Л
+	      "lcy" => "\N{CYRILLIC SMALL LETTER EL}",	# л
+	     "LJcy" => "\N{CYRILLIC CAPITAL LETTER LJE}",	# Љ
+	     "ljcy" => "\N{CYRILLIC SMALL LETTER LJE}",	# љ
+	      "Mcy" => "\N{CYRILLIC CAPITAL LETTER EM}",	# М
+	      "mcy" => "\N{CYRILLIC SMALL LETTER EM}",	# м
+	      "Ncy" => "\N{CYRILLIC CAPITAL LETTER EN}",	# Н
+	      "ncy" => "\N{CYRILLIC SMALL LETTER EN}",	# н
+	     "NJcy" => "\N{CYRILLIC CAPITAL LETTER NJE}",	# Њ
+	     "njcy" => "\N{CYRILLIC SMALL LETTER NJE}",	# њ
+	      "Ocy" => "\N{CYRILLIC CAPITAL LETTER O}",	# О
+	      "ocy" => "\N{CYRILLIC SMALL LETTER O}",	# о
+	      "Pcy" => "\N{CYRILLIC CAPITAL LETTER PE}",	# П
+	      "pcy" => "\N{CYRILLIC SMALL LETTER PE}",	# п
+	      "Rcy" => "\N{CYRILLIC CAPITAL LETTER ER}",	# Р
+	      "rcy" => "\N{CYRILLIC SMALL LETTER ER}",	# р
+	      "Scy" => "\N{CYRILLIC CAPITAL LETTER ES}",	# С
+	      "scy" => "\N{CYRILLIC SMALL LETTER ES}",	# с
+	      "Tcy" => "\N{CYRILLIC CAPITAL LETTER TE}",	# Т
+	      "tcy" => "\N{CYRILLIC SMALL LETTER TE}",	# т
+	    "TSHcy" => "\N{CYRILLIC CAPITAL LETTER TSHE}",	# Ћ
+	    "tshcy" => "\N{CYRILLIC SMALL LETTER TSHE}",	# ћ
+	     "KJcy" => "\N{CYRILLIC CAPITAL LETTER KJE}",	# Ќ
+	     "kjcy" => "\N{CYRILLIC SMALL LETTER KJE}",	# ќ
+	      "Ucy" => "\N{CYRILLIC CAPITAL LETTER U}",	# У
+	      "ucy" => "\N{CYRILLIC SMALL LETTER U}",	# у
+	    "Ubrcy" => "\N{CYRILLIC CAPITAL LETTER SHORT U}",	# Ў
+	    "ubrcy" => "\N{CYRILLIC SMALL LETTER SHORT U}",	# ў
+	      "Fcy" => "\N{CYRILLIC CAPITAL LETTER EF}",	# Ф
+	      "fcy" => "\N{CYRILLIC SMALL LETTER EF}",	# ф
+	     "KHcy" => "\N{CYRILLIC CAPITAL LETTER HA}",	# Х
+	     "khcy" => "\N{CYRILLIC SMALL LETTER HA}",	# х
+	     "TScy" => "\N{CYRILLIC CAPITAL LETTER TSE}",	# Ц
+	     "tscy" => "\N{CYRILLIC SMALL LETTER TSE}",	# ц
+	     "CHcy" => "\N{CYRILLIC CAPITAL LETTER CHE}",	# Ч
+	     "chcy" => "\N{CYRILLIC SMALL LETTER CHE}",	# ч
+	     "DZcy" => "\N{CYRILLIC CAPITAL LETTER DZHE}",	# Џ
+	     "dzcy" => "\N{CYRILLIC SMALL LETTER DZHE}",	# џ
+	     "SHcy" => "\N{CYRILLIC CAPITAL LETTER SHA}",	# Ш
+	     "shcy" => "\N{CYRILLIC SMALL LETTER SHA}",	# ш
+	   "SHCHcy" => "\N{CYRILLIC CAPITAL LETTER SHCHA}",	# Щ
+	   "shchcy" => "\N{CYRILLIC SMALL LETTER SHCHA}",	# щ
+	   "HARDcy" => "\N{CYRILLIC CAPITAL LETTER HARD SIGN}",	# Ъ
+	   "hardcy" => "\N{CYRILLIC SMALL LETTER HARD SIGN}",	# ъ
+	      "Ycy" => "\N{CYRILLIC CAPITAL LETTER YERU}",	# Ы
+	      "ycy" => "\N{CYRILLIC SMALL LETTER YERU}",	# ы
+	   "SOFTcy" => "\N{CYRILLIC CAPITAL LETTER SOFT SIGN}",	# Ь
+	   "softcy" => "\N{CYRILLIC SMALL LETTER SOFT SIGN}",	# ь
+	      "Ecy" => "\N{CYRILLIC CAPITAL LETTER E}",	# Э
+	      "ecy" => "\N{CYRILLIC SMALL LETTER E}",	# э
+	     "YUcy" => "\N{CYRILLIC CAPITAL LETTER YU}",	# Ю
+	     "yucy" => "\N{CYRILLIC SMALL LETTER YU}",	# ю
+	     "YAcy" => "\N{CYRILLIC CAPITAL LETTER YA}",	# Я
+	     "yacy" => "\N{CYRILLIC SMALL LETTER YA}",	# я
+
+	    "aleph" => "\N{ALEF SYMBOL}",	# ℵ
+	  "alefsym" => "\N{ALEF SYMBOL}",	# ℵ
+	     "beth" => "\N{BET SYMBOL}",	# ℶ
+	    "gimel" => "\N{GIMEL SYMBOL}",	# ℷ
+	   "daleth" => "\N{DALET SYMBOL}",	# ℸ
+
+	     "lesg" => "\N{LESS-THAN EQUAL TO OR GREATER-THAN}\N{VARIATION SELECTOR-1}",	# ⋚︀
+	     "gesl" => "\N{GREATER-THAN EQUAL TO OR LESS-THAN}\N{VARIATION SELECTOR-1}",	# ⋛︀
+	     "cups" => "\N{UNION}\N{VARIATION SELECTOR-1}",	# ∪︀
+	     "caps" => "\N{INTERSECTION}\N{VARIATION SELECTOR-1}",	# ∩︀
+	    "lates" => "\N{LARGER THAN OR EQUAL TO}\N{VARIATION SELECTOR-1}",	# ⪭︀
+	    "smtes" => "\N{SMALLER THAN OR EQUAL TO}\N{VARIATION SELECTOR-1}",	# ⪬︀
+	   "vsubnE" => "\N{SUBSET OF ABOVE NOT EQUAL TO}\N{VARIATION SELECTOR-1}",	# ⫋︀
+    "varsubsetneqq" => "\N{SUBSET OF ABOVE NOT EQUAL TO}\N{VARIATION SELECTOR-1}",	# ⫋︀
+	   "vsupnE" => "\N{SUPERSET OF ABOVE NOT EQUAL TO}\N{VARIATION SELECTOR-1}",	# ⫌︀
+    "varsupsetneqq" => "\N{SUPERSET OF ABOVE NOT EQUAL TO}\N{VARIATION SELECTOR-1}",	# ⫌︀
+	   "vsubne" => "\N{SUBSET OF WITH NOT EQUAL TO}\N{VARIATION SELECTOR-1}",	# ⊊︀
+     "varsubsetneq" => "\N{SUBSET OF WITH NOT EQUAL TO}\N{VARIATION SELECTOR-1}",	# ⊊︀
+	   "vsupne" => "\N{SUPERSET OF WITH NOT EQUAL TO}\N{VARIATION SELECTOR-1}",	# ⊋︀
+     "varsupsetneq" => "\N{SUPERSET OF WITH NOT EQUAL TO}\N{VARIATION SELECTOR-1}",	# ⊋︀
+	     "gvnE" => "\N{GREATER-THAN BUT NOT EQUAL TO}\N{VARIATION SELECTOR-1}",	# ≩︀
+	"gvertneqq" => "\N{GREATER-THAN BUT NOT EQUAL TO}\N{VARIATION SELECTOR-1}",	# ≩︀
+	     "lvnE" => "\N{LESS-THAN BUT NOT EQUAL TO}\N{VARIATION SELECTOR-1}",	# ≨︀
+	"lvertneqq" => "\N{LESS-THAN BUT NOT EQUAL TO}\N{VARIATION SELECTOR-1}",	# ≨︀
+	   "sqcaps" => "\N{SQUARE CAP}\N{VARIATION SELECTOR-1}",	# ⊓︀
+	   "sqcups" => "\N{SQUARE CUP}\N{VARIATION SELECTOR-1}",	# ⊔︀
+	    "nabla" => "\N{NABLA}",	# ∇
+	      "Del" => "\N{NABLA}",	# ∇
+	  "Cedilla" => "\N{CEDILLA}",	# ¸
+	    "cedil" => "\N{CEDILLA}",	# ¸
+     "RoundImplies" => "\N{RIGHT DOUBLE ARROW WITH ROUNDED HEAD}",	# ⥰
+	    "nsucc" => "\N{DOES NOT SUCCEED}",	# ⊁
+	      "nsc" => "\N{DOES NOT SUCCEED}",	# ⊁
+      "NotSucceeds" => "\N{DOES NOT SUCCEED}",	# ⊁
+      "RuleDelayed" => "\N{RULE-DELAYED}",	# ⧴
+	 "andslope" => "\N{SLOPING LARGE AND}",	# ⩘
+	      "And" => "\N{DOUBLE LOGICAL AND}",	# ⩓
+	   "andand" => "\N{TWO INTERSECTING LOGICAL AND}",	# ⩕
+	   "capand" => "\N{INTERSECTION WITH LOGICAL AND}",	# ⩄
+	      "and" => "\N{LOGICAL AND}",	# ∧
+	    "wedge" => "\N{LOGICAL AND}",	# ∧
+	    "cuwed" => "\N{CURLY LOGICAL AND}",	# ⋏
+       "curlywedge" => "\N{CURLY LOGICAL AND}",	# ⋏
+	    "Wedge" => "\N{N-ARY LOGICAL AND}",	# ⋀
+	 "bigwedge" => "\N{N-ARY LOGICAL AND}",	# ⋀
+	   "xwedge" => "\N{N-ARY LOGICAL AND}",	# ⋀
+	  "larrbfs" => "\N{LEFTWARDS ARROW FROM BAR TO BLACK DIAMOND}",	# ⤟
+	  "rarrbfs" => "\N{RIGHTWARDS ARROW FROM BAR TO BLACK DIAMOND}",	# ⤠
+	   "larrfs" => "\N{LEFTWARDS ARROW TO BLACK DIAMOND}",	# ⤝
+	   "rarrfs" => "\N{RIGHTWARDS ARROW TO BLACK DIAMOND}",	# ⤞
+	    "numsp" => "\N{FIGURE SPACE}",	#  
+    "ZeroWidthSpace" => "\N{ZERO WIDTH SPACE}",	# ​
+    "NegativeThickSpace" => "\N{ZERO WIDTH SPACE}",	# ​
+    "NegativeMediumSpace" => "\N{ZERO WIDTH SPACE}",	# ​
+    "NegativeThinSpace" => "\N{ZERO WIDTH SPACE}",	# ​
+    "NegativeVeryThinSpace" => "\N{ZERO WIDTH SPACE}",	# ​
+    "NonBreakingSpace" => "\N{NO-BREAK SPACE}",	#  
+	     "nbsp" => "\N{NO-BREAK SPACE}",	#  
+      "MediumSpace" => "\N{MEDIUM MATHEMATICAL SPACE}",	#  
+	     "emsp" => "\N{EM SPACE}",	#  
+	   "emsp13" => "\N{THREE-PER-EM SPACE}",	#  
+	   "emsp14" => "\N{FOUR-PER-EM SPACE}",	#  
+	     "ensp" => "\N{EN SPACE}",	#  
+	"ThinSpace" => "\N{THIN SPACE}",	#  
+	   "thinsp" => "\N{THIN SPACE}",	#  
+	   "puncsp" => "\N{PUNCTUATION SPACE}",	#  
+       "ThickSpace" => "\N{MEDIUM MATHEMATICAL SPACE}\N{HAIR SPACE}",	#   
+    "VeryThinSpace" => "\N{HAIR SPACE}",	#  
+	   "hairsp" => "\N{HAIR SPACE}",	#  
+	   "lbrace" => "{",	# { # {
+	   "rbrace" => "}",	# } # }
+	   "nVdash" => "\N{DOES NOT FORCE}",	# ⊮
+	    "blk34" => "\N{DARK SHADE}",	# ▓
+	    "blk12" => "\N{MEDIUM SHADE}",	# ▒
+	    "blk14" => "\N{LIGHT SHADE}",	# ░
+	    "nprec" => "\N{DOES NOT PRECEDE}",	# ⊀
+	      "npr" => "\N{DOES NOT PRECEDE}",	# ⊀
+      "NotPrecedes" => "\N{DOES NOT PRECEDE}",	# ⊀
+	    "gtcir" => "\N{GREATER-THAN WITH CIRCLE INSIDE}",	# ⩺
+	    "ltcir" => "\N{LESS-THAN WITH CIRCLE INSIDE}",	# ⩹
+	   "egsdot" => "\N{SLANTED EQUAL TO OR GREATER-THAN WITH DOT INSIDE}",	# ⪘
+	   "elsdot" => "\N{SLANTED EQUAL TO OR LESS-THAN WITH DOT INSIDE}",	# ⪗
+	   "gesdot" => "\N{GREATER-THAN OR SLANTED EQUAL TO WITH DOT INSIDE}",	# ⪀
+	   "lesdot" => "\N{LESS-THAN OR SLANTED EQUAL TO WITH DOT INSIDE}",	# ⩿
+	     "nmid" => "\N{DOES NOT DIVIDE}",	# ∤
+	    "nsmid" => "\N{DOES NOT DIVIDE}",	# ∤
+	"nshortmid" => "\N{DOES NOT DIVIDE}",	# ∤
+    "NotVerticalBar" => "\N{DOES NOT DIVIDE}",	# ∤
+	     "bsim" => "\N{REVERSED TILDE}",	# ∽
+	  "backsim" => "\N{REVERSED TILDE}",	# ∽
+	     "apid" => "\N{TRIPLE TILDE}",	# ≋
+	    "tilde" => "\N{SMALL TILDE}",	# ˜
+    "DiacriticalTilde" => "\N{SMALL TILDE}",	# ˜
+       "EqualTilde" => "\N{MINUS TILDE}",	# ≂
+	     "esim" => "\N{MINUS TILDE}",	# ≂
+	    "eqsim" => "\N{MINUS TILDE}",	# ≂
+	 "NotTilde" => "\N{NOT TILDE}",	# ≁
+	     "nsim" => "\N{NOT TILDE}",	# ≁
+     "blacklozenge" => "\N{BLACK LOZENGE}",	# ⧫
+	     "lozf" => "\N{BLACK LOZENGE}",	# ⧫
+	  "lozenge" => "\N{LOZENGE}",	# ◊
+	      "loz" => "\N{LOZENGE}",	# ◊
+	   "bowtie" => "\N{BOWTIE}",	# ⋈
+	       "rx" => "\N{PRESCRIPTION TAKE}",	# ℞
+	    "nlArr" => "\N{LEFTWARDS DOUBLE ARROW WITH STROKE}",	# ⇍
+       "nLeftarrow" => "\N{LEFTWARDS DOUBLE ARROW WITH STROKE}",	# ⇍
+	    "nrArr" => "\N{RIGHTWARDS DOUBLE ARROW WITH STROKE}",	# ⇏
+      "nRightarrow" => "\N{RIGHTWARDS DOUBLE ARROW WITH STROKE}",	# ⇏
+	    "nhArr" => "\N{LEFT RIGHT DOUBLE ARROW WITH STROKE}",	# ⇎
+    "nLeftrightarrow" => "\N{LEFT RIGHT DOUBLE ARROW WITH STROKE}",	# ⇎
+	    "nlarr" => "\N{LEFTWARDS ARROW WITH STROKE}",	# ↚
+       "nleftarrow" => "\N{LEFTWARDS ARROW WITH STROKE}",	# ↚
+	    "nrarr" => "\N{RIGHTWARDS ARROW WITH STROKE}",	# ↛
+      "nrightarrow" => "\N{RIGHTWARDS ARROW WITH STROKE}",	# ↛
+	    "nharr" => "\N{LEFT RIGHT ARROW WITH STROKE}",	# ↮
+    "nleftrightarrow" => "\N{LEFT RIGHT ARROW WITH STROKE}",	# ↮
+	   "nvlArr" => "\N{LEFTWARDS DOUBLE ARROW WITH VERTICAL STROKE}",	# ⤂
+	   "nvrArr" => "\N{RIGHTWARDS DOUBLE ARROW WITH VERTICAL STROKE}",	# ⤃
+	   "nvHarr" => "\N{LEFT RIGHT DOUBLE ARROW WITH VERTICAL STROKE}",	# ⤄
+	    "isins" => "\N{SMALL ELEMENT OF WITH VERTICAL BAR AT END OF HORIZONTAL STROKE}",	# ⋴
+	   "isinsv" => "\N{ELEMENT OF WITH VERTICAL BAR AT END OF HORIZONTAL STROKE}",	# ⋳
+	      "nis" => "\N{SMALL CONTAINS WITH VERTICAL BAR AT END OF HORIZONTAL STROKE}",	# ⋼
+	     "xnis" => "\N{CONTAINS WITH VERTICAL BAR AT END OF HORIZONTAL STROKE}",	# ⋻
+	    "disin" => "\N{ELEMENT OF WITH LONG HORIZONTAL STROKE}",	# ⋲
+	     "nisd" => "\N{CONTAINS WITH LONG HORIZONTAL STROKE}",	# ⋺
+	    "nhpar" => "\N{PARALLEL WITH HORIZONTAL STROKE}",	# ⫲
+	    "boxvH" => "\N{BOX DRAWINGS VERTICAL SINGLE AND HORIZONTAL DOUBLE}",	# ╪
+	    "boxHd" => "\N{BOX DRAWINGS DOWN SINGLE AND HORIZONTAL DOUBLE}",	# ╤
+	    "boxHu" => "\N{BOX DRAWINGS UP SINGLE AND HORIZONTAL DOUBLE}",	# ╧
+	    "boxvL" => "\N{BOX DRAWINGS VERTICAL SINGLE AND LEFT DOUBLE}",	# ╡
+	    "boxdL" => "\N{BOX DRAWINGS DOWN SINGLE AND LEFT DOUBLE}",	# ╕
+	    "boxuL" => "\N{BOX DRAWINGS UP SINGLE AND LEFT DOUBLE}",	# ╛
+	    "boxvR" => "\N{BOX DRAWINGS VERTICAL SINGLE AND RIGHT DOUBLE}",	# ╞
+	    "boxdR" => "\N{BOX DRAWINGS DOWN SINGLE AND RIGHT DOUBLE}",	# ╒
+	    "boxuR" => "\N{BOX DRAWINGS UP SINGLE AND RIGHT DOUBLE}",	# ╘
+	  "bigcirc" => "\N{LARGE CIRCLE}",	# ◯
+	    "xcirc" => "\N{LARGE CIRCLE}",	# ◯
+	   "Otimes" => "\N{MULTIPLICATION SIGN IN DOUBLE CIRCLE}",	# ⨷
+	      "cir" => "\N{WHITE CIRCLE}",	# ○
+	  "lotimes" => "\N{MULTIPLICATION SIGN IN LEFT HALF CIRCLE}",	# ⨴
+	   "loplus" => "\N{PLUS SIGN IN LEFT HALF CIRCLE}",	# ⨭
+	  "rotimes" => "\N{MULTIPLICATION SIGN IN RIGHT HALF CIRCLE}",	# ⨵
+	   "roplus" => "\N{PLUS SIGN IN RIGHT HALF CIRCLE}",	# ⨮
+	  "harrcir" => "\N{LEFT RIGHT ARROW THROUGH SMALL CIRCLE}",	# ⥈
+	 "Uarrocir" => "\N{UPWARDS TWO-HEADED ARROW FROM SMALL CIRCLE}",	# ⥉
+	   "angmsd" => "\N{MEASURED ANGLE}",	# ∡
+    "measuredangle" => "\N{MEASURED ANGLE}",	# ∡
+	    "xdtri" => "\N{WHITE DOWN-POINTING TRIANGLE}",	# ▽
+    "bigtriangledown" => "\N{WHITE DOWN-POINTING TRIANGLE}",	# ▽
+	    "xutri" => "\N{WHITE UP-POINTING TRIANGLE}",	# △
+    "bigtriangleup" => "\N{WHITE UP-POINTING TRIANGLE}",	# △
+	     "dtri" => "\N{WHITE DOWN-POINTING SMALL TRIANGLE}",	# ▿
+     "triangledown" => "\N{WHITE DOWN-POINTING SMALL TRIANGLE}",	# ▿
+	    "dtrif" => "\N{BLACK DOWN-POINTING SMALL TRIANGLE}",	# ▾
+    "blacktriangledown" => "\N{BLACK DOWN-POINTING SMALL TRIANGLE}",	# ▾
+	 "triangle" => "\N{WHITE UP-POINTING SMALL TRIANGLE}",	# ▵
+	     "utri" => "\N{WHITE UP-POINTING SMALL TRIANGLE}",	# ▵
+    "blacktriangle" => "\N{BLACK UP-POINTING SMALL TRIANGLE}",	# ▴
+	    "utrif" => "\N{BLACK UP-POINTING SMALL TRIANGLE}",	# ▴
+	     "ltri" => "\N{WHITE LEFT-POINTING SMALL TRIANGLE}",	# ◃
+     "triangleleft" => "\N{WHITE LEFT-POINTING SMALL TRIANGLE}",	# ◃
+	    "ltrif" => "\N{BLACK LEFT-POINTING SMALL TRIANGLE}",	# ◂
+    "blacktriangleleft" => "\N{BLACK LEFT-POINTING SMALL TRIANGLE}",	# ◂
+	     "rtri" => "\N{WHITE RIGHT-POINTING SMALL TRIANGLE}",	# ▹
+    "triangleright" => "\N{WHITE RIGHT-POINTING SMALL TRIANGLE}",	# ▹
+	    "rtrif" => "\N{BLACK RIGHT-POINTING SMALL TRIANGLE}",	# ▸
+    "blacktriangleright" => "\N{BLACK RIGHT-POINTING SMALL TRIANGLE}",	# ▸
+	  "tritime" => "\N{MULTIPLICATION SIGN IN TRIANGLE}",	# ⨻
+	  "triplus" => "\N{PLUS SIGN IN TRIANGLE}",	# ⨹
+	 "triminus" => "\N{MINUS SIGN IN TRIANGLE}",	# ⨺
+	 "rtriltri" => "\N{RIGHT TRIANGLE ABOVE LEFT TRIANGLE}",	# ⧎
+	    "ultri" => "\N{UPPER LEFT TRIANGLE}",	# ◸
+	    "lltri" => "\N{LOWER LEFT TRIANGLE}",	# ◺
+    "RightTriangleBar" => "\N{VERTICAL BAR BESIDE RIGHT TRIANGLE}",	# ⧐
+	    "lrtri" => "\N{RIGHT TRIANGLE}",	# ⊿
+	    "urtri" => "\N{UPPER RIGHT TRIANGLE}",	# ◹
+	   "angsph" => "\N{SPHERICAL ANGLE}",	# ∢
+	    "angle" => "\N{ANGLE}",	# ∠
+	      "ang" => "\N{ANGLE}",	# ∠
+	     "rect" => "\N{WHITE RECTANGLE}",	# ▭
+	   "marker" => "\N{BLACK VERTICAL RECTANGLE}",	# ▮
+	    "angrt" => "\N{RIGHT ANGLE}",	# ∟
+	    "boxVh" => "\N{BOX DRAWINGS VERTICAL DOUBLE AND HORIZONTAL SINGLE}",	# ╫
+	    "boxhD" => "\N{BOX DRAWINGS DOWN DOUBLE AND HORIZONTAL SINGLE}",	# ╥
+	    "boxhU" => "\N{BOX DRAWINGS UP DOUBLE AND HORIZONTAL SINGLE}",	# ╨
+	    "boxVl" => "\N{BOX DRAWINGS VERTICAL DOUBLE AND LEFT SINGLE}",	# ╢
+	    "boxDl" => "\N{BOX DRAWINGS DOWN DOUBLE AND LEFT SINGLE}",	# ╖
+	    "boxUl" => "\N{BOX DRAWINGS UP DOUBLE AND LEFT SINGLE}",	# ╜
+	    "boxVr" => "\N{BOX DRAWINGS VERTICAL DOUBLE AND RIGHT SINGLE}",	# ╟
+	    "boxDr" => "\N{BOX DRAWINGS DOWN DOUBLE AND RIGHT SINGLE}",	# ╓
+	    "boxUr" => "\N{BOX DRAWINGS UP DOUBLE AND RIGHT SINGLE}",	# ╙
+	 "profalar" => "\N{ALL AROUND-PROFILE}",	# ⌮
+	    "smile" => "\N{SMILE}",	# ⌣
+	   "ssmile" => "\N{SMILE}",	# ⌣
+	    "ovbar" => "\N{APL FUNCTIONAL SYMBOL CIRCLE STILE}",	# ⌽
+    "DoubleLeftTee" => "\N{VERTICAL BAR DOUBLE LEFT TURNSTILE}",	# ⫤
+	    "Dashv" => "\N{VERTICAL BAR DOUBLE LEFT TURNSTILE}",	# ⫤
+	   "nVDash" => "\N{NEGATED DOUBLE VERTICAL BAR DOUBLE RIGHT TURNSTILE}",	# ⊯
+	    "VDash" => "\N{DOUBLE VERTICAL BAR DOUBLE RIGHT TURNSTILE}",	# ⊫
+	   "Vvdash" => "\N{TRIPLE VERTICAL BAR RIGHT TURNSTILE}",	# ⊪
+	 "scpolint" => "\N{LINE INTEGRATION WITH SEMICIRCULAR PATH AROUND POLE}",	# ⨓
+	 "rppolint" => "\N{LINE INTEGRATION WITH RECTANGULAR PATH AROUND POLE}",	# ⨒
+	  "npolint" => "\N{LINE INTEGRATION NOT INCLUDING THE POLE}",	# ⨔
+	   "bprime" => "\N{REVERSED PRIME}",	# ‵
+	"backprime" => "\N{REVERSED PRIME}",	# ‵
+	    "Prime" => "\N{DOUBLE PRIME}",	# ″
+	   "tprime" => "\N{TRIPLE PRIME}",	# ‴
+	   "qprime" => "\N{QUADRUPLE PRIME}",	# ⁗
+	    "prime" => "\N{PRIME}",	# ′
+	  "vzigzag" => "\N{VERTICAL ZIGZAG LINE}",	# ⦚
+     "VerticalLine" => "|",	# |
+	   "Verbar" => "\N{DOUBLE VERTICAL LINE}",	# ‖
+	     "Vert" => "\N{DOUBLE VERTICAL LINE}",	# ‖
+	    "oline" => "\N{OVERLINE}",	# ‾
+	  "OverBar" => "\N{OVERLINE}",	# ‾
+	      "acE" => "\N{INVERTED LAZY S}\N{COMBINING DOUBLE LOW LINE}",	# ∾̳
+	    "phone" => "\N{BLACK TELEPHONE}",	# ☎
+	   "Ecaron" => "\N{LATIN CAPITAL LETTER E WITH CARON}",	# Ě
+	   "ecaron" => "\N{LATIN SMALL LETTER E WITH CARON}",	# ě
+	    "Emacr" => "\N{LATIN CAPITAL LETTER E WITH MACRON}",	# Ē
+	    "emacr" => "\N{LATIN SMALL LETTER E WITH MACRON}",	# ē
+	   "square" => "\N{WHITE SQUARE}",	# □
+	   "Square" => "\N{WHITE SQUARE}",	# □
+	      "squ" => "\N{WHITE SQUARE}",	# □
+	   "vangrt" => "\N{RIGHT ANGLE VARIANT WITH SQUARE}",	# ⦜
+    "EmptyVerySmallSquare" => "\N{WHITE SMALL SQUARE}",	# ▫
+      "blacksquare" => "\N{BLACK SMALL SQUARE}",	# ▪
+    "FilledVerySmallSquare" => "\N{BLACK SMALL SQUARE}",	# ▪
+	   "squarf" => "\N{BLACK SMALL SQUARE}",	# ▪
+	     "squf" => "\N{BLACK SMALL SQUARE}",	# ▪
+    "EmptySmallSquare" => "\N{WHITE MEDIUM SQUARE}",	# ◻
+    "FilledSmallSquare" => "\N{BLACK MEDIUM SQUARE}",	# ◼
+	   "there4" => "\N{THEREFORE}",	# ∴
+	"therefore" => "\N{THEREFORE}",	# ∴
+	"Therefore" => "\N{THEREFORE}",	# ∴
+	  "because" => "\N{BECAUSE}",	# ∵
+	  "Because" => "\N{BECAUSE}",	# ∵
+	   "becaus" => "\N{BECAUSE}",	# ∵
+	 "intercal" => "\N{INTERCALATE}",	# ⊺
+	   "intcal" => "\N{INTERCALATE}",	# ⊺
+	      "gap" => "\N{GREATER-THAN OR APPROXIMATE}",	# ⪆
+	"gtrapprox" => "\N{GREATER-THAN OR APPROXIMATE}",	# ⪆
+	      "lap" => "\N{LESS-THAN OR APPROXIMATE}",	# ⪅
+       "lessapprox" => "\N{LESS-THAN OR APPROXIMATE}",	# ⪅
+	     "gnap" => "\N{GREATER-THAN AND NOT APPROXIMATE}",	# ⪊
+	 "gnapprox" => "\N{GREATER-THAN AND NOT APPROXIMATE}",	# ⪊
+	     "lnap" => "\N{LESS-THAN AND NOT APPROXIMATE}",	# ⪉
+	 "lnapprox" => "\N{LESS-THAN AND NOT APPROXIMATE}",	# ⪉
+	     "sung" => "\N{EIGHTH NOTE}",	# ♪
+    "DoubleRightTee" => "\N{TRUE}",	# ⊨
+	    "vDash" => "\N{TRUE}",	# ⊨
+	   "nvDash" => "\N{NOT TRUE}",	# ⊭
+	    "grave" => "`",	# `
+    "DiacriticalGrave" => "`",	# `
+	      "acd" => "\N{SINE WAVE}",	# ∿
+	"DownBreve" => "\N{COMBINING INVERTED BREVE}",	# ̑
+	    "breve" => "\N{BREVE}",	# ˘
+	    "Breve" => "\N{BREVE}",	# ˘
+	   "barwed" => "\N{PROJECTIVE}",	# ⌅
+	 "barwedge" => "\N{PROJECTIVE}",	# ⌅
+	   "Barwed" => "\N{PERSPECTIVE}",	# ⌆
+    "doublebarwedge" => "\N{PERSPECTIVE}",	# ⌆
+	   "mcomma" => "\N{MINUS SIGN WITH COMMA ABOVE}",	# ⨩
+	 "smeparsl" => "\N{EQUALS SIGN AND SLANTED PARALLEL WITH TILDE ABOVE}",	# ⧤
+	  "simplus" => "\N{PLUS SIGN WITH TILDE ABOVE}",	# ⨤
+	   "cirmid" => "\N{VERTICAL LINE WITH CIRCLE ABOVE}",	# ⫯
+	  "pluscir" => "\N{PLUS SIGN WITH SMALL CIRCLE ABOVE}",	# ⨢
+	  "cemptyv" => "\N{EMPTY SET WITH SMALL CIRCLE ABOVE}",	# ⦲
+	     "ring" => "\N{RING ABOVE}",	# ˚
+	  "gtquest" => "\N{GREATER-THAN WITH QUESTION MARK ABOVE}",	# ⩼
+	  "ltquest" => "\N{LESS-THAN WITH QUESTION MARK ABOVE}",	# ⩻
+	"TripleDot" => "\N{COMBINING THREE DOTS ABOVE}",	# ⃛
+	     "tdot" => "\N{COMBINING THREE DOTS ABOVE}",	# ⃛
+	   "DotDot" => "\N{COMBINING FOUR DOTS ABOVE}",	# ⃜
+	  "equivDD" => "\N{EQUIVALENT WITH FOUR DOTS ABOVE}",	# ⩸
+	 "plusacir" => "\N{PLUS SIGN WITH CIRCUMFLEX ACCENT ABOVE}",	# ⨣
+	  "isindot" => "\N{ELEMENT OF WITH DOT ABOVE}",	# ⋵
+	   "timesd" => "\N{MULTIPLICATION SIGN WITH DOT ABOVE}",	# ⨰
+	  "gesdoto" => "\N{GREATER-THAN OR SLANTED EQUAL TO WITH DOT ABOVE}",	# ⪂
+	  "lesdoto" => "\N{LESS-THAN OR SLANTED EQUAL TO WITH DOT ABOVE}",	# ⪁
+	  "subedot" => "\N{SUBSET OF OR EQUAL TO WITH DOT ABOVE}",	# ⫃
+	  "supedot" => "\N{SUPERSET OF OR EQUAL TO WITH DOT ABOVE}",	# ⫄
+	   "simdot" => "\N{TILDE OPERATOR WITH DOT ABOVE}",	# ⩪
+	  "congdot" => "\N{CONGRUENT WITH DOT ABOVE}",	# ⩭
+	      "dot" => "\N{DOT ABOVE}",	# ˙
+    "DiacriticalDot" => "\N{DOT ABOVE}",	# ˙
+	 "laemptyv" => "\N{EMPTY SET WITH LEFT ARROW ABOVE}",	# ⦴
+	 "raemptyv" => "\N{EMPTY SET WITH RIGHT ARROW ABOVE}",	# ⦳
+	    "bumpE" => "\N{EQUALS SIGN WITH BUMPY ABOVE}",	# ⪮
+	   "nvdash" => "\N{DOES NOT PROVE}",	# ⊬
+	     "gtcc" => "\N{GREATER-THAN CLOSED BY CURVE}",	# ⪧
+	     "ltcc" => "\N{LESS-THAN CLOSED BY CURVE}",	# ⪦
+    "fallingdotseq" => "\N{APPROXIMATELY EQUAL TO OR THE IMAGE OF}",	# ≒
+	    "efDot" => "\N{APPROXIMATELY EQUAL TO OR THE IMAGE OF}",	# ≒
+	    "sqsub" => "\N{SQUARE IMAGE OF}",	# ⊏
+     "SquareSubset" => "\N{SQUARE IMAGE OF}",	# ⊏
+	 "sqsubset" => "\N{SQUARE IMAGE OF}",	# ⊏
+	     "imof" => "\N{IMAGE OF}",	# ⊷
+	    "sqsup" => "\N{SQUARE ORIGINAL OF}",	# ⊐
+	 "sqsupset" => "\N{SQUARE ORIGINAL OF}",	# ⊐
+    "SquareSuperset" => "\N{SQUARE ORIGINAL OF}",	# ⊐
+	   "origof" => "\N{ORIGINAL OF}",	# ⊶
+     "LeftTriangle" => "\N{NORMAL SUBGROUP OF}",	# ⊲
+	    "vltri" => "\N{NORMAL SUBGROUP OF}",	# ⊲
+    "vartriangleleft" => "\N{NORMAL SUBGROUP OF}",	# ⊲
+    "NotLeftTriangle" => "\N{NOT NORMAL SUBGROUP OF}",	# ⋪
+	    "nltri" => "\N{NOT NORMAL SUBGROUP OF}",	# ⋪
+    "ntriangleleft" => "\N{NOT NORMAL SUBGROUP OF}",	# ⋪
+	     "nsub" => "\N{NOT A SUBSET OF}",	# ⊄
+	      "sub" => "\N{SUBSET OF}",	# ⊂
+	   "subset" => "\N{SUBSET OF}",	# ⊂
+	     "nsup" => "\N{NOT A SUPERSET OF}",	# ⊅
+	      "sup" => "\N{SUPERSET OF}",	# ⊃
+	   "supset" => "\N{SUPERSET OF}",	# ⊃
+	 "Superset" => "\N{SUPERSET OF}",	# ⊃
+	  "notinva" => "\N{NOT AN ELEMENT OF}",	# ∉
+	    "notin" => "\N{NOT AN ELEMENT OF}",	# ∉
+       "NotElement" => "\N{NOT AN ELEMENT OF}",	# ∉
+	       "in" => "\N{ELEMENT OF}",	# ∈
+	     "isin" => "\N{ELEMENT OF}",	# ∈
+	  "Element" => "\N{ELEMENT OF}",	# ∈
+	    "isinv" => "\N{ELEMENT OF}",	# ∈
+      "LeftCeiling" => "\N{LEFT CEILING}",	# ⌈
+	    "lceil" => "\N{LEFT CEILING}",	# ⌈
+     "RightCeiling" => "\N{RIGHT CEILING}",	# ⌉
+	    "rceil" => "\N{RIGHT CEILING}",	# ⌉
+      "circleddash" => "\N{CIRCLED DASH}",	# ⊝
+	    "odash" => "\N{CIRCLED DASH}",	# ⊝
+	   "lharul" => "\N{LEFTWARDS HARPOON WITH BARB UP ABOVE LONG DASH}",	# ⥪
+	   "rharul" => "\N{RIGHTWARDS HARPOON WITH BARB UP ABOVE LONG DASH}",	# ⥬
+	   "llhard" => "\N{LEFTWARDS HARPOON WITH BARB DOWN BELOW LONG DASH}",	# ⥫
+	   "lrhard" => "\N{RIGHTWARDS HARPOON WITH BARB DOWN BELOW LONG DASH}",	# ⥭
+	     "andd" => "\N{LOGICAL AND WITH HORIZONTAL DASH}",	# ⩜
+	      "ord" => "\N{LOGICAL OR WITH HORIZONTAL DASH}",	# ⩝
+	    "mdash" => "\N{EM DASH}",	# —
+	    "ndash" => "\N{EN DASH}",	# –
+	    "bsolb" => "\N{SQUARED FALLING DIAGONAL SLASH}",	# ⧅
+	     "solb" => "\N{SQUARED RISING DIAGONAL SLASH}",	# ⧄
+	     "osol" => "\N{CIRCLED DIVISION SLASH}",	# ⊘
+	    "rnmid" => "\N{DOES NOT DIVIDE WITH REVERSED NEGATION SLASH}",	# ⫮
+	    "frasl" => "\N{FRACTION SLASH}",	# ⁄
+	     "semi" => ";",	# ;
+	   "lbrack" => "[",	# [
+	   "rbrack" => "]",	# ]
+	  "DownTee" => "\N{DOWN TACK}",	# ⊤
+	      "top" => "\N{DOWN TACK}",	# ⊤
+	    "vBarv" => "\N{SHORT UP TACK ABOVE SHORT DOWN TACK}",	# ⫩
+	     "Vbar" => "\N{DOUBLE UP TACK}",	# ⫫
+	    "UpTee" => "\N{UP TACK}",	# ⊥
+	   "bottom" => "\N{UP TACK}",	# ⊥
+	     "perp" => "\N{UP TACK}",	# ⊥
+	      "bot" => "\N{UP TACK}",	# ⊥
+	  "LeftTee" => "\N{LEFT TACK}",	# ⊣
+	    "dashv" => "\N{LEFT TACK}",	# ⊣
+	 "RightTee" => "\N{RIGHT TACK}",	# ⊢
+	    "vdash" => "\N{RIGHT TACK}",	# ⊢
+	    "uhblk" => "\N{UPPER HALF BLOCK}",	# ▀
+	    "lhblk" => "\N{LOWER HALF BLOCK}",	# ▄
+	    "block" => "\N{FULL BLOCK}",	# █
+	     "ogon" => "\N{OGONEK}",	# ˛
+	 "intlarhk" => "\N{INTEGRAL WITH LEFTWARDS ARROW WITH HOOK}",	# ⨗
+	   "larrhk" => "\N{LEFTWARDS ARROW WITH HOOK}",	# ↩
+    "hookleftarrow" => "\N{LEFTWARDS ARROW WITH HOOK}",	# ↩
+	   "rarrhk" => "\N{RIGHTWARDS ARROW WITH HOOK}",	# ↪
+    "hookrightarrow" => "\N{RIGHTWARDS ARROW WITH HOOK}",	# ↪
+	   "nearhk" => "\N{NORTH EAST ARROW WITH HOOK}",	# ⤤
+	   "searhk" => "\N{SOUTH EAST ARROW WITH HOOK}",	# ⤥
+	 "hksearow" => "\N{SOUTH EAST ARROW WITH HOOK}",	# ⤥
+	   "nwarhk" => "\N{NORTH WEST ARROW WITH HOOK}",	# ⤣
+	   "swarhk" => "\N{SOUTH WEST ARROW WITH HOOK}",	# ⤦
+	 "hkswarow" => "\N{SOUTH WEST ARROW WITH HOOK}",	# ⤦
+	    "check" => "\N{CHECK MARK}",	# ✓
+	"checkmark" => "\N{CHECK MARK}",	# ✓
+	    "iexcl" => "\N{INVERTED EXCLAMATION MARK}",	# ¡
+	    "bdquo" => "\N{DOUBLE LOW-9 QUOTATION MARK}",	# „
+	   "ldquor" => "\N{DOUBLE LOW-9 QUOTATION MARK}",	# „
+	    "sbquo" => "\N{SINGLE LOW-9 QUOTATION MARK}",	# ‚
+	   "lsquor" => "\N{SINGLE LOW-9 QUOTATION MARK}",	# ‚
+    "OpenCurlyDoubleQuote" => "\N{LEFT DOUBLE QUOTATION MARK}",	# “
+	    "ldquo" => "\N{LEFT DOUBLE QUOTATION MARK}",	# “
+    "CloseCurlyDoubleQuote" => "\N{RIGHT DOUBLE QUOTATION MARK}",	# ”
+	    "rdquo" => "\N{RIGHT DOUBLE QUOTATION MARK}",	# ”
+	   "rdquor" => "\N{RIGHT DOUBLE QUOTATION MARK}",	# ”
+	    "laquo" => "\N{LEFT-POINTING DOUBLE ANGLE QUOTATION MARK}",	# «
+	    "raquo" => "\N{RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK}",	# »
+	   "lsaquo" => "\N{SINGLE LEFT-POINTING ANGLE QUOTATION MARK}",	# ‹
+	   "rsaquo" => "\N{SINGLE RIGHT-POINTING ANGLE QUOTATION MARK}",	# ›
+    "OpenCurlyQuote" => "\N{LEFT SINGLE QUOTATION MARK}",	# ‘
+	    "lsquo" => "\N{LEFT SINGLE QUOTATION MARK}",	# ‘
+    "CloseCurlyQuote" => "\N{RIGHT SINGLE QUOTATION MARK}",	# ’
+	    "rsquo" => "\N{RIGHT SINGLE QUOTATION MARK}",	# ’
+	   "rsquor" => "\N{RIGHT SINGLE QUOTATION MARK}",	# ’
+	   "iquest" => "\N{INVERTED QUESTION MARK}",	# ¿
+	      "rlm" => "\N{RIGHT-TO-LEFT MARK}",	# ‏
+	      "lrm" => "\N{LEFT-TO-RIGHT MARK}",	# ‎
+	     "fork" => "\N{PITCHFORK}",	# ⋔
+	"pitchfork" => "\N{PITCHFORK}",	# ⋔
+	   "easter" => "\N{EQUALS WITH ASTERISK}",	# ⩮
+	   "Vdashl" => "\N{LONG DASH FROM LEFT MEMBER OF DOUBLE VERTICAL}",	# ⫦
+	     "boxV" => "\N{BOX DRAWINGS DOUBLE VERTICAL}",	# ║
+	     "boxv" => "\N{BOX DRAWINGS LIGHT VERTICAL}",	# │
+	 "PartialD" => "\N{PARTIAL DIFFERENTIAL}",	# ∂
+	     "part" => "\N{PARTIAL DIFFERENTIAL}",	# ∂
+    "DoubleContourIntegral" => "\N{SURFACE INTEGRAL}",	# ∯
+	   "Conint" => "\N{SURFACE INTEGRAL}",	# ∯
+	      "Int" => "\N{DOUBLE INTEGRAL}",	# ∬
+	    "iiint" => "\N{TRIPLE INTEGRAL}",	# ∭
+	     "tint" => "\N{TRIPLE INTEGRAL}",	# ∭
+	  "Cconint" => "\N{VOLUME INTEGRAL}",	# ∰
+	    "cwint" => "\N{CLOCKWISE INTEGRAL}",	# ∱
+	 "Integral" => "\N{INTEGRAL}",	# ∫
+	      "int" => "\N{INTEGRAL}",	# ∫
+    "CounterClockwiseContourIntegral" => "\N{ANTICLOCKWISE CONTOUR INTEGRAL}",	# ∳
+	 "awconint" => "\N{ANTICLOCKWISE CONTOUR INTEGRAL}",	# ∳
+    "ClockwiseContourIntegral" => "\N{CLOCKWISE CONTOUR INTEGRAL}",	# ∲
+	 "cwconint" => "\N{CLOCKWISE CONTOUR INTEGRAL}",	# ∲
+    "ContourIntegral" => "\N{CONTOUR INTEGRAL}",	# ∮
+	   "conint" => "\N{CONTOUR INTEGRAL}",	# ∮
+	     "oint" => "\N{CONTOUR INTEGRAL}",	# ∮
+	 "fpartint" => "\N{FINITE PART INTEGRAL}",	# ⨍
+	    "boxVH" => "\N{BOX DRAWINGS DOUBLE VERTICAL AND HORIZONTAL}",	# ╬
+	    "boxvh" => "\N{BOX DRAWINGS LIGHT VERTICAL AND HORIZONTAL}",	# ┼
+	    "boxHD" => "\N{BOX DRAWINGS DOUBLE DOWN AND HORIZONTAL}",	# ╦
+	    "boxhd" => "\N{BOX DRAWINGS LIGHT DOWN AND HORIZONTAL}",	# ┬
+	    "boxHU" => "\N{BOX DRAWINGS DOUBLE UP AND HORIZONTAL}",	# ╩
+	    "boxhu" => "\N{BOX DRAWINGS LIGHT UP AND HORIZONTAL}",	# ┴
+	     "boxH" => "\N{BOX DRAWINGS DOUBLE HORIZONTAL}",	# ═
+    "HorizontalLine" => "\N{BOX DRAWINGS LIGHT HORIZONTAL}",	# ─
+	     "boxh" => "\N{BOX DRAWINGS LIGHT HORIZONTAL}",	# ─
+	    "gescc" => "\N{GREATER-THAN CLOSED BY CURVE ABOVE SLANTED EQUAL}",	# ⪩
+	    "lescc" => "\N{LESS-THAN CLOSED BY CURVE ABOVE SLANTED EQUAL}",	# ⪨
+	   "lesges" => "\N{LESS-THAN ABOVE SLANTED EQUAL ABOVE GREATER-THAN ABOVE SLANTED EQUAL}",	# ⪓
+	   "gesles" => "\N{GREATER-THAN ABOVE SLANTED EQUAL ABOVE LESS-THAN ABOVE SLANTED EQUAL}",	# ⪔
+	      "lgE" => "\N{LESS-THAN ABOVE GREATER-THAN ABOVE DOUBLE-LINE EQUAL}",	# ⪑
+	      "glE" => "\N{GREATER-THAN ABOVE LESS-THAN ABOVE DOUBLE-LINE EQUAL}",	# ⪒
+	   "Colone" => "\N{DOUBLE COLON EQUAL}",	# ⩴
+	   "nsccue" => "\N{DOES NOT SUCCEED OR EQUAL}",	# ⋡
+    "NotSucceedsSlantEqual" => "\N{DOES NOT SUCCEED OR EQUAL}",	# ⋡
+	   "nprcue" => "\N{DOES NOT PRECEDE OR EQUAL}",	# ⋠
+    "NotPrecedesSlantEqual" => "\N{DOES NOT PRECEDE OR EQUAL}",	# ⋠
+	   "nrtrie" => "\N{DOES NOT CONTAIN AS NORMAL SUBGROUP OR EQUAL}",	# ⋭
+    "NotRightTriangleEqual" => "\N{DOES NOT CONTAIN AS NORMAL SUBGROUP OR EQUAL}",	# ⋭
+    "ntrianglerighteq" => "\N{DOES NOT CONTAIN AS NORMAL SUBGROUP OR EQUAL}",	# ⋭
+	    "gsime" => "\N{GREATER-THAN ABOVE SIMILAR OR EQUAL}",	# ⪎
+	    "lsime" => "\N{LESS-THAN ABOVE SIMILAR OR EQUAL}",	# ⪍
+	     "excl" => "!",	# !
+	     "opar" => "\N{CIRCLED PARALLEL}",	# ⦷
+	   "eparsl" => "\N{EQUALS SIGN AND SLANTED PARALLEL}",	# ⧣
+	 "eqvparsl" => "\N{IDENTICAL TO AND SLANTED PARALLEL}",	# ⧥
+	   "dfisht" => "\N{DOWN FISH TAIL}",	# ⥿
+	   "ufisht" => "\N{UP FISH TAIL}",	# ⥾
+	   "lfisht" => "\N{LEFT FISH TAIL}",	# ⥼
+	   "rfisht" => "\N{RIGHT FISH TAIL}",	# ⥽
+	   "Rarrtl" => "\N{RIGHTWARDS TWO-HEADED ARROW WITH TAIL}",	# ⤖
+    "leftarrowtail" => "\N{LEFTWARDS ARROW WITH TAIL}",	# ↢
+	   "larrtl" => "\N{LEFTWARDS ARROW WITH TAIL}",	# ↢
+    "rightarrowtail" => "\N{RIGHTWARDS ARROW WITH TAIL}",	# ↣
+	   "rarrtl" => "\N{RIGHTWARDS ARROW WITH TAIL}",	# ↣
+	   "lAtail" => "\N{LEFTWARDS DOUBLE ARROW-TAIL}",	# ⤛
+	   "rAtail" => "\N{RIGHTWARDS DOUBLE ARROW-TAIL}",	# ⤜
+	   "latail" => "\N{LEFTWARDS ARROW-TAIL}",	# ⤙
+	   "ratail" => "\N{RIGHTWARDS ARROW-TAIL}",	# ⤚
+	   "forall" => "\N{FOR ALL}",	# ∀
+	   "ForAll" => "\N{FOR ALL}",	# ∀
+	      "sol" => "/",	# /
+	     "bsol" => "\\",	# \
+	   "topbot" => "\N{APL FUNCTIONAL SYMBOL I-BEAM}",	# ⌶
+	    "fltns" => "\N{WHITE PARALLELOGRAM}",	# ▱
+	 "DDotrahd" => "\N{RIGHTWARDS ARROW WITH DOTTED STEM}",	# ⤑
+	     "andv" => "\N{LOGICAL AND WITH MIDDLE STEM}",	# ⩚
+	      "orv" => "\N{LOGICAL OR WITH MIDDLE STEM}",	# ⩛
+	     "Mopf" => "\N{MATHEMATICAL DOUBLE-STRUCK CAPITAL M}",	# 𝕄
+	      "Mfr" => "\N{MATHEMATICAL FRAKTUR CAPITAL M}",	# 𝔐
+	"Mellintrf" => "\N{SCRIPT CAPITAL M}",	# ℳ
+	     "Mscr" => "\N{SCRIPT CAPITAL M}",	# ℳ
+	   "phmmat" => "\N{SCRIPT CAPITAL M}",	# ℳ
+	     "mopf" => "\N{MATHEMATICAL DOUBLE-STRUCK SMALL M}",	# 𝕞
+	      "mfr" => "\N{MATHEMATICAL FRAKTUR SMALL M}",	# 𝔪
+	     "mscr" => "\N{MATHEMATICAL SCRIPT SMALL M}",	# 𝓂
+	    "trisb" => "\N{TRIANGLE WITH SERIFS AT BOTTOM}",	# ⧍
+	 "trpezium" => "\N{WHITE TRAPEZIUM}",	# ⏢
+	      "num" => "#",	# #
+	      "lat" => "\N{LARGER THAN}",	# ⪫
+	      "smt" => "\N{SMALLER THAN}",	# ⪪
+	      "ogt" => "\N{CIRCLED GREATER-THAN}",	# ⧁
+    "GreaterGreater" => "\N{DOUBLE NESTED GREATER-THAN}",	# ⪢
+	      "lEg" => "\N{LESS-THAN ABOVE DOUBLE-LINE EQUAL ABOVE GREATER-THAN}",	# ⪋
+       "lesseqqgtr" => "\N{LESS-THAN ABOVE DOUBLE-LINE EQUAL ABOVE GREATER-THAN}",	# ⪋
+	    "lsimg" => "\N{LESS-THAN ABOVE SIMILAR ABOVE GREATER-THAN}",	# ⪏
+	       "gg" => "\N{MUCH GREATER-THAN}",	# ≫
+    "NestedGreaterGreater" => "\N{MUCH GREATER-THAN}",	# ≫
+	       "Gt" => "\N{MUCH GREATER-THAN}",	# ≫
+	       "Gg" => "\N{VERY MUCH GREATER-THAN}",	# ⋙
+	      "ggg" => "\N{VERY MUCH GREATER-THAN}",	# ⋙
+	       "lg" => "\N{LESS-THAN OR GREATER-THAN}",	# ≶
+      "LessGreater" => "\N{LESS-THAN OR GREATER-THAN}",	# ≶
+	  "lessgtr" => "\N{LESS-THAN OR GREATER-THAN}",	# ≶
+	     "ntlg" => "\N{NEITHER LESS-THAN NOR GREATER-THAN}",	# ≸
+    "NotLessGreater" => "\N{NEITHER LESS-THAN NOR GREATER-THAN}",	# ≸
+       "eqslantgtr" => "\N{SLANTED EQUAL TO OR GREATER-THAN}",	# ⪖
+	      "egs" => "\N{SLANTED EQUAL TO OR GREATER-THAN}",	# ⪖
+	       "eg" => "\N{DOUBLE-LINE EQUAL TO OR GREATER-THAN}",	# ⪚
+	      "leg" => "\N{LESS-THAN EQUAL TO OR GREATER-THAN}",	# ⋚
+    "LessEqualGreater" => "\N{LESS-THAN EQUAL TO OR GREATER-THAN}",	# ⋚
+	"lesseqgtr" => "\N{LESS-THAN EQUAL TO OR GREATER-THAN}",	# ⋚
+	     "simg" => "\N{SIMILAR OR GREATER-THAN}",	# ⪞
+       "NotGreater" => "\N{NOT GREATER-THAN}",	# ≯
+	     "ngtr" => "\N{NOT GREATER-THAN}",	# ≯
+	      "ngt" => "\N{NOT GREATER-THAN}",	# ≯
+	      "olt" => "\N{CIRCLED LESS-THAN}",	# ⧀
+	 "LessLess" => "\N{DOUBLE NESTED LESS-THAN}",	# ⪡
+	      "gla" => "\N{GREATER-THAN BESIDE LESS-THAN}",	# ⪥
+	      "gEl" => "\N{GREATER-THAN ABOVE DOUBLE-LINE EQUAL ABOVE LESS-THAN}",	# ⪌
+       "gtreqqless" => "\N{GREATER-THAN ABOVE DOUBLE-LINE EQUAL ABOVE LESS-THAN}",	# ⪌
+	    "gsiml" => "\N{GREATER-THAN ABOVE SIMILAR ABOVE LESS-THAN}",	# ⪐
+	      "glj" => "\N{GREATER-THAN OVERLAPPING LESS-THAN}",	# ⪤
+	       "ll" => "\N{MUCH LESS-THAN}",	# ≪
+    "NestedLessLess" => "\N{MUCH LESS-THAN}",	# ≪
+	       "Lt" => "\N{MUCH LESS-THAN}",	# ≪
+	       "Ll" => "\N{VERY MUCH LESS-THAN}",	# ⋘
+	       "gl" => "\N{GREATER-THAN OR LESS-THAN}",	# ≷
+      "GreaterLess" => "\N{GREATER-THAN OR LESS-THAN}",	# ≷
+	  "gtrless" => "\N{GREATER-THAN OR LESS-THAN}",	# ≷
+	     "ntgl" => "\N{NEITHER GREATER-THAN NOR LESS-THAN}",	# ≹
+    "NotGreaterLess" => "\N{NEITHER GREATER-THAN NOR LESS-THAN}",	# ≹
+	      "els" => "\N{SLANTED EQUAL TO OR LESS-THAN}",	# ⪕
+      "eqslantless" => "\N{SLANTED EQUAL TO OR LESS-THAN}",	# ⪕
+	       "el" => "\N{DOUBLE-LINE EQUAL TO OR LESS-THAN}",	# ⪙
+	      "gel" => "\N{GREATER-THAN EQUAL TO OR LESS-THAN}",	# ⋛
+    "GreaterEqualLess" => "\N{GREATER-THAN EQUAL TO OR LESS-THAN}",	# ⋛
+	"gtreqless" => "\N{GREATER-THAN EQUAL TO OR LESS-THAN}",	# ⋛
+	     "siml" => "\N{SIMILAR OR LESS-THAN}",	# ⪝
+	    "nless" => "\N{NOT LESS-THAN}",	# ≮
+	  "NotLess" => "\N{NOT LESS-THAN}",	# ≮
+	      "nlt" => "\N{NOT LESS-THAN}",	# ≮
+	   "Ncedil" => "\N{LATIN CAPITAL LETTER N WITH CEDILLA}",	# Ņ
+	   "ncedil" => "\N{LATIN SMALL LETTER N WITH CEDILLA}",	# ņ
+	   "Ntilde" => "\N{LATIN CAPITAL LETTER N WITH TILDE}",	# Ñ
+	   "ntilde" => "\N{LATIN SMALL LETTER N WITH TILDE}",	# ñ
+	    "bumpe" => "\N{DIFFERENCE BETWEEN}",	# ≏
+	"HumpEqual" => "\N{DIFFERENCE BETWEEN}",	# ≏
+	   "bumpeq" => "\N{DIFFERENCE BETWEEN}",	# ≏
+	  "between" => "\N{BETWEEN}",	# ≬
+	    "twixt" => "\N{BETWEEN}",	# ≬
+	     "dash" => "\N{HYPHEN}",	# ‐
+	   "hyphen" => "\N{HYPHEN}",	# ‐
+	      "shy" => "\N{SOFT HYPHEN}",	# ­
+	  "NewLine" => "\n",	# 
+	   "Nacute" => "\N{LATIN CAPITAL LETTER N WITH ACUTE}",	# Ń
+	   "nacute" => "\N{LATIN SMALL LETTER N WITH ACUTE}",	# ń
+	      "reg" => "\N{REGISTERED SIGN}",	# ®
+	      "REG" => "\N{REGISTERED SIGN}",	# ®
+	 "circledR" => "\N{REGISTERED SIGN}",	# ®
+	  "pertenk" => "\N{PER TEN THOUSAND SIGN}",	# ‱
+	      "deg" => "\N{DEGREE SIGN}",	# °
+	   "female" => "\N{FEMALE SIGN}",	# ♀
+	     "male" => "\N{MALE SIGN}",	# ♂
+	   "permil" => "\N{PER MILLE SIGN}",	# ‰
+	  "natural" => "\N{MUSIC NATURAL SIGN}",	# ♮
+	    "natur" => "\N{MUSIC NATURAL SIGN}",	# ♮
+	      "mho" => "\N{INVERTED OHM SIGN}",	# ℧
+	     "odiv" => "\N{CIRCLED DIVISION SIGN}",	# ⨸
+	   "odsold" => "\N{CIRCLED ANTICLOCKWISE-ROTATED DIVISION SIGN}",	# ⦼
+	   "divide" => "\N{DIVISION SIGN}",	# ÷
+	      "div" => "\N{DIVISION SIGN}",	# ÷
+	    "times" => "\N{MULTIPLICATION SIGN}",	# ×
+	     "sect" => "\N{SECTION SIGN}",	# §
+	    "sharp" => "\N{MUSIC SHARP SIGN}",	# ♯
+	      "sce" => "\N{SUCCEEDS ABOVE SINGLE-LINE EQUALS SIGN}",	# ⪰
+    "SucceedsEqual" => "\N{SUCCEEDS ABOVE SINGLE-LINE EQUALS SIGN}",	# ⪰
+	   "succeq" => "\N{SUCCEEDS ABOVE SINGLE-LINE EQUALS SIGN}",	# ⪰
+	      "pre" => "\N{PRECEDES ABOVE SINGLE-LINE EQUALS SIGN}",	# ⪯
+    "PrecedesEqual" => "\N{PRECEDES ABOVE SINGLE-LINE EQUALS SIGN}",	# ⪯
+	   "preceq" => "\N{PRECEDES ABOVE SINGLE-LINE EQUALS SIGN}",	# ⪯
+	     "subE" => "\N{SUBSET OF ABOVE EQUALS SIGN}",	# ⫅
+	"subseteqq" => "\N{SUBSET OF ABOVE EQUALS SIGN}",	# ⫅
+	     "supE" => "\N{SUPERSET OF ABOVE EQUALS SIGN}",	# ⫆
+	"supseteqq" => "\N{SUPERSET OF ABOVE EQUALS SIGN}",	# ⫆
+	    "simgE" => "\N{SIMILAR ABOVE GREATER-THAN ABOVE EQUALS SIGN}",	# ⪠
+	    "simlE" => "\N{SIMILAR ABOVE LESS-THAN ABOVE EQUALS SIGN}",	# ⪟
+	    "pluse" => "\N{PLUS SIGN ABOVE EQUALS SIGN}",	# ⩲
+	      "scE" => "\N{SUCCEEDS ABOVE EQUALS SIGN}",	# ⪴
+	      "prE" => "\N{PRECEDES ABOVE EQUALS SIGN}",	# ⪳
+	    "eplus" => "\N{EQUALS SIGN ABOVE PLUS SIGN}",	# ⩱
+	       "mp" => "\N{MINUS-OR-PLUS SIGN}",	# ∓
+	   "mnplus" => "\N{MINUS-OR-PLUS SIGN}",	# ∓
+	"MinusPlus" => "\N{MINUS-OR-PLUS SIGN}",	# ∓
+	    "minus" => "\N{MINUS SIGN}",	# −
+	       "pm" => "\N{PLUS-MINUS SIGN}",	# ±
+	   "plusmn" => "\N{PLUS-MINUS SIGN}",	# ±
+	"PlusMinus" => "\N{PLUS-MINUS SIGN}",	# ±
+	     "flat" => "\N{MUSIC FLAT SIGN}",	# ♭
+	     "copy" => "\N{COPYRIGHT SIGN}",	# ©
+	     "COPY" => "\N{COPYRIGHT SIGN}",	# ©
+	     "bnot" => "\N{REVERSED NOT SIGN}",	# ⌐
+	     "bNot" => "\N{REVERSED DOUBLE STROKE NOT SIGN}",	# ⫭
+	      "Not" => "\N{DOUBLE STROKE NOT SIGN}",	# ⫬
+	      "not" => "\N{NOT SIGN}",	# ¬
+	     "para" => "\N{PILCROW SIGN}",	# ¶
+	     "Nopf" => "\N{DOUBLE-STRUCK CAPITAL N}",	# ℕ
+	 "naturals" => "\N{DOUBLE-STRUCK CAPITAL N}",	# ℕ
+	      "Nfr" => "\N{MATHEMATICAL FRAKTUR CAPITAL N}",	# 𝔑
+	     "Nscr" => "\N{MATHEMATICAL SCRIPT CAPITAL N}",	# 𝒩
+	     "nopf" => "\N{MATHEMATICAL DOUBLE-STRUCK SMALL N}",	# 𝕟
+	      "nfr" => "\N{MATHEMATICAL FRAKTUR SMALL N}",	# 𝔫
+	     "nscr" => "\N{MATHEMATICAL SCRIPT SMALL N}",	# 𝓃
+	   "Ncaron" => "\N{LATIN CAPITAL LETTER N WITH CARON}",	# Ň
+	   "ncaron" => "\N{LATIN SMALL LETTER N WITH CARON}",	# ň
+	      "Cup" => "\N{DOUBLE UNION}",	# ⋓
+	   "capcup" => "\N{INTERSECTION ABOVE UNION}",	# ⩇
+	 "capbrcup" => "\N{INTERSECTION ABOVE BAR ABOVE UNION}",	# ⩉
+	   "cupcup" => "\N{UNION BESIDE AND JOINED WITH UNION}",	# ⩊
+	      "cup" => "\N{UNION}",	# ∪
+	"UnionPlus" => "\N{MULTISET UNION}",	# ⊎
+	    "uplus" => "\N{MULTISET UNION}",	# ⊎
+	    "Union" => "\N{N-ARY UNION}",	# ⋃
+	   "bigcup" => "\N{N-ARY UNION}",	# ⋃
+	     "xcup" => "\N{N-ARY UNION}",	# ⋃
+	   "cupdot" => "\N{MULTISET MULTIPLICATION}",	# ⊍
+	       "af" => "\N{FUNCTION APPLICATION}",	# ⁡
+    "ApplyFunction" => "\N{FUNCTION APPLICATION}",	# ⁡
+	   "prurel" => "\N{PRECEDES UNDER RELATION}",	# ⊰
+	      "Tab" => "\N{CHARACTER TABULATION}",	#                            
+	      "sum" => "\N{N-ARY SUMMATION}",	# ∑
+	      "Sum" => "\N{N-ARY SUMMATION}",	# ∑
+	    "awint" => "\N{ANTICLOCKWISE INTEGRATION}",	# ⨑
+	      "Cap" => "\N{DOUBLE INTERSECTION}",	# ⋒
+	   "cupcap" => "\N{UNION ABOVE INTERSECTION}",	# ⩆
+	 "cupbrcap" => "\N{UNION ABOVE BAR ABOVE INTERSECTION}",	# ⩈
+	   "capcap" => "\N{INTERSECTION BESIDE AND JOINED WITH INTERSECTION}",	# ⩋
+	 "elinters" => "\N{ELECTRICAL INTERSECTION}",	# ⏧
+	     "mlcp" => "\N{TRANSVERSAL INTERSECTION}",	# ⫛
+	      "cap" => "\N{INTERSECTION}",	# ∩
+     "Intersection" => "\N{N-ARY INTERSECTION}",	# ⋂
+	   "bigcap" => "\N{N-ARY INTERSECTION}",	# ⋂
+	     "xcap" => "\N{N-ARY INTERSECTION}",	# ⋂
+       "rmoustache" => "\N{UPPER RIGHT OR LOWER LEFT CURLY BRACKET SECTION}",	# ⎱
+	   "rmoust" => "\N{UPPER RIGHT OR LOWER LEFT CURLY BRACKET SECTION}",	# ⎱
+       "lmoustache" => "\N{UPPER LEFT OR LOWER RIGHT CURLY BRACKET SECTION}",	# ⎰
+	   "lmoust" => "\N{UPPER LEFT OR LOWER RIGHT CURLY BRACKET SECTION}",	# ⎰
+	 "cirfnint" => "\N{CIRCULATION FUNCTION}",	# ⨐
+	    "mDDot" => "\N{GEOMETRIC PROPORTION}",	# ∺
+       "Proportion" => "\N{PROPORTION}",	# ∷
+	    "Colon" => "\N{PROPORTION}",	# ∷
+	    "colon" => ":",	# :
+	    "bsemi" => "\N{REVERSED SEMICOLON}",	# ⁏
+	   "ecolon" => "\N{EQUALS COLON}",	# ≕
+	  "eqcolon" => "\N{EQUALS COLON}",	# ≕
+	   "numero" => "\N{NUMERO SIGN}",	# №
+    "DownLeftRightVector" => "\N{LEFT BARB DOWN RIGHT BARB DOWN HARPOON}",	# ⥐
+	 "lurdshar" => "\N{LEFT BARB UP RIGHT BARB DOWN HARPOON}",	# ⥊
+	 "ldrushar" => "\N{LEFT BARB DOWN RIGHT BARB UP HARPOON}",	# ⥋
+    "LeftRightVector" => "\N{LEFT BARB UP RIGHT BARB UP HARPOON}",	# ⥎
+      "Equilibrium" => "\N{RIGHTWARDS HARPOON OVER LEFTWARDS HARPOON}",	# ⇌
+	    "rlhar" => "\N{RIGHTWARDS HARPOON OVER LEFTWARDS HARPOON}",	# ⇌
+    "rightleftharpoons" => "\N{RIGHTWARDS HARPOON OVER LEFTWARDS HARPOON}",	# ⇌
+    "ReverseEquilibrium" => "\N{LEFTWARDS HARPOON OVER RIGHTWARDS HARPOON}",	# ⇋
+	    "lrhar" => "\N{LEFTWARDS HARPOON OVER RIGHTWARDS HARPOON}",	# ⇋
+    "leftrightharpoons" => "\N{LEFTWARDS HARPOON OVER RIGHTWARDS HARPOON}",	# ⇋
+    "LeftUpDownVector" => "\N{UP BARB LEFT DOWN BARB LEFT HARPOON}",	# ⥑
+    "RightUpDownVector" => "\N{UP BARB RIGHT DOWN BARB RIGHT HARPOON}",	# ⥏
+	    "Hacek" => "\N{CARON}",	# ˇ
+	    "caron" => "\N{CARON}",	# ˇ
+	     "macr" => "\N{MACRON}",	# ¯
+	    "strns" => "\N{MACRON}",	# ¯
+	  "rdldhar" => "\N{RIGHTWARDS HARPOON WITH BARB DOWN ABOVE LEFTWARDS HARPOON WITH BARB DOWN}",	# ⥩
+	     "lHar" => "\N{LEFTWARDS HARPOON WITH BARB UP ABOVE LEFTWARDS HARPOON WITH BARB DOWN}",	# ⥢
+	  "ldrdhar" => "\N{LEFTWARDS HARPOON WITH BARB DOWN ABOVE RIGHTWARDS HARPOON WITH BARB DOWN}",	# ⥧
+	     "rHar" => "\N{RIGHTWARDS HARPOON WITH BARB UP ABOVE RIGHTWARDS HARPOON WITH BARB DOWN}",	# ⥤
+	 "angmsdah" => "\N{MEASURED ANGLE WITH OPEN ARM ENDING IN ARROW POINTING LEFT AND DOWN}",	# ⦯
+	 "angmsdag" => "\N{MEASURED ANGLE WITH OPEN ARM ENDING IN ARROW POINTING RIGHT AND DOWN}",	# ⦮
+	  "uwangle" => "\N{OBLIQUE ANGLE OPENING DOWN}",	# ⦧
+	    "frown" => "\N{FROWN}",	# ⌢
+	   "sfrown" => "\N{FROWN}",	# ⌢
+	      "ENG" => "\N{LATIN CAPITAL LETTER ENG}",	# Ŋ
+	      "eng" => "\N{LATIN SMALL LETTER ENG}",	# ŋ
+	   "Otilde" => "\N{LATIN CAPITAL LETTER O WITH TILDE}",	# Õ
+	   "otilde" => "\N{LATIN SMALL LETTER O WITH TILDE}",	# õ
+	    "OElig" => "\N{LATIN CAPITAL LIGATURE OE}",	# Œ
+	    "oelig" => "\N{LATIN SMALL LIGATURE OE}",	# œ
+	   "Oslash" => "\N{LATIN CAPITAL LETTER O WITH STROKE}",	# Ø
+	   "oslash" => "\N{LATIN SMALL LETTER O WITH STROKE}",	# ø
+	   "Odblac" => "\N{LATIN CAPITAL LETTER O WITH DOUBLE ACUTE}",	# Ő
+	   "odblac" => "\N{LATIN SMALL LETTER O WITH DOUBLE ACUTE}",	# ő
+	   "Oacute" => "\N{LATIN CAPITAL LETTER O WITH ACUTE}",	# Ó
+	   "oacute" => "\N{LATIN SMALL LETTER O WITH ACUTE}",	# ó
+	   "Ograve" => "\N{LATIN CAPITAL LETTER O WITH GRAVE}",	# Ò
+	   "ograve" => "\N{LATIN SMALL LETTER O WITH GRAVE}",	# ò
+	    "ratio" => "\N{RATIO}",	# ∶
+	    "Omacr" => "\N{LATIN CAPITAL LETTER O WITH MACRON}",	# Ō
+	    "omacr" => "\N{LATIN SMALL LETTER O WITH MACRON}",	# ō
+	     "Oopf" => "\N{MATHEMATICAL DOUBLE-STRUCK CAPITAL O}",	# 𝕆
+	      "Ofr" => "\N{MATHEMATICAL FRAKTUR CAPITAL O}",	# 𝔒
+	     "Oscr" => "\N{MATHEMATICAL SCRIPT CAPITAL O}",	# 𝒪
+	     "oopf" => "\N{MATHEMATICAL DOUBLE-STRUCK SMALL O}",	# 𝕠
+	      "ofr" => "\N{MATHEMATICAL FRAKTUR SMALL O}",	# 𝔬
+	  "orderof" => "\N{SCRIPT SMALL O}",	# ℴ
+	     "oscr" => "\N{SCRIPT SMALL O}",	# ℴ
+	    "order" => "\N{SCRIPT SMALL O}",	# ℴ
+	     "ordm" => "\N{MASCULINE ORDINAL INDICATOR}",	# º
+	     "Ouml" => "\N{LATIN CAPITAL LETTER O WITH DIAERESIS}",	# Ö
+	     "ouml" => "\N{LATIN SMALL LETTER O WITH DIAERESIS}",	# ö
+	"Congruent" => "\N{IDENTICAL TO}",	# ≡
+	    "equiv" => "\N{IDENTICAL TO}",	# ≡
+     "NotCongruent" => "\N{NOT IDENTICAL TO}",	# ≢
+	   "nequiv" => "\N{NOT IDENTICAL TO}",	# ≢
+     "Proportional" => "\N{PROPORTIONAL TO}",	# ∝
+	   "propto" => "\N{PROPORTIONAL TO}",	# ∝
+	"varpropto" => "\N{PROPORTIONAL TO}",	# ∝
+	     "prop" => "\N{PROPORTIONAL TO}",	# ∝
+	    "vprop" => "\N{PROPORTIONAL TO}",	# ∝
+	     "trie" => "\N{DELTA EQUAL TO}",	# ≜
+	"triangleq" => "\N{DELTA EQUAL TO}",	# ≜
+	  "questeq" => "\N{QUESTIONED EQUAL TO}",	# ≟
+	   "equest" => "\N{QUESTIONED EQUAL TO}",	# ≟
+    "GreaterSlantEqual" => "\N{GREATER-THAN OR SLANTED EQUAL TO}",	# ⩾
+	      "ges" => "\N{GREATER-THAN OR SLANTED EQUAL TO}",	# ⩾
+	 "geqslant" => "\N{GREATER-THAN OR SLANTED EQUAL TO}",	# ⩾
+    "LessSlantEqual" => "\N{LESS-THAN OR SLANTED EQUAL TO}",	# ⩽
+	      "les" => "\N{LESS-THAN OR SLANTED EQUAL TO}",	# ⩽
+	 "leqslant" => "\N{LESS-THAN OR SLANTED EQUAL TO}",	# ⩽
+	     "cire" => "\N{RING EQUAL TO}",	# ≗
+	   "circeq" => "\N{RING EQUAL TO}",	# ≗
+	    "bcong" => "\N{ALL EQUAL TO}",	# ≌
+	 "backcong" => "\N{ALL EQUAL TO}",	# ≌
+	   "eqcirc" => "\N{RING IN EQUAL TO}",	# ≖
+	     "ecir" => "\N{RING IN EQUAL TO}",	# ≖
+	       "gE" => "\N{GREATER-THAN OVER EQUAL TO}",	# ≧
+    "GreaterFullEqual" => "\N{GREATER-THAN OVER EQUAL TO}",	# ≧
+	     "geqq" => "\N{GREATER-THAN OVER EQUAL TO}",	# ≧
+	       "lE" => "\N{LESS-THAN OVER EQUAL TO}",	# ≦
+    "LessFullEqual" => "\N{LESS-THAN OVER EQUAL TO}",	# ≦
+	     "leqq" => "\N{LESS-THAN OVER EQUAL TO}",	# ≦
+	   "sqsube" => "\N{SQUARE IMAGE OF OR EQUAL TO}",	# ⊑
+    "SquareSubsetEqual" => "\N{SQUARE IMAGE OF OR EQUAL TO}",	# ⊑
+       "sqsubseteq" => "\N{SQUARE IMAGE OF OR EQUAL TO}",	# ⊑
+	  "nsqsube" => "\N{NOT SQUARE IMAGE OF OR EQUAL TO}",	# ⋢
+    "NotSquareSubsetEqual" => "\N{NOT SQUARE IMAGE OF OR EQUAL TO}",	# ⋢
+	   "sqsupe" => "\N{SQUARE ORIGINAL OF OR EQUAL TO}",	# ⊒
+    "SquareSupersetEqual" => "\N{SQUARE ORIGINAL OF OR EQUAL TO}",	# ⊒
+       "sqsupseteq" => "\N{SQUARE ORIGINAL OF OR EQUAL TO}",	# ⊒
+	  "nsqsupe" => "\N{NOT SQUARE ORIGINAL OF OR EQUAL TO}",	# ⋣
+    "NotSquareSupersetEqual" => "\N{NOT SQUARE ORIGINAL OF OR EQUAL TO}",	# ⋣
+	    "ltrie" => "\N{NORMAL SUBGROUP OF OR EQUAL TO}",	# ⊴
+    "LeftTriangleEqual" => "\N{NORMAL SUBGROUP OF OR EQUAL TO}",	# ⊴
+    "trianglelefteq" => "\N{NORMAL SUBGROUP OF OR EQUAL TO}",	# ⊴
+	   "nltrie" => "\N{NOT NORMAL SUBGROUP OF OR EQUAL TO}",	# ⋬
+    "NotLeftTriangleEqual" => "\N{NOT NORMAL SUBGROUP OF OR EQUAL TO}",	# ⋬
+    "ntrianglelefteq" => "\N{NOT NORMAL SUBGROUP OF OR EQUAL TO}",	# ⋬
+	     "sube" => "\N{SUBSET OF OR EQUAL TO}",	# ⊆
+      "SubsetEqual" => "\N{SUBSET OF OR EQUAL TO}",	# ⊆
+	 "subseteq" => "\N{SUBSET OF OR EQUAL TO}",	# ⊆
+	     "supe" => "\N{SUPERSET OF OR EQUAL TO}",	# ⊇
+    "SupersetEqual" => "\N{SUPERSET OF OR EQUAL TO}",	# ⊇
+	 "supseteq" => "\N{SUPERSET OF OR EQUAL TO}",	# ⊇
+	      "ape" => "\N{ALMOST EQUAL OR EQUAL TO}",	# ≊
+	 "approxeq" => "\N{ALMOST EQUAL OR EQUAL TO}",	# ≊
+	      "apE" => "\N{APPROXIMATELY EQUAL OR EQUAL TO}",	# ⩰
+	     "late" => "\N{LARGER THAN OR EQUAL TO}",	# ⪭
+	     "smte" => "\N{SMALLER THAN OR EQUAL TO}",	# ⪬
+	       "ge" => "\N{GREATER-THAN OR EQUAL TO}",	# ≥
+     "GreaterEqual" => "\N{GREATER-THAN OR EQUAL TO}",	# ≥
+	      "geq" => "\N{GREATER-THAN OR EQUAL TO}",	# ≥
+	       "le" => "\N{LESS-THAN OR EQUAL TO}",	# ≤
+	      "leq" => "\N{LESS-THAN OR EQUAL TO}",	# ≤
+	    "nsube" => "\N{NEITHER A SUBSET OF NOR EQUAL TO}",	# ⊈
+    "NotSubsetEqual" => "\N{NEITHER A SUBSET OF NOR EQUAL TO}",	# ⊈
+	"nsubseteq" => "\N{NEITHER A SUBSET OF NOR EQUAL TO}",	# ⊈
+	    "nsupe" => "\N{NEITHER A SUPERSET OF NOR EQUAL TO}",	# ⊉
+    "NotSupersetEqual" => "\N{NEITHER A SUPERSET OF NOR EQUAL TO}",	# ⊉
+	"nsupseteq" => "\N{NEITHER A SUPERSET OF NOR EQUAL TO}",	# ⊉
+	      "nge" => "\N{NEITHER GREATER-THAN NOR EQUAL TO}",	# ≱
+    "NotGreaterEqual" => "\N{NEITHER GREATER-THAN NOR EQUAL TO}",	# ≱
+	     "ngeq" => "\N{NEITHER GREATER-THAN NOR EQUAL TO}",	# ≱
+	      "nle" => "\N{NEITHER LESS-THAN NOR EQUAL TO}",	# ≰
+     "NotLessEqual" => "\N{NEITHER LESS-THAN NOR EQUAL TO}",	# ≰
+	     "nleq" => "\N{NEITHER LESS-THAN NOR EQUAL TO}",	# ≰
+	    "rtrie" => "\N{CONTAINS AS NORMAL SUBGROUP OR EQUAL TO}",	# ⊵
+    "RightTriangleEqual" => "\N{CONTAINS AS NORMAL SUBGROUP OR EQUAL TO}",	# ⊵
+    "trianglerighteq" => "\N{CONTAINS AS NORMAL SUBGROUP OR EQUAL TO}",	# ⊵
+	    "sccue" => "\N{SUCCEEDS OR EQUAL TO}",	# ≽
+    "SucceedsSlantEqual" => "\N{SUCCEEDS OR EQUAL TO}",	# ≽
+      "succcurlyeq" => "\N{SUCCEEDS OR EQUAL TO}",	# ≽
+	    "prcue" => "\N{PRECEDES OR EQUAL TO}",	# ≼
+    "PrecedesSlantEqual" => "\N{PRECEDES OR EQUAL TO}",	# ≼
+      "preccurlyeq" => "\N{PRECEDES OR EQUAL TO}",	# ≼
+	    "csube" => "\N{CLOSED SUBSET OR EQUAL TO}",	# ⫑
+	    "csupe" => "\N{CLOSED SUPERSET OR EQUAL TO}",	# ⫒
+	      "gne" => "\N{GREATER-THAN AND SINGLE-LINE NOT EQUAL TO}",	# ⪈
+	     "gneq" => "\N{GREATER-THAN AND SINGLE-LINE NOT EQUAL TO}",	# ⪈
+	      "lne" => "\N{LESS-THAN AND SINGLE-LINE NOT EQUAL TO}",	# ⪇
+	     "lneq" => "\N{LESS-THAN AND SINGLE-LINE NOT EQUAL TO}",	# ⪇
+	    "subnE" => "\N{SUBSET OF ABOVE NOT EQUAL TO}",	# ⫋
+       "subsetneqq" => "\N{SUBSET OF ABOVE NOT EQUAL TO}",	# ⫋
+	    "supnE" => "\N{SUPERSET OF ABOVE NOT EQUAL TO}",	# ⫌
+       "supsetneqq" => "\N{SUPERSET OF ABOVE NOT EQUAL TO}",	# ⫌
+	     "scnE" => "\N{SUCCEEDS ABOVE NOT EQUAL TO}",	# ⪶
+	 "succneqq" => "\N{SUCCEEDS ABOVE NOT EQUAL TO}",	# ⪶
+	     "prnE" => "\N{PRECEDES ABOVE NOT EQUAL TO}",	# ⪵
+	 "precneqq" => "\N{PRECEDES ABOVE NOT EQUAL TO}",	# ⪵
+	    "subne" => "\N{SUBSET OF WITH NOT EQUAL TO}",	# ⊊
+	"subsetneq" => "\N{SUBSET OF WITH NOT EQUAL TO}",	# ⊊
+	    "supne" => "\N{SUPERSET OF WITH NOT EQUAL TO}",	# ⊋
+	"supsetneq" => "\N{SUPERSET OF WITH NOT EQUAL TO}",	# ⊋
+	       "ne" => "\N{NOT EQUAL TO}",	# ≠
+	 "NotEqual" => "\N{NOT EQUAL TO}",	# ≠
+	      "gnE" => "\N{GREATER-THAN BUT NOT EQUAL TO}",	# ≩
+	    "gneqq" => "\N{GREATER-THAN BUT NOT EQUAL TO}",	# ≩
+	      "lnE" => "\N{LESS-THAN BUT NOT EQUAL TO}",	# ≨
+	    "lneqq" => "\N{LESS-THAN BUT NOT EQUAL TO}",	# ≨
+	     "scap" => "\N{SUCCEEDS ABOVE ALMOST EQUAL TO}",	# ⪸
+       "succapprox" => "\N{SUCCEEDS ABOVE ALMOST EQUAL TO}",	# ⪸
+	     "prap" => "\N{PRECEDES ABOVE ALMOST EQUAL TO}",	# ⪷
+       "precapprox" => "\N{PRECEDES ABOVE ALMOST EQUAL TO}",	# ⪷
+	   "rarrap" => "\N{RIGHTWARDS ARROW ABOVE ALMOST EQUAL TO}",	# ⥵
+       "TildeTilde" => "\N{ALMOST EQUAL TO}",	# ≈
+	       "ap" => "\N{ALMOST EQUAL TO}",	# ≈
+	    "thkap" => "\N{ALMOST EQUAL TO}",	# ≈
+	    "asymp" => "\N{ALMOST EQUAL TO}",	# ≈
+	   "approx" => "\N{ALMOST EQUAL TO}",	# ≈
+      "thickapprox" => "\N{ALMOST EQUAL TO}",	# ≈
+	    "scnap" => "\N{SUCCEEDS ABOVE NOT ALMOST EQUAL TO}",	# ⪺
+      "succnapprox" => "\N{SUCCEEDS ABOVE NOT ALMOST EQUAL TO}",	# ⪺
+	    "prnap" => "\N{PRECEDES ABOVE NOT ALMOST EQUAL TO}",	# ⪹
+      "precnapprox" => "\N{PRECEDES ABOVE NOT ALMOST EQUAL TO}",	# ⪹
+    "NotTildeTilde" => "\N{NOT ALMOST EQUAL TO}",	# ≉
+	      "nap" => "\N{NOT ALMOST EQUAL TO}",	# ≉
+	  "napprox" => "\N{NOT ALMOST EQUAL TO}",	# ≉
+	     "cong" => "\N{APPROXIMATELY EQUAL TO}",	# ≅
+    "TildeFullEqual" => "\N{APPROXIMATELY EQUAL TO}",	# ≅
+     "risingdotseq" => "\N{IMAGE OF OR APPROXIMATELY EQUAL TO}",	# ≓
+	    "erDot" => "\N{IMAGE OF OR APPROXIMATELY EQUAL TO}",	# ≓
+	     "eDot" => "\N{GEOMETRICALLY EQUAL TO}",	# ≑
+	 "doteqdot" => "\N{GEOMETRICALLY EQUAL TO}",	# ≑
+	     "sime" => "\N{ASYMPTOTICALLY EQUAL TO}",	# ≃
+       "TildeEqual" => "\N{ASYMPTOTICALLY EQUAL TO}",	# ≃
+	    "simeq" => "\N{ASYMPTOTICALLY EQUAL TO}",	# ≃
+	    "nsime" => "\N{NOT ASYMPTOTICALLY EQUAL TO}",	# ≄
+    "NotTildeEqual" => "\N{NOT ASYMPTOTICALLY EQUAL TO}",	# ≄
+	   "nsimeq" => "\N{NOT ASYMPTOTICALLY EQUAL TO}",	# ≄
+	    "ncong" => "\N{NEITHER APPROXIMATELY NOR ACTUALLY EQUAL TO}",	# ≇
+    "NotTildeFullEqual" => "\N{NEITHER APPROXIMATELY NOR ACTUALLY EQUAL TO}",	# ≇
+	    "simne" => "\N{APPROXIMATELY BUT NOT ACTUALLY EQUAL TO}",	# ≆
+	     "epar" => "\N{EQUAL AND PARALLEL TO}",	# ⋕
+	 "parallel" => "\N{PARALLEL TO}",	# ∥
+    "shortparallel" => "\N{PARALLEL TO}",	# ∥
+    "DoubleVerticalBar" => "\N{PARALLEL TO}",	# ∥
+	      "par" => "\N{PARALLEL TO}",	# ∥
+	     "spar" => "\N{PARALLEL TO}",	# ∥
+	"nparallel" => "\N{NOT PARALLEL TO}",	# ∦
+    "nshortparallel" => "\N{NOT PARALLEL TO}",	# ∦
+    "NotDoubleVerticalBar" => "\N{NOT PARALLEL TO}",	# ∦
+	     "npar" => "\N{NOT PARALLEL TO}",	# ∦
+	    "nspar" => "\N{NOT PARALLEL TO}",	# ∦
+	    "veeeq" => "\N{EQUIANGULAR TO}",	# ≚
+	   "CupCap" => "\N{EQUIVALENT TO}",	# ≍
+	  "asympeq" => "\N{EQUIVALENT TO}",	# ≍
+     "GreaterTilde" => "\N{GREATER-THAN OR EQUIVALENT TO}",	# ≳
+	     "gsim" => "\N{GREATER-THAN OR EQUIVALENT TO}",	# ≳
+	   "gtrsim" => "\N{GREATER-THAN OR EQUIVALENT TO}",	# ≳
+	"LessTilde" => "\N{LESS-THAN OR EQUIVALENT TO}",	# ≲
+	     "lsim" => "\N{LESS-THAN OR EQUIVALENT TO}",	# ≲
+	  "lesssim" => "\N{LESS-THAN OR EQUIVALENT TO}",	# ≲
+    "NotGreaterTilde" => "\N{NEITHER GREATER-THAN NOR EQUIVALENT TO}",	# ≵
+	    "ngsim" => "\N{NEITHER GREATER-THAN NOR EQUIVALENT TO}",	# ≵
+     "NotLessTilde" => "\N{NEITHER LESS-THAN NOR EQUIVALENT TO}",	# ≴
+	    "nlsim" => "\N{NEITHER LESS-THAN NOR EQUIVALENT TO}",	# ≴
+    "SucceedsTilde" => "\N{SUCCEEDS OR EQUIVALENT TO}",	# ≿
+	  "succsim" => "\N{SUCCEEDS OR EQUIVALENT TO}",	# ≿
+	    "scsim" => "\N{SUCCEEDS OR EQUIVALENT TO}",	# ≿
+    "PrecedesTilde" => "\N{PRECEDES OR EQUIVALENT TO}",	# ≾
+	  "precsim" => "\N{PRECEDES OR EQUIVALENT TO}",	# ≾
+	    "prsim" => "\N{PRECEDES OR EQUIVALENT TO}",	# ≾
+	"NotCupCap" => "\N{NOT EQUIVALENT TO}",	# ≭
+	    "gnsim" => "\N{GREATER-THAN BUT NOT EQUIVALENT TO}",	# ⋧
+	    "lnsim" => "\N{LESS-THAN BUT NOT EQUIVALENT TO}",	# ⋦
+	 "succnsim" => "\N{SUCCEEDS BUT NOT EQUIVALENT TO}",	# ⋩
+	   "scnsim" => "\N{SUCCEEDS BUT NOT EQUIVALENT TO}",	# ⋩
+	 "precnsim" => "\N{PRECEDES BUT NOT EQUIVALENT TO}",	# ⋨
+	   "prnsim" => "\N{PRECEDES BUT NOT EQUIVALENT TO}",	# ⋨
+	     "bump" => "\N{GEOMETRICALLY EQUIVALENT TO}",	# ≎
+     "HumpDownHump" => "\N{GEOMETRICALLY EQUIVALENT TO}",	# ≎
+	   "Bumpeq" => "\N{GEOMETRICALLY EQUIVALENT TO}",	# ≎
+	  "plustwo" => "\N{PLUS SIGN WITH SUBSCRIPT TWO}",	# ⨧
+    "SquareIntersection" => "\N{SQUARE CAP}",	# ⊓
+	    "sqcap" => "\N{SQUARE CAP}",	# ⊓
+	 "multimap" => "\N{MULTIMAP}",	# ⊸
+	    "mumap" => "\N{MULTIMAP}",	# ⊸
+	   "weierp" => "\N{SCRIPT CAPITAL P}",	# ℘
+	       "wp" => "\N{SCRIPT CAPITAL P}",	# ℘
+	      ## "amp" => "&",	# &
+	      ## "AMP" => "&",	# &
+	   "larrlp" => "\N{LEFTWARDS ARROW WITH LOOP}",	# ↫
+    "looparrowleft" => "\N{LEFTWARDS ARROW WITH LOOP}",	# ↫
+	   "rarrlp" => "\N{RIGHTWARDS ARROW WITH LOOP}",	# ↬
+    "looparrowright" => "\N{RIGHTWARDS ARROW WITH LOOP}",	# ↬
+	   "dlcrop" => "\N{BOTTOM LEFT CROP}",	# ⌍
+	   "ulcrop" => "\N{TOP LEFT CROP}",	# ⌏
+	   "drcrop" => "\N{BOTTOM RIGHT CROP}",	# ⌌
+	   "urcrop" => "\N{TOP RIGHT CROP}",	# ⌎
+	  "topfork" => "\N{PITCHFORK WITH TEE TOP}",	# ⫚
+	     "Popf" => "\N{DOUBLE-STRUCK CAPITAL P}",	# ℙ
+	   "primes" => "\N{DOUBLE-STRUCK CAPITAL P}",	# ℙ
+	      "Pfr" => "\N{MATHEMATICAL FRAKTUR CAPITAL P}",	# 𝔓
+	     "Pscr" => "\N{MATHEMATICAL SCRIPT CAPITAL P}",	# 𝒫
+	     "popf" => "\N{MATHEMATICAL DOUBLE-STRUCK SMALL P}",	# 𝕡
+	      "pfr" => "\N{MATHEMATICAL FRAKTUR SMALL P}",	# 𝔭
+	     "pscr" => "\N{MATHEMATICAL SCRIPT SMALL P}",	# 𝓅
+	  "ruluhar" => "\N{RIGHTWARDS HARPOON WITH BARB UP ABOVE LEFTWARDS HARPOON WITH BARB UP}",	# ⥨
+	  "luruhar" => "\N{LEFTWARDS HARPOON WITH BARB UP ABOVE RIGHTWARDS HARPOON WITH BARB UP}",	# ⥦
+      "SquareUnion" => "\N{SQUARE CUP}",	# ⊔
+	    "sqcup" => "\N{SQUARE CUP}",	# ⊔
+	 "angmsdaf" => "\N{MEASURED ANGLE WITH OPEN ARM ENDING IN ARROW POINTING LEFT AND UP}",	# ⦭
+	 "angmsdae" => "\N{MEASURED ANGLE WITH OPEN ARM ENDING IN ARROW POINTING RIGHT AND UP}",	# ⦬
+	  "dwangle" => "\N{OBLIQUE ANGLE OPENING UP}",	# ⦦
+    "NotRightTriangle" => "\N{DOES NOT CONTAIN AS NORMAL SUBGROUP}",	# ⋫
+	    "nrtri" => "\N{DOES NOT CONTAIN AS NORMAL SUBGROUP}",	# ⋫
+    "ntriangleright" => "\N{DOES NOT CONTAIN AS NORMAL SUBGROUP}",	# ⋫
+    "RightTriangle" => "\N{CONTAINS AS NORMAL SUBGROUP}",	# ⊳
+	    "vrtri" => "\N{CONTAINS AS NORMAL SUBGROUP}",	# ⊳
+    "vartriangleright" => "\N{CONTAINS AS NORMAL SUBGROUP}",	# ⊳
+	    "comma" => q(,),	# ,
+	     "lsqb" => q([),	# [
+	     "rsqb" => q(]),	# ]
+	     "lcub" => q({),	# {
+	     "rcub" => q(}),	# }
+	   "period" => q(.),	# .
+	     "Qopf" => "\N{DOUBLE-STRUCK CAPITAL Q}",	# ℚ
+	"rationals" => "\N{DOUBLE-STRUCK CAPITAL Q}",	# ℚ
+	      "Qfr" => "\N{MATHEMATICAL FRAKTUR CAPITAL Q}",	# 𝔔
+	     "Qscr" => "\N{MATHEMATICAL SCRIPT CAPITAL Q}",	# 𝒬
+	     "qopf" => "\N{MATHEMATICAL DOUBLE-STRUCK SMALL Q}",	# 𝕢
+	      "qfr" => "\N{MATHEMATICAL FRAKTUR SMALL Q}",	# 𝔮
+	     "qscr" => "\N{MATHEMATICAL SCRIPT SMALL Q}",	# 𝓆
+	     "quot" => q("),	# "
+	     "QUOT" => q("),	# "
+	   "kgreen" => "\N{LATIN SMALL LETTER KRA}",	# ĸ
+	   "solbar" => "\N{APL FUNCTIONAL SYMBOL SLASH BAR}",	# ⌿
+	     "omid" => "\N{CIRCLED VERTICAL BAR}",	# ⦶
+    "LeftTriangleBar" => "\N{LEFT TRIANGLE BESIDE VERTICAL BAR}",	# ⧏
+	  "nvinfin" => "\N{INFINITY NEGATED WITH VERTICAL BAR}",	# ⧞
+    "VerticalSeparator" => "\N{LIGHT VERTICAL BAR}",	# ❘
+	    "ohbar" => "\N{CIRCLE WITH HORIZONTAL BAR}",	# ⦵
+	   "horbar" => "\N{HORIZONTAL BAR}",	# ―
+    "DownLeftTeeVector" => "\N{LEFTWARDS HARPOON WITH BARB DOWN FROM BAR}",	# ⥞
+    "DownRightTeeVector" => "\N{RIGHTWARDS HARPOON WITH BARB DOWN FROM BAR}",	# ⥟
+    "LeftTeeVector" => "\N{LEFTWARDS HARPOON WITH BARB UP FROM BAR}",	# ⥚
+    "RightTeeVector" => "\N{RIGHTWARDS HARPOON WITH BARB UP FROM BAR}",	# ⥛
+    "LeftDownTeeVector" => "\N{DOWNWARDS HARPOON WITH BARB LEFT FROM BAR}",	# ⥡
+    "LeftUpTeeVector" => "\N{UPWARDS HARPOON WITH BARB LEFT FROM BAR}",	# ⥠
+    "RightDownTeeVector" => "\N{DOWNWARDS HARPOON WITH BARB RIGHT FROM BAR}",	# ⥝
+    "RightUpTeeVector" => "\N{UPWARDS HARPOON WITH BARB RIGHT FROM BAR}",	# ⥜
+	      "Map" => "\N{RIGHTWARDS TWO-HEADED ARROW FROM BAR}",	# ⤅
+       "mapstodown" => "\N{DOWNWARDS ARROW FROM BAR}",	# ↧
+     "DownTeeArrow" => "\N{DOWNWARDS ARROW FROM BAR}",	# ↧
+	 "mapstoup" => "\N{UPWARDS ARROW FROM BAR}",	# ↥
+       "UpTeeArrow" => "\N{UPWARDS ARROW FROM BAR}",	# ↥
+       "mapstoleft" => "\N{LEFTWARDS ARROW FROM BAR}",	# ↤
+     "LeftTeeArrow" => "\N{LEFTWARDS ARROW FROM BAR}",	# ↤
+       "longmapsto" => "\N{LONG RIGHTWARDS ARROW FROM BAR}",	# ⟼
+	     "xmap" => "\N{LONG RIGHTWARDS ARROW FROM BAR}",	# ⟼
+	   "mapsto" => "\N{RIGHTWARDS ARROW FROM BAR}",	# ↦
+	      "map" => "\N{RIGHTWARDS ARROW FROM BAR}",	# ↦
+    "RightTeeArrow" => "\N{RIGHTWARDS ARROW FROM BAR}",	# ↦
+	   "brvbar" => "\N{BROKEN BAR}",	# ¦
+    "DownLeftVectorBar" => "\N{LEFTWARDS HARPOON WITH BARB DOWN TO BAR}",	# ⥖
+    "DownRightVectorBar" => "\N{RIGHTWARDS HARPOON WITH BARB DOWN TO BAR}",	# ⥗
+    "LeftVectorBar" => "\N{LEFTWARDS HARPOON WITH BARB UP TO BAR}",	# ⥒
+    "RightVectorBar" => "\N{RIGHTWARDS HARPOON WITH BARB UP TO BAR}",	# ⥓
+    "LeftDownVectorBar" => "\N{DOWNWARDS HARPOON WITH BARB LEFT TO BAR}",	# ⥙
+    "LeftUpVectorBar" => "\N{UPWARDS HARPOON WITH BARB LEFT TO BAR}",	# ⥘
+    "RightDownVectorBar" => "\N{DOWNWARDS HARPOON WITH BARB RIGHT TO BAR}",	# ⥕
+    "RightUpVectorBar" => "\N{UPWARDS HARPOON WITH BARB RIGHT TO BAR}",	# ⥔
+     "DownArrowBar" => "\N{DOWNWARDS ARROW TO BAR}",	# ⤓
+       "UpArrowBar" => "\N{UPWARDS ARROW TO BAR}",	# ⤒
+	    "larrb" => "\N{LEFTWARDS ARROW TO BAR}",	# ⇤
+     "LeftArrowBar" => "\N{LEFTWARDS ARROW TO BAR}",	# ⇤
+	    "rarrb" => "\N{RIGHTWARDS ARROW TO BAR}",	# ⇥
+    "RightArrowBar" => "\N{RIGHTWARDS ARROW TO BAR}",	# ⇥
+	 "UnderBar" => "_",	# _
+	   "wedbar" => "\N{LOGICAL AND WITH UNDERBAR}",	# ⩟
+	    "range" => "\N{REVERSED ANGLE WITH UNDERBAR}",	# ⦥
+	     "ange" => "\N{ANGLE WITH UNDERBAR}",	# ⦤
+	     "vBar" => "\N{SHORT UP TACK WITH UNDERBAR}",	# ⫨
+	 "timesbar" => "\N{MULTIPLICATION SIGN WITH UNDERBAR}",	# ⨱
+	    "lbrke" => "\N{LEFT SQUARE BRACKET WITH UNDERBAR}",	# ⦋
+	    "rbrke" => "\N{RIGHT SQUARE BRACKET WITH UNDERBAR}",	# ⦌
+	   "verbar" => "|",	# |
+	  "notinvb" => "\N{SMALL ELEMENT OF WITH OVERBAR}",	# ⋷
+	  "notinvc" => "\N{ELEMENT OF WITH OVERBAR}",	# ⋶
+	     "Barv" => "\N{SHORT DOWN TACK WITH OVERBAR}",	# ⫧
+	     "ncup" => "\N{UNION WITH OVERBAR}",	# ⩂
+	     "ncap" => "\N{INTERSECTION WITH OVERBAR}",	# ⩃
+	  "notnivb" => "\N{SMALL CONTAINS WITH OVERBAR}",	# ⋾
+	  "notnivc" => "\N{CONTAINS WITH OVERBAR}",	# ⋽
+	     "dsol" => "\N{SOLIDUS WITH OVERBAR}",	# ⧶
+	  "demptyv" => "\N{EMPTY SET WITH OVERBAR}",	# ⦱
+	   "lowbar" => "_",	# _
+	   "Rcedil" => "\N{LATIN CAPITAL LETTER R WITH CEDILLA}",	# Ŗ
+	   "rcedil" => "\N{LATIN SMALL LETTER R WITH CEDILLA}",	# ŗ
+	    "operp" => "\N{CIRCLED PERPENDICULAR}",	# ⦹
+	     "lpar" => "(",	# (
+	     "rpar" => ")",	# )
+	     "star" => "\N{WHITE STAR}",	# ☆
+	     "sext" => "\N{SIX POINTED BLACK STAR}",	# ✶
+	    "starf" => "\N{BLACK STAR}",	# ★
+	  "bigstar" => "\N{BLACK STAR}",	# ★
+	  "notniva" => "\N{DOES NOT CONTAIN AS MEMBER}",	# ∌
+	    "notni" => "\N{DOES NOT CONTAIN AS MEMBER}",	# ∌
+    "NotReverseElement" => "\N{DOES NOT CONTAIN AS MEMBER}",	# ∌
+	       "ni" => "\N{CONTAINS AS MEMBER}",	# ∋
+	 "SuchThat" => "\N{CONTAINS AS MEMBER}",	# ∋
+    "ReverseElement" => "\N{CONTAINS AS MEMBER}",	# ∋
+	      "niv" => "\N{CONTAINS AS MEMBER}",	# ∋
+	     "nldr" => "\N{TWO DOT LEADER}",	# ‥
+	   "telrec" => "\N{TELEPHONE RECORDER}",	# ⌕
+	   "Dagger" => "\N{DOUBLE DAGGER}",	# ‡
+	  "ddagger" => "\N{DOUBLE DAGGER}",	# ‡
+	   "dagger" => "\N{DAGGER}",	# †
+	  "NoBreak" => "\N{WORD JOINER}",	# ⁠
+	      "zwj" => "\N{ZERO WIDTH JOINER}",	# ‍
+	     "zwnj" => "\N{ZERO WIDTH NON-JOINER}",	# ‌
+	  "lbrksld" => "\N{LEFT SQUARE BRACKET WITH TICK IN BOTTOM CORNER}",	# ⦏
+	  "rbrksld" => "\N{RIGHT SQUARE BRACKET WITH TICK IN BOTTOM CORNER}",	# ⦎
+	  "lbrkslu" => "\N{LEFT SQUARE BRACKET WITH TICK IN TOP CORNER}",	# ⦍
+	  "rbrkslu" => "\N{RIGHT SQUARE BRACKET WITH TICK IN TOP CORNER}",	# ⦐
+	   "dlcorn" => "\N{BOTTOM LEFT CORNER}",	# ⌞
+	 "llcorner" => "\N{BOTTOM LEFT CORNER}",	# ⌞
+	   "ulcorn" => "\N{TOP LEFT CORNER}",	# ⌜
+	 "ulcorner" => "\N{TOP LEFT CORNER}",	# ⌜
+	   "drcorn" => "\N{BOTTOM RIGHT CORNER}",	# ⌟
+	 "lrcorner" => "\N{BOTTOM RIGHT CORNER}",	# ⌟
+	   "urcorn" => "\N{TOP RIGHT CORNER}",	# ⌝
+	 "urcorner" => "\N{TOP RIGHT CORNER}",	# ⌝
+	   "Racute" => "\N{LATIN CAPITAL LETTER R WITH ACUTE}",	# Ŕ
+	   "racute" => "\N{LATIN SMALL LETTER R WITH ACUTE}",	# ŕ
+	   "Rcaron" => "\N{LATIN CAPITAL LETTER R WITH CARON}",	# Ř
+	   "rcaron" => "\N{LATIN SMALL LETTER R WITH CARON}",	# ř
+	  "orslope" => "\N{SLOPING LARGE OR}",	# ⩗
+	       "Or" => "\N{DOUBLE LOGICAL OR}",	# ⩔
+	     "oror" => "\N{TWO INTERSECTING LOGICAL OR}",	# ⩖
+	    "cupor" => "\N{UNION WITH LOGICAL OR}",	# ⩅
+	      "vee" => "\N{LOGICAL OR}",	# ∨
+	       "or" => "\N{LOGICAL OR}",	# ∨
+	    "cuvee" => "\N{CURLY LOGICAL OR}",	# ⋎
+	 "curlyvee" => "\N{CURLY LOGICAL OR}",	# ⋎
+	      "Vee" => "\N{N-ARY LOGICAL OR}",	# ⋁
+	   "bigvee" => "\N{N-ARY LOGICAL OR}",	# ⋁
+	     "xvee" => "\N{N-ARY LOGICAL OR}",	# ⋁
+	   "barvee" => "\N{NOR}",	# ⊽
+	   "lfloor" => "\N{LEFT FLOOR}",	# ⌊
+	"LeftFloor" => "\N{LEFT FLOOR}",	# ⌊
+	   "rfloor" => "\N{RIGHT FLOOR}",	# ⌋
+       "RightFloor" => "\N{RIGHT FLOOR}",	# ⌋
+	   "target" => "\N{POSITION INDICATOR}",	# ⌖
+    "InvisibleComma" => "\N{INVISIBLE SEPARATOR}",	# ⁣
+	       "ic" => "\N{INVISIBLE SEPARATOR}",	# ⁣
+	  "diamond" => "\N{DIAMOND OPERATOR}",	# ⋄
+	  "Diamond" => "\N{DIAMOND OPERATOR}",	# ⋄
+	     "diam" => "\N{DIAMOND OPERATOR}",	# ⋄
+	   "subsim" => "\N{SUBSET OF ABOVE TILDE OPERATOR}",	# ⫇
+	   "supsim" => "\N{SUPERSET OF ABOVE TILDE OPERATOR}",	# ⫈
+	     "Esim" => "\N{EQUALS SIGN ABOVE TILDE OPERATOR}",	# ⩳
+	  "larrsim" => "\N{LEFTWARDS ARROW ABOVE TILDE OPERATOR}",	# ⥳
+	  "rarrsim" => "\N{RIGHTWARDS ARROW ABOVE TILDE OPERATOR}",	# ⥴
+	   "parsim" => "\N{PARALLEL WITH TILDE OPERATOR}",	# ⫳
+	    "Tilde" => "\N{TILDE OPERATOR}",	# ∼
+	      "sim" => "\N{TILDE OPERATOR}",	# ∼
+	 "thicksim" => "\N{TILDE OPERATOR}",	# ∼
+	   "thksim" => "\N{TILDE OPERATOR}",	# ∼
+      "circledcirc" => "\N{CIRCLED RING OPERATOR}",	# ⊚
+	     "ocir" => "\N{CIRCLED RING OPERATOR}",	# ⊚
+      "SmallCircle" => "\N{RING OPERATOR}",	# ∘
+	   "compfn" => "\N{RING OPERATOR}",	# ∘
+       "circledast" => "\N{CIRCLED ASTERISK OPERATOR}",	# ⊛
+	     "oast" => "\N{CIRCLED ASTERISK OPERATOR}",	# ⊛
+	   "lowast" => "\N{ASTERISK OPERATOR}",	# ∗
+	   "iiiint" => "\N{QUADRUPLE INTEGRAL OPERATOR}",	# ⨌
+	     "qint" => "\N{QUADRUPLE INTEGRAL OPERATOR}",	# ⨌
+	  "quatint" => "\N{QUATERNION INTEGRAL OPERATOR}",	# ⨖
+	 "bigsqcup" => "\N{N-ARY SQUARE UNION OPERATOR}",	# ⨆
+	   "xsqcup" => "\N{N-ARY SQUARE UNION OPERATOR}",	# ⨆
+	   "sstarf" => "\N{STAR OPERATOR}",	# ⋆
+	     "Star" => "\N{STAR OPERATOR}",	# ⋆
+	   "xotime" => "\N{N-ARY CIRCLED TIMES OPERATOR}",	# ⨂
+	"bigotimes" => "\N{N-ARY CIRCLED TIMES OPERATOR}",	# ⨂
+	    "parsl" => "\N{DOUBLE SOLIDUS OPERATOR}",	# ⫽
+	 "bigoplus" => "\N{N-ARY CIRCLED PLUS OPERATOR}",	# ⨁
+	   "xoplus" => "\N{N-ARY CIRCLED PLUS OPERATOR}",	# ⨁
+	 "pointint" => "\N{INTEGRAL AROUND A POINT OPERATOR}",	# ⨕
+	"CircleDot" => "\N{CIRCLED DOT OPERATOR}",	# ⊙
+	     "odot" => "\N{CIRCLED DOT OPERATOR}",	# ⊙
+	  "bigodot" => "\N{N-ARY CIRCLED DOT OPERATOR}",	# ⨀
+	    "xodot" => "\N{N-ARY CIRCLED DOT OPERATOR}",	# ⨀
+	    "sdotb" => "\N{SQUARED DOT OPERATOR}",	# ⊡
+	"dotsquare" => "\N{SQUARED DOT OPERATOR}",	# ⊡
+	     "sdot" => "\N{DOT OPERATOR}",	# ⋅
+	   "veebar" => "\N{XOR}",	# ⊻
+	     "Ropf" => "\N{DOUBLE-STRUCK CAPITAL R}",	# ℝ
+	    "reals" => "\N{DOUBLE-STRUCK CAPITAL R}",	# ℝ
+	       "Re" => "\N{BLACK-LETTER CAPITAL R}",	# ℜ
+	     "real" => "\N{BLACK-LETTER CAPITAL R}",	# ℜ
+	      "Rfr" => "\N{BLACK-LETTER CAPITAL R}",	# ℜ
+	 "realpart" => "\N{BLACK-LETTER CAPITAL R}",	# ℜ
+	  "realine" => "\N{SCRIPT CAPITAL R}",	# ℛ
+	     "Rscr" => "\N{SCRIPT CAPITAL R}",	# ℛ
+	     "ropf" => "\N{MATHEMATICAL DOUBLE-STRUCK SMALL R}",	# 𝕣
+	      "rfr" => "\N{MATHEMATICAL FRAKTUR SMALL R}",	# 𝔯
+	     "rscr" => "\N{MATHEMATICAL SCRIPT SMALL R}",	# 𝓇
+	   "Scedil" => "\N{LATIN CAPITAL LETTER S WITH CEDILLA}",	# Ş
+	   "scedil" => "\N{LATIN SMALL LETTER S WITH CEDILLA}",	# ş
+	       "Sc" => "\N{DOUBLE SUCCEEDS}",	# ⪼
+	     "succ" => "\N{SUCCEEDS}",	# ≻
+	       "sc" => "\N{SUCCEEDS}",	# ≻
+	 "Succeeds" => "\N{SUCCEEDS}",	# ≻
+      "curlyeqsucc" => "\N{EQUAL TO OR SUCCEEDS}",	# ⋟
+	    "cuesc" => "\N{EQUAL TO OR SUCCEEDS}",	# ⋟
+	    "lhard" => "\N{LEFTWARDS HARPOON WITH BARB DOWNWARDS}",	# ↽
+    "leftharpoondown" => "\N{LEFTWARDS HARPOON WITH BARB DOWNWARDS}",	# ↽
+    "DownLeftVector" => "\N{LEFTWARDS HARPOON WITH BARB DOWNWARDS}",	# ↽
+	    "rhard" => "\N{RIGHTWARDS HARPOON WITH BARB DOWNWARDS}",	# ⇁
+    "rightharpoondown" => "\N{RIGHTWARDS HARPOON WITH BARB DOWNWARDS}",	# ⇁
+    "DownRightVector" => "\N{RIGHTWARDS HARPOON WITH BARB DOWNWARDS}",	# ⇁
+	    "forkv" => "\N{ELEMENT OF OPENING DOWNWARDS}",	# ⫙
+	  "cudarrr" => "\N{ARROW POINTING RIGHTWARDS THEN CURVING DOWNWARDS}",	# ⤵
+    "leftharpoonup" => "\N{LEFTWARDS HARPOON WITH BARB UPWARDS}",	# ↼
+       "LeftVector" => "\N{LEFTWARDS HARPOON WITH BARB UPWARDS}",	# ↼
+	    "lharu" => "\N{LEFTWARDS HARPOON WITH BARB UPWARDS}",	# ↼
+    "rightharpoonup" => "\N{RIGHTWARDS HARPOON WITH BARB UPWARDS}",	# ⇀
+      "RightVector" => "\N{RIGHTWARDS HARPOON WITH BARB UPWARDS}",	# ⇀
+	    "rharu" => "\N{RIGHTWARDS HARPOON WITH BARB UPWARDS}",	# ⇀
+	    "dharl" => "\N{DOWNWARDS HARPOON WITH BARB LEFTWARDS}",	# ⇃
+    "LeftDownVector" => "\N{DOWNWARDS HARPOON WITH BARB LEFTWARDS}",	# ⇃
+    "downharpoonleft" => "\N{DOWNWARDS HARPOON WITH BARB LEFTWARDS}",	# ⇃
+	    "uharl" => "\N{UPWARDS HARPOON WITH BARB LEFTWARDS}",	# ↿
+     "LeftUpVector" => "\N{UPWARDS HARPOON WITH BARB LEFTWARDS}",	# ↿
+    "upharpoonleft" => "\N{UPWARDS HARPOON WITH BARB LEFTWARDS}",	# ↿
+	     "ldca" => "\N{ARROW POINTING DOWNWARDS THEN CURVING LEFTWARDS}",	# ⤶
+	     "ldsh" => "\N{DOWNWARDS ARROW WITH TIP LEFTWARDS}",	# ↲
+	      "lsh" => "\N{UPWARDS ARROW WITH TIP LEFTWARDS}",	# ↰
+	      "Lsh" => "\N{UPWARDS ARROW WITH TIP LEFTWARDS}",	# ↰
+	    "crarr" => "\N{DOWNWARDS ARROW WITH CORNER LEFTWARDS}",	# ↵
+    "RightDownVector" => "\N{DOWNWARDS HARPOON WITH BARB RIGHTWARDS}",	# ⇂
+	    "dharr" => "\N{DOWNWARDS HARPOON WITH BARB RIGHTWARDS}",	# ⇂
+    "downharpoonright" => "\N{DOWNWARDS HARPOON WITH BARB RIGHTWARDS}",	# ⇂
+    "RightUpVector" => "\N{UPWARDS HARPOON WITH BARB RIGHTWARDS}",	# ↾
+	    "uharr" => "\N{UPWARDS HARPOON WITH BARB RIGHTWARDS}",	# ↾
+    "upharpoonright" => "\N{UPWARDS HARPOON WITH BARB RIGHTWARDS}",	# ↾
+	     "rdca" => "\N{ARROW POINTING DOWNWARDS THEN CURVING RIGHTWARDS}",	# ⤷
+	     "rdsh" => "\N{DOWNWARDS ARROW WITH TIP RIGHTWARDS}",	# ↳
+	      "rsh" => "\N{UPWARDS ARROW WITH TIP RIGHTWARDS}",	# ↱
+	      "Rsh" => "\N{UPWARDS ARROW WITH TIP RIGHTWARDS}",	# ↱
+	    "Vdash" => "\N{FORCES}",	# ⊩
+	       "Pr" => "\N{DOUBLE PRECEDES}",	# ⪻
+	     "prec" => "\N{PRECEDES}",	# ≺
+	       "pr" => "\N{PRECEDES}",	# ≺
+	 "Precedes" => "\N{PRECEDES}",	# ≺
+      "curlyeqprec" => "\N{EQUAL TO OR PRECEDES}",	# ⋞
+	    "cuepr" => "\N{EQUAL TO OR PRECEDES}",	# ⋞
+	      "mid" => "\N{DIVIDES}",	# ∣
+	     "smid" => "\N{DIVIDES}",	# ∣
+	 "shortmid" => "\N{DIVIDES}",	# ∣
+      "VerticalBar" => "\N{DIVIDES}",	# ∣
+	    "isinE" => "\N{ELEMENT OF WITH TWO HORIZONTAL STROKES}",	# ⋹
+      "CircleTimes" => "\N{CIRCLED TIMES}",	# ⊗
+	   "otimes" => "\N{CIRCLED TIMES}",	# ⊗
+	   "timesb" => "\N{SQUARED TIMES}",	# ⊠
+	 "boxtimes" => "\N{SQUARED TIMES}",	# ⊠
+    "InvisibleTimes" => "\N{INVISIBLE TIMES}",	# ⁢
+	       "it" => "\N{INVISIBLE TIMES}",	# ⁢
+    "divideontimes" => "\N{DIVISION TIMES}",	# ⋇
+	   "divonx" => "\N{DIVISION TIMES}",	# ⋇
+	   "boxbox" => "\N{TWO JOINED SQUARES}",	# ⧉
+	   "wedgeq" => "\N{ESTIMATES}",	# ≙
+	   "Sacute" => "\N{LATIN CAPITAL LETTER S WITH ACUTE}",	# Ś
+	   "sacute" => "\N{LATIN SMALL LETTER S WITH ACUTE}",	# ś
+	    "ccups" => "\N{CLOSED UNION WITH SERIFS}",	# ⩌
+	    "ccaps" => "\N{CLOSED INTERSECTION WITH SERIFS}",	# ⩍
+	    "lopar" => "\N{LEFT WHITE PARENTHESIS}",	# ⦅
+	    "ropar" => "\N{RIGHT WHITE PARENTHESIS}",	# ⦆
+    "UnderParenthesis" => "\N{BOTTOM PARENTHESIS}",	# ⏝
+    "OverParenthesis" => "\N{TOP PARENTHESIS}",	# ⏜
+	      "die" => "\N{DIAERESIS}",	# ¨
+	      "uml" => "\N{DIAERESIS}",	# ¨
+	      "Dot" => "\N{DIAERESIS}",	# ¨
+	"DoubleDot" => "\N{DIAERESIS}",	# ¨
+	   "vellip" => "\N{VERTICAL ELLIPSIS}",	# ⋮
+	    "dtdot" => "\N{DOWN RIGHT DIAGONAL ELLIPSIS}",	# ⋱
+	    "utdot" => "\N{UP RIGHT DIAGONAL ELLIPSIS}",	# ⋰
+	    "ctdot" => "\N{MIDLINE HORIZONTAL ELLIPSIS}",	# ⋯
+	   "hellip" => "\N{HORIZONTAL ELLIPSIS}",	# …
+	     "mldr" => "\N{HORIZONTAL ELLIPSIS}",	# …
+	   "equals" => "=",	# =
+	    "bsime" => "\N{REVERSED TILDE EQUALS}",	# ⋍
+	"backsimeq" => "\N{REVERSED TILDE EQUALS}",	# ⋍
+	   "colone" => "\N{COLON EQUALS}",	# ≔
+	   "Assign" => "\N{COLON EQUALS}",	# ≔
+	  "coloneq" => "\N{COLON EQUALS}",	# ≔
+	   "models" => "\N{MODELS}",	# ⊧
+	    "Equal" => "\N{TWO CONSECUTIVE EQUALS SIGNS}",	# ⩵
+	   "Scaron" => "\N{LATIN CAPITAL LETTER S WITH CARON}",	# Š
+	   "scaron" => "\N{LATIN SMALL LETTER S WITH CARON}",	# š
+	     "apos" => "'",	# '
+	     "Sopf" => "\N{MATHEMATICAL DOUBLE-STRUCK CAPITAL S}",	# 𝕊
+	      "Sfr" => "\N{MATHEMATICAL FRAKTUR CAPITAL S}",	# 𝔖
+	     "Sscr" => "\N{MATHEMATICAL SCRIPT CAPITAL S}",	# 𝒮
+	     "sopf" => "\N{MATHEMATICAL DOUBLE-STRUCK SMALL S}",	# 𝕤
+	      "sfr" => "\N{MATHEMATICAL FRAKTUR SMALL S}",	# 𝔰
+	     "sscr" => "\N{MATHEMATICAL SCRIPT SMALL S}",	# 𝓈
+	  "maltese" => "\N{MALTESE CROSS}",	# ✠
+	     "malt" => "\N{MALTESE CROSS}",	# ✠
+	 "circledS" => "\N{CIRCLED LATIN CAPITAL LETTER S}",	# Ⓢ
+	       "oS" => "\N{CIRCLED LATIN CAPITAL LETTER S}",	# Ⓢ
+	    "szlig" => "\N{LATIN SMALL LETTER SHARP S}",	# ß
+	   "Exists" => "\N{THERE EXISTS}",	# ∃
+	    "exist" => "\N{THERE EXISTS}",	# ∃
+	  "suphsol" => "\N{SUPERSET PRECEDING SOLIDUS}",	# ⟉
+	     "plus" => "+",	# +
+       "CirclePlus" => "\N{CIRCLED PLUS}",	# ⊕
+	    "oplus" => "\N{CIRCLED PLUS}",	# ⊕
+	    "plusb" => "\N{SQUARED PLUS}",	# ⊞
+	  "boxplus" => "\N{SQUARED PLUS}",	# ⊞
+	 "biguplus" => "\N{N-ARY UNION OPERATOR WITH PLUS}",	# ⨄
+	   "xuplus" => "\N{N-ARY UNION OPERATOR WITH PLUS}",	# ⨄
+	  "cularrp" => "\N{TOP ARC ANTICLOCKWISE ARROW WITH PLUS}",	# ⤽
+	   "plusdo" => "\N{DOT PLUS}",	# ∔
+	  "dotplus" => "\N{DOT PLUS}",	# ∔
+      "CircleMinus" => "\N{CIRCLED MINUS}",	# ⊖
+	   "ominus" => "\N{CIRCLED MINUS}",	# ⊖
+	   "minusb" => "\N{SQUARED MINUS}",	# ⊟
+	 "boxminus" => "\N{SQUARED MINUS}",	# ⊟
+	  "curarrm" => "\N{TOP ARC CLOCKWISE ARROW WITH MINUS}",	# ⤼
+	"Backslash" => "\N{SET MINUS}",	# ∖
+	    "setmn" => "\N{SET MINUS}",	# ∖
+	   "ssetmn" => "\N{SET MINUS}",	# ∖
+	 "setminus" => "\N{SET MINUS}",	# ∖
+    "smallsetminus" => "\N{SET MINUS}",	# ∖
+	   "minusd" => "\N{DOT MINUS}",	# ∸
+	 "dotminus" => "\N{DOT MINUS}",	# ∸
+	    "ddarr" => "\N{DOWNWARDS PAIRED ARROWS}",	# ⇊
+    "downdownarrows" => "\N{DOWNWARDS PAIRED ARROWS}",	# ⇊
+	    "uuarr" => "\N{UPWARDS PAIRED ARROWS}",	# ⇈
+       "upuparrows" => "\N{UPWARDS PAIRED ARROWS}",	# ⇈
+	    "llarr" => "\N{LEFTWARDS PAIRED ARROWS}",	# ⇇
+    "leftleftarrows" => "\N{LEFTWARDS PAIRED ARROWS}",	# ⇇
+	    "rrarr" => "\N{RIGHTWARDS PAIRED ARROWS}",	# ⇉
+    "rightrightarrows" => "\N{RIGHTWARDS PAIRED ARROWS}",	# ⇉
+	      "Hat" => "^",	# ^
+	   "commat" => "@",	# @
+	  "ccupssm" => "\N{CLOSED UNION WITH SERIFS AND SMASH PRODUCT}",	# ⩐
+	   "smashp" => "\N{SMASH PRODUCT}",	# ⨳
+    "VerticalTilde" => "\N{WREATH PRODUCT}",	# ≀
+	   "wreath" => "\N{WREATH PRODUCT}",	# ≀
+	       "wr" => "\N{WREATH PRODUCT}",	# ≀
+	    "amalg" => "\N{AMALGAMATION OR COPRODUCT}",	# ⨿
+	   "coprod" => "\N{N-ARY COPRODUCT}",	# ∐
+	"Coproduct" => "\N{N-ARY COPRODUCT}",	# ∐
+	    "iprod" => "\N{INTERIOR PRODUCT}",	# ⨼
+	  "intprod" => "\N{INTERIOR PRODUCT}",	# ⨼
+	    "Cross" => "\N{VECTOR OR CROSS PRODUCT}",	# ⨯
+	   "ltimes" => "\N{LEFT NORMAL FACTOR SEMIDIRECT PRODUCT}",	# ⋉
+	   "rtimes" => "\N{RIGHT NORMAL FACTOR SEMIDIRECT PRODUCT}",	# ⋊
+	   "lthree" => "\N{LEFT SEMIDIRECT PRODUCT}",	# ⋋
+    "leftthreetimes" => "\N{LEFT SEMIDIRECT PRODUCT}",	# ⋋
+	   "rthree" => "\N{RIGHT SEMIDIRECT PRODUCT}",	# ⋌
+    "rightthreetimes" => "\N{RIGHT SEMIDIRECT PRODUCT}",	# ⋌
+	     "prod" => "\N{N-ARY PRODUCT}",	# ∏
+	  "Product" => "\N{N-ARY PRODUCT}",	# ∏
+	     "Lang" => "\N{MATHEMATICAL LEFT DOUBLE ANGLE BRACKET}",	# ⟪
+	     "Rang" => "\N{MATHEMATICAL RIGHT DOUBLE ANGLE BRACKET}",	# ⟫
+	   "langle" => "\N{MATHEMATICAL LEFT ANGLE BRACKET}",	# ⟨
+	     "lang" => "\N{MATHEMATICAL LEFT ANGLE BRACKET}",	# ⟨
+    "LeftAngleBracket" => "\N{MATHEMATICAL LEFT ANGLE BRACKET}",	# ⟨
+	   "rangle" => "\N{MATHEMATICAL RIGHT ANGLE BRACKET}",	# ⟩
+	     "rang" => "\N{MATHEMATICAL RIGHT ANGLE BRACKET}",	# ⟩
+    "RightAngleBracket" => "\N{MATHEMATICAL RIGHT ANGLE BRACKET}",	# ⟩
+	    "lobrk" => "\N{MATHEMATICAL LEFT WHITE SQUARE BRACKET}",	# ⟦
+    "LeftDoubleBracket" => "\N{MATHEMATICAL LEFT WHITE SQUARE BRACKET}",	# ⟦
+	    "robrk" => "\N{MATHEMATICAL RIGHT WHITE SQUARE BRACKET}",	# ⟧
+    "RightDoubleBracket" => "\N{MATHEMATICAL RIGHT WHITE SQUARE BRACKET}",	# ⟧
+	     "bbrk" => "\N{BOTTOM SQUARE BRACKET}",	# ⎵
+     "UnderBracket" => "\N{BOTTOM SQUARE BRACKET}",	# ⎵
+	     "tbrk" => "\N{TOP SQUARE BRACKET}",	# ⎴
+      "OverBracket" => "\N{TOP SQUARE BRACKET}",	# ⎴
+	 "bbrktbrk" => "\N{BOTTOM SQUARE BRACKET OVER TOP SQUARE BRACKET}",	# ⎶
+	    "loang" => "\N{MATHEMATICAL LEFT WHITE TORTOISE SHELL BRACKET}",	# ⟬
+	    "roang" => "\N{MATHEMATICAL RIGHT WHITE TORTOISE SHELL BRACKET}",	# ⟭
+	   "gtlPar" => "\N{DOUBLE LEFT ARC GREATER-THAN BRACKET}",	# ⦕
+	   "rpargt" => "\N{RIGHT ARC GREATER-THAN BRACKET}",	# ⦔
+	   "lparlt" => "\N{LEFT ARC LESS-THAN BRACKET}",	# ⦓
+	   "ltrPar" => "\N{DOUBLE RIGHT ARC LESS-THAN BRACKET}",	# ⦖
+       "UnderBrace" => "\N{BOTTOM CURLY BRACKET}",	# ⏟
+	"OverBrace" => "\N{TOP CURLY BRACKET}",	# ⏞
+	    "ofcir" => "\N{CIRCLED BULLET}",	# ⦿
+	    "olcir" => "\N{CIRCLED WHITE BULLET}",	# ⦾
+	   "hybull" => "\N{HYPHEN BULLET}",	# ⁃
+	     "bull" => "\N{BULLET}",	# •
+	   "bullet" => "\N{BULLET}",	# •
+	     "csub" => "\N{CLOSED SUBSET}",	# ⫏
+	  "suphsub" => "\N{SUPERSET BESIDE SUBSET}",	# ⫗
+	      "Sub" => "\N{DOUBLE SUBSET}",	# ⋐
+	   "Subset" => "\N{DOUBLE SUBSET}",	# ⋐
+	   "subsub" => "\N{SUBSET ABOVE SUBSET}",	# ⫕
+	   "supsub" => "\N{SUPERSET ABOVE SUBSET}",	# ⫔
+	 "bsolhsub" => "\N{REVERSE SOLIDUS PRECEDING SUBSET}",	# ⟈
+	  "supdsub" => "\N{SUPERSET BESIDE AND JOINED BY DASH WITH SUBSET}",	# ⫘
+	     "csup" => "\N{CLOSED SUPERSET}",	# ⫐
+	      "Sup" => "\N{DOUBLE SUPERSET}",	# ⋑
+	   "Supset" => "\N{DOUBLE SUPERSET}",	# ⋑
+	   "subsup" => "\N{SUBSET ABOVE SUPERSET}",	# ⫓
+	   "supsup" => "\N{SUPERSET ABOVE SUPERSET}",	# ⫖
+	  "bemptyv" => "\N{REVERSED EMPTY SET}",	# ⦰
+       "varnothing" => "\N{EMPTY SET}",	# ∅
+	 "emptyset" => "\N{EMPTY SET}",	# ∅
+	   "emptyv" => "\N{EMPTY SET}",	# ∅
+	    "empty" => "\N{EMPTY SET}",	# ∅
+	    "boxVL" => "\N{BOX DRAWINGS DOUBLE VERTICAL AND LEFT}",	# ╣
+	    "boxvl" => "\N{BOX DRAWINGS LIGHT VERTICAL AND LEFT}",	# ┤
+	    "boxDL" => "\N{BOX DRAWINGS DOUBLE DOWN AND LEFT}",	# ╗
+	 "angmsdad" => "\N{MEASURED ANGLE WITH OPEN ARM ENDING IN ARROW POINTING DOWN AND LEFT}",	# ⦫
+	    "boxdl" => "\N{BOX DRAWINGS LIGHT DOWN AND LEFT}",	# ┐
+	    "boxUL" => "\N{BOX DRAWINGS DOUBLE UP AND LEFT}",	# ╝
+	 "angmsdab" => "\N{MEASURED ANGLE WITH OPEN ARM ENDING IN ARROW POINTING UP AND LEFT}",	# ⦩
+	    "boxul" => "\N{BOX DRAWINGS LIGHT UP AND LEFT}",	# ┘
+	 "gesdotol" => "\N{GREATER-THAN OR SLANTED EQUAL TO WITH DOT ABOVE LEFT}",	# ⪄
+	       "gt" => ">",	# >
+	       "GT" => ">",	# >
+	     "dHar" => "\N{DOWNWARDS HARPOON WITH BARB LEFT BESIDE DOWNWARDS HARPOON WITH BARB RIGHT}",	# ⥥
+    "UpEquilibrium" => "\N{UPWARDS HARPOON WITH BARB LEFT BESIDE DOWNWARDS HARPOON WITH BARB RIGHT}",	# ⥮
+	    "udhar" => "\N{UPWARDS HARPOON WITH BARB LEFT BESIDE DOWNWARDS HARPOON WITH BARB RIGHT}",	# ⥮
+    "ReverseUpEquilibrium" => "\N{DOWNWARDS HARPOON WITH BARB LEFT BESIDE UPWARDS HARPOON WITH BARB RIGHT}",	# ⥯
+	    "duhar" => "\N{DOWNWARDS HARPOON WITH BARB LEFT BESIDE UPWARDS HARPOON WITH BARB RIGHT}",	# ⥯
+	     "uHar" => "\N{UPWARDS HARPOON WITH BARB LEFT BESIDE UPWARDS HARPOON WITH BARB RIGHT}",	# ⥣
+	    "boxVR" => "\N{BOX DRAWINGS DOUBLE VERTICAL AND RIGHT}",	# ╠
+	    "boxvr" => "\N{BOX DRAWINGS LIGHT VERTICAL AND RIGHT}",	# ├
+	    "boxDR" => "\N{BOX DRAWINGS DOUBLE DOWN AND RIGHT}",	# ╔
+	 "angmsdac" => "\N{MEASURED ANGLE WITH OPEN ARM ENDING IN ARROW POINTING DOWN AND RIGHT}",	# ⦪
+	    "boxdr" => "\N{BOX DRAWINGS LIGHT DOWN AND RIGHT}",	# ┌
+	    "boxUR" => "\N{BOX DRAWINGS DOUBLE UP AND RIGHT}",	# ╚
+	 "angmsdaa" => "\N{MEASURED ANGLE WITH OPEN ARM ENDING IN ARROW POINTING UP AND RIGHT}",	# ⦨
+	    "boxur" => "\N{BOX DRAWINGS LIGHT UP AND RIGHT}",	# └
+	  "cirscir" => "\N{CIRCLE WITH SMALL CIRCLE TO THE RIGHT}",	# ⧂
+	     "cirE" => "\N{CIRCLE WITH TWO HORIZONTAL STROKES TO THE RIGHT}",	# ⧃
+	 "lesdotor" => "\N{LESS-THAN OR SLANTED EQUAL TO WITH DOT ABOVE RIGHT}",	# ⪃
+	    "rarrc" => "\N{WAVE ARROW POINTING DIRECTLY RIGHT}",	# ⤳
+	   "copysr" => "\N{SOUND RECORDING COPYRIGHT}",	# ℗
+	 "DotEqual" => "\N{APPROACHES THE LIMIT}",	# ≐
+	    "doteq" => "\N{APPROACHES THE LIMIT}",	# ≐
+	    "esdot" => "\N{APPROACHES THE LIMIT}",	# ≐
+	    "clubs" => "\N{BLACK CLUB SUIT}",	# ♣
+	 "clubsuit" => "\N{BLACK CLUB SUIT}",	# ♣
+	    "diams" => "\N{BLACK DIAMOND SUIT}",	# ♦
+      "diamondsuit" => "\N{BLACK DIAMOND SUIT}",	# ♦
+	   "spades" => "\N{BLACK SPADE SUIT}",	# ♠
+	"spadesuit" => "\N{BLACK SPADE SUIT}",	# ♠
+	   "hearts" => "\N{BLACK HEART SUIT}",	# ♥
+	"heartsuit" => "\N{BLACK HEART SUIT}",	# ♥
+	       "lt" => "<",	# <
+	       "LT" => "<",	# <
+	    "trade" => "\N{TRADE MARK SIGN}",	# ™
+	    "TRADE" => "\N{TRADE MARK SIGN}",	# ™
+	   "percnt" => "%",	# %
+	    "dblac" => "\N{DOUBLE ACUTE ACCENT}",	# ˝
+    "DiacriticalDoubleAcute" => "\N{DOUBLE ACUTE ACCENT}",	# ˝
+	    "acute" => "\N{ACUTE ACCENT}",	# ´
+    "DiacriticalAcute" => "\N{ACUTE ACCENT}",	# ´
+	 "otimesas" => "\N{CIRCLED MULTIPLICATION SIGN WITH CIRCUMFLEX ACCENT}",	# ⨶
+	   "apacir" => "\N{ALMOST EQUAL TO WITH CIRCUMFLEX ACCENT}",	# ⩯
+	     "circ" => "\N{MODIFIER LETTER CIRCUMFLEX ACCENT}",	# ˆ
+	    "lbbrk" => "\N{LIGHT LEFT TORTOISE SHELL BRACKET ORNAMENT}",	# ❲
+	    "rbbrk" => "\N{LIGHT RIGHT TORTOISE SHELL BRACKET ORNAMENT}",	# ❳
+	     "comp" => "\N{COMPLEMENT}",	# ∁
+       "complement" => "\N{COMPLEMENT}",	# ∁
+	 "profsurf" => "\N{SEGMENT}",	# ⌓
+	    "caret" => "\N{CARET INSERTION POINT}",	# ⁁
+	   "Tcaron" => "\N{LATIN CAPITAL LETTER T WITH CARON}",	# Ť
+	   "tcaron" => "\N{LATIN SMALL LETTER T WITH CARON}",	# ť
+	   "middot" => "\N{MIDDLE DOT}",	# ·
+	"centerdot" => "\N{MIDDLE DOT}",	# ·
+	"CenterDot" => "\N{MIDDLE DOT}",	# ·
+	   "tridot" => "\N{WHITE UP-POINTING TRIANGLE WITH DOT}",	# ◬
+	 "angrtvbd" => "\N{MEASURED RIGHT ANGLE WITH DOT}",	# ⦝
+	   "gtrdot" => "\N{GREATER-THAN WITH DOT}",	# ⋗
+	    "gtdot" => "\N{GREATER-THAN WITH DOT}",	# ⋗
+	  "lessdot" => "\N{LESS-THAN WITH DOT}",	# ⋖
+	    "ltdot" => "\N{LESS-THAN WITH DOT}",	# ⋖
+	   "capdot" => "\N{INTERSECTION WITH DOT}",	# ⩀
+	    "langd" => "\N{LEFT ANGLE BRACKET WITH DOT}",	# ⦑
+	    "rangd" => "\N{RIGHT ANGLE BRACKET WITH DOT}",	# ⦒
+	   "subdot" => "\N{SUBSET WITH DOT}",	# ⪽
+	   "supdot" => "\N{SUPERSET WITH DOT}",	# ⪾
+	    "radic" => "\N{SQUARE ROOT}",	# √
+	     "Sqrt" => "\N{SQUARE ROOT}",	# √
+	     "vert" => "|",	# |
+	      "ast" => "*",	# *
+	   "midast" => "*",	# *
+	    "quest" => "?",	# ?
+	  "nexists" => "\N{THERE DOES NOT EXIST}",	# ∄
+	"NotExists" => "\N{THERE DOES NOT EXIST}",	# ∄
+	   "nexist" => "\N{THERE DOES NOT EXIST}",	# ∄
+	  "plussim" => "\N{PLUS SIGN WITH TILDE BELOW}",	# ⨦
+	   "midcir" => "\N{VERTICAL LINE WITH CIRCLE BELOW}",	# ⫰
+	   "topcir" => "\N{DOWN TACK WITH CIRCLE BELOW}",	# ⫱
+	  "submult" => "\N{SUBSET WITH MULTIPLICATION SIGN BELOW}",	# ⫁
+	  "supmult" => "\N{SUPERSET WITH MULTIPLICATION SIGN BELOW}",	# ⫂
+	  "subplus" => "\N{SUBSET WITH PLUS SIGN BELOW}",	# ⪿
+	  "supplus" => "\N{SUPERSET WITH PLUS SIGN BELOW}",	# ⫀
+	     "race" => "\N{REVERSED TILDE}\N{COMBINING MACRON BELOW}",	# ∽̱
+	  "ddotseq" => "\N{EQUALS SIGN WITH TWO DOTS ABOVE AND TWO DOTS BELOW}",	# ⩷
+	    "eDDot" => "\N{EQUALS SIGN WITH TWO DOTS ABOVE AND TWO DOTS BELOW}",	# ⩷
+	   "rarrpl" => "\N{RIGHTWARDS ARROW WITH PLUS BELOW}",	# ⥅
+	    "sdote" => "\N{EQUALS SIGN WITH DOT BELOW}",	# ⩦
+	   "plusdu" => "\N{PLUS SIGN WITH DOT BELOW}",	# ⨥
+	  "minusdu" => "\N{MINUS SIGN WITH DOT BELOW}",	# ⨪
+	    "loarr" => "\N{LEFTWARDS OPEN-HEADED ARROW}",	# ⇽
+	    "roarr" => "\N{RIGHTWARDS OPEN-HEADED ARROW}",	# ⇾
+	    "hoarr" => "\N{LEFT RIGHT OPEN-HEADED ARROW}",	# ⇿
+	     "Darr" => "\N{DOWNWARDS TWO HEADED ARROW}",	# ↡
+	     "Uarr" => "\N{UPWARDS TWO HEADED ARROW}",	# ↟
+	     "Larr" => "\N{LEFTWARDS TWO HEADED ARROW}",	# ↞
+    "twoheadleftarrow" => "\N{LEFTWARDS TWO HEADED ARROW}",	# ↞
+	     "Rarr" => "\N{RIGHTWARDS TWO HEADED ARROW}",	# ↠
+    "twoheadrightarrow" => "\N{RIGHTWARDS TWO HEADED ARROW}",	# ↠
+	     "vArr" => "\N{UP DOWN DOUBLE ARROW}",	# ⇕
+      "Updownarrow" => "\N{UP DOWN DOUBLE ARROW}",	# ⇕
+    "DoubleUpDownArrow" => "\N{UP DOWN DOUBLE ARROW}",	# ⇕
+	     "dArr" => "\N{DOWNWARDS DOUBLE ARROW}",	# ⇓
+	"Downarrow" => "\N{DOWNWARDS DOUBLE ARROW}",	# ⇓
+    "DoubleDownArrow" => "\N{DOWNWARDS DOUBLE ARROW}",	# ⇓
+	     "uArr" => "\N{UPWARDS DOUBLE ARROW}",	# ⇑
+	  "Uparrow" => "\N{UPWARDS DOUBLE ARROW}",	# ⇑
+    "DoubleUpArrow" => "\N{UPWARDS DOUBLE ARROW}",	# ⇑
+	    "xlArr" => "\N{LONG LEFTWARDS DOUBLE ARROW}",	# ⟸
+    "Longleftarrow" => "\N{LONG LEFTWARDS DOUBLE ARROW}",	# ⟸
+    "DoubleLongLeftArrow" => "\N{LONG LEFTWARDS DOUBLE ARROW}",	# ⟸
+	     "lArr" => "\N{LEFTWARDS DOUBLE ARROW}",	# ⇐
+	"Leftarrow" => "\N{LEFTWARDS DOUBLE ARROW}",	# ⇐
+    "DoubleLeftArrow" => "\N{LEFTWARDS DOUBLE ARROW}",	# ⇐
+	    "xrArr" => "\N{LONG RIGHTWARDS DOUBLE ARROW}",	# ⟹
+    "Longrightarrow" => "\N{LONG RIGHTWARDS DOUBLE ARROW}",	# ⟹
+    "DoubleLongRightArrow" => "\N{LONG RIGHTWARDS DOUBLE ARROW}",	# ⟹
+	     "rArr" => "\N{RIGHTWARDS DOUBLE ARROW}",	# ⇒
+	  "Implies" => "\N{RIGHTWARDS DOUBLE ARROW}",	# ⇒
+       "Rightarrow" => "\N{RIGHTWARDS DOUBLE ARROW}",	# ⇒
+    "DoubleRightArrow" => "\N{RIGHTWARDS DOUBLE ARROW}",	# ⇒
+	    "xhArr" => "\N{LONG LEFT RIGHT DOUBLE ARROW}",	# ⟺
+    "Longleftrightarrow" => "\N{LONG LEFT RIGHT DOUBLE ARROW}",	# ⟺
+    "DoubleLongLeftRightArrow" => "\N{LONG LEFT RIGHT DOUBLE ARROW}",	# ⟺
+	      "iff" => "\N{LEFT RIGHT DOUBLE ARROW}",	# ⇔
+	     "hArr" => "\N{LEFT RIGHT DOUBLE ARROW}",	# ⇔
+    "Leftrightarrow" => "\N{LEFT RIGHT DOUBLE ARROW}",	# ⇔
+    "DoubleLeftRightArrow" => "\N{LEFT RIGHT DOUBLE ARROW}",	# ⇔
+	    "neArr" => "\N{NORTH EAST DOUBLE ARROW}",	# ⇗
+	    "seArr" => "\N{SOUTH EAST DOUBLE ARROW}",	# ⇘
+	    "nwArr" => "\N{NORTH WEST DOUBLE ARROW}",	# ⇖
+	    "swArr" => "\N{SOUTH WEST DOUBLE ARROW}",	# ⇙
+	   "cularr" => "\N{ANTICLOCKWISE TOP SEMICIRCLE ARROW}",	# ↶
+    "curvearrowleft" => "\N{ANTICLOCKWISE TOP SEMICIRCLE ARROW}",	# ↶
+	   "curarr" => "\N{CLOCKWISE TOP SEMICIRCLE ARROW}",	# ↷
+    "curvearrowright" => "\N{CLOCKWISE TOP SEMICIRCLE ARROW}",	# ↷
+	    "olarr" => "\N{ANTICLOCKWISE OPEN CIRCLE ARROW}",	# ↺
+    "circlearrowleft" => "\N{ANTICLOCKWISE OPEN CIRCLE ARROW}",	# ↺
+	    "orarr" => "\N{CLOCKWISE OPEN CIRCLE ARROW}",	# ↻
+    "circlearrowright" => "\N{CLOCKWISE OPEN CIRCLE ARROW}",	# ↻
+	 "dzigrarr" => "\N{LONG RIGHTWARDS SQUIGGLE ARROW}",	# ⟿
+	  "zigrarr" => "\N{RIGHTWARDS SQUIGGLE ARROW}",	# ⇝
+	    "lAarr" => "\N{LEFTWARDS TRIPLE ARROW}",	# ⇚
+       "Lleftarrow" => "\N{LEFTWARDS TRIPLE ARROW}",	# ⇚
+	    "rAarr" => "\N{RIGHTWARDS TRIPLE ARROW}",	# ⇛
+      "Rrightarrow" => "\N{RIGHTWARDS TRIPLE ARROW}",	# ⇛
+	  "cudarrl" => "\N{RIGHT-SIDE ARC CLOCKWISE ARROW}",	# ⤸
+	   "larrpl" => "\N{LEFT-SIDE ARC ANTICLOCKWISE ARROW}",	# ⤹
+    "rightsquigarrow" => "\N{RIGHTWARDS WAVE ARROW}",	# ↝
+	    "rarrw" => "\N{RIGHTWARDS WAVE ARROW}",	# ↝
+    "leftrightsquigarrow" => "\N{LEFT RIGHT WAVE ARROW}",	# ↭
+	    "harrw" => "\N{LEFT RIGHT WAVE ARROW}",	# ↭
+	  "angzarr" => "\N{RIGHT ANGLE WITH DOWNWARDS ZIGZAG ARROW}",	# ⍼
+	    "lbarr" => "\N{LEFTWARDS DOUBLE DASH ARROW}",	# ⤌
+	    "rbarr" => "\N{RIGHTWARDS DOUBLE DASH ARROW}",	# ⤍
+	   "bkarow" => "\N{RIGHTWARDS DOUBLE DASH ARROW}",	# ⤍
+	    "RBarr" => "\N{RIGHTWARDS TWO-HEADED TRIPLE DASH ARROW}",	# ⤐
+	 "drbkarow" => "\N{RIGHTWARDS TWO-HEADED TRIPLE DASH ARROW}",	# ⤐
+	    "lBarr" => "\N{LEFTWARDS TRIPLE DASH ARROW}",	# ⤎
+	    "rBarr" => "\N{RIGHTWARDS TRIPLE DASH ARROW}",	# ⤏
+	  "dbkarow" => "\N{RIGHTWARDS TRIPLE DASH ARROW}",	# ⤏
+	     "varr" => "\N{UP DOWN ARROW}",	# ↕
+      "updownarrow" => "\N{UP DOWN ARROW}",	# ↕
+      "UpDownArrow" => "\N{UP DOWN ARROW}",	# ↕
+	    "udarr" => "\N{UPWARDS ARROW LEFTWARDS OF DOWNWARDS ARROW}",	# ⇅
+    "UpArrowDownArrow" => "\N{UPWARDS ARROW LEFTWARDS OF DOWNWARDS ARROW}",	# ⇅
+	     "darr" => "\N{DOWNWARDS ARROW}",	# ↓
+	"downarrow" => "\N{DOWNWARDS ARROW}",	# ↓
+	"DownArrow" => "\N{DOWNWARDS ARROW}",	# ↓
+    "ShortDownArrow" => "\N{DOWNWARDS ARROW}",	# ↓
+	    "duarr" => "\N{DOWNWARDS ARROW LEFTWARDS OF UPWARDS ARROW}",	# ⇵
+    "DownArrowUpArrow" => "\N{DOWNWARDS ARROW LEFTWARDS OF UPWARDS ARROW}",	# ⇵
+	     "uarr" => "\N{UPWARDS ARROW}",	# ↑
+	  "uparrow" => "\N{UPWARDS ARROW}",	# ↑
+	  "UpArrow" => "\N{UPWARDS ARROW}",	# ↑
+     "ShortUpArrow" => "\N{UPWARDS ARROW}",	# ↑
+	   "ltlarr" => "\N{LESS-THAN ABOVE LEFTWARDS ARROW}",	# ⥶
+	  "suplarr" => "\N{SUPERSET ABOVE LEFTWARDS ARROW}",	# ⥻
+	    "xlarr" => "\N{LONG LEFTWARDS ARROW}",	# ⟵
+    "longleftarrow" => "\N{LONG LEFTWARDS ARROW}",	# ⟵
+    "LongLeftArrow" => "\N{LONG LEFTWARDS ARROW}",	# ⟵
+	     "larr" => "\N{LEFTWARDS ARROW}",	# ←
+	    "slarr" => "\N{LEFTWARDS ARROW}",	# ←
+	"leftarrow" => "\N{LEFTWARDS ARROW}",	# ←
+	"LeftArrow" => "\N{LEFTWARDS ARROW}",	# ←
+    "ShortLeftArrow" => "\N{LEFTWARDS ARROW}",	# ←
+	    "rlarr" => "\N{RIGHTWARDS ARROW OVER LEFTWARDS ARROW}",	# ⇄
+    "rightleftarrows" => "\N{RIGHTWARDS ARROW OVER LEFTWARDS ARROW}",	# ⇄
+    "RightArrowLeftArrow" => "\N{RIGHTWARDS ARROW OVER LEFTWARDS ARROW}",	# ⇄
+	   "gtrarr" => "\N{GREATER-THAN ABOVE RIGHTWARDS ARROW}",	# ⥸
+	    "erarr" => "\N{EQUALS SIGN ABOVE RIGHTWARDS ARROW}",	# ⥱
+	  "simrarr" => "\N{TILDE OPERATOR ABOVE RIGHTWARDS ARROW}",	# ⥲
+	  "subrarr" => "\N{SUBSET ABOVE RIGHTWARDS ARROW}",	# ⥹
+	    "xrarr" => "\N{LONG RIGHTWARDS ARROW}",	# ⟶
+    "longrightarrow" => "\N{LONG RIGHTWARDS ARROW}",	# ⟶
+    "LongRightArrow" => "\N{LONG RIGHTWARDS ARROW}",	# ⟶
+	     "rarr" => "\N{RIGHTWARDS ARROW}",	# →
+	    "srarr" => "\N{RIGHTWARDS ARROW}",	# →
+       "rightarrow" => "\N{RIGHTWARDS ARROW}",	# →
+       "RightArrow" => "\N{RIGHTWARDS ARROW}",	# →
+    "ShortRightArrow" => "\N{RIGHTWARDS ARROW}",	# →
+	    "lrarr" => "\N{LEFTWARDS ARROW OVER RIGHTWARDS ARROW}",	# ⇆
+    "leftrightarrows" => "\N{LEFTWARDS ARROW OVER RIGHTWARDS ARROW}",	# ⇆
+    "LeftArrowRightArrow" => "\N{LEFTWARDS ARROW OVER RIGHTWARDS ARROW}",	# ⇆
+	    "xharr" => "\N{LONG LEFT RIGHT ARROW}",	# ⟷
+    "longleftrightarrow" => "\N{LONG LEFT RIGHT ARROW}",	# ⟷
+    "LongLeftRightArrow" => "\N{LONG LEFT RIGHT ARROW}",	# ⟷
+	     "harr" => "\N{LEFT RIGHT ARROW}",	# ↔
+    "leftrightarrow" => "\N{LEFT RIGHT ARROW}",	# ↔
+    "LeftRightArrow" => "\N{LEFT RIGHT ARROW}",	# ↔
+	   "nwnear" => "\N{NORTH WEST ARROW AND NORTH EAST ARROW}",	# ⤧
+	    "nearr" => "\N{NORTH EAST ARROW}",	# ↗
+	  "nearrow" => "\N{NORTH EAST ARROW}",	# ↗
+    "UpperRightArrow" => "\N{NORTH EAST ARROW}",	# ↗
+	     "toea" => "\N{NORTH EAST ARROW AND SOUTH EAST ARROW}",	# ⤨
+	   "nesear" => "\N{NORTH EAST ARROW AND SOUTH EAST ARROW}",	# ⤨
+	    "searr" => "\N{SOUTH EAST ARROW}",	# ↘
+	  "searrow" => "\N{SOUTH EAST ARROW}",	# ↘
+    "LowerRightArrow" => "\N{SOUTH EAST ARROW}",	# ↘
+	   "swnwar" => "\N{SOUTH WEST ARROW AND NORTH WEST ARROW}",	# ⤪
+	    "nwarr" => "\N{NORTH WEST ARROW}",	# ↖
+    "UpperLeftArrow" => "\N{NORTH WEST ARROW}",	# ↖
+	  "nwarrow" => "\N{NORTH WEST ARROW}",	# ↖
+	     "tosa" => "\N{SOUTH EAST ARROW AND SOUTH WEST ARROW}",	# ⤩
+	   "seswar" => "\N{SOUTH EAST ARROW AND SOUTH WEST ARROW}",	# ⤩
+	    "swarr" => "\N{SOUTH WEST ARROW}",	# ↙
+    "LowerLeftArrow" => "\N{SOUTH WEST ARROW}",	# ↙
+	  "swarrow" => "\N{SOUTH WEST ARROW}",	# ↙
+	  "olcross" => "\N{CIRCLE WITH SUPERIMPOSED X}",	# ⦻
+	   "hercon" => "\N{HERMITIAN CONJUGATE MATRIX}",	# ⊹
+	    "blank" => "\N{OPEN BOX}",	# ␣
+	    "cross" => "\N{BALLOT X}",	# ✗
+	     "Xopf" => "\N{MATHEMATICAL DOUBLE-STRUCK CAPITAL X}",	# 𝕏
+	      "Xfr" => "\N{MATHEMATICAL FRAKTUR CAPITAL X}",	# 𝔛
+	     "Xscr" => "\N{MATHEMATICAL SCRIPT CAPITAL X}",	# 𝒳
+	     "xopf" => "\N{MATHEMATICAL DOUBLE-STRUCK SMALL X}",	# 𝕩
+	      "xfr" => "\N{MATHEMATICAL FRAKTUR SMALL X}",	# 𝔵
+	     "xscr" => "\N{MATHEMATICAL SCRIPT SMALL X}",	# 𝓍
+	     "nang" => "\N{ANGLE}\N{COMBINING LONG VERTICAL LINE OVERLAY}",	# ∠⃒
+	    "vnsub" => "\N{SUBSET OF}\N{COMBINING LONG VERTICAL LINE OVERLAY}",	# ⊂⃒
+	  "nsubset" => "\N{SUBSET OF}\N{COMBINING LONG VERTICAL LINE OVERLAY}",	# ⊂⃒
+	"NotSubset" => "\N{SUBSET OF}\N{COMBINING LONG VERTICAL LINE OVERLAY}",	# ⊂⃒
+	    "vnsup" => "\N{SUPERSET OF}\N{COMBINING LONG VERTICAL LINE OVERLAY}",	# ⊃⃒
+	  "nsupset" => "\N{SUPERSET OF}\N{COMBINING LONG VERTICAL LINE OVERLAY}",	# ⊃⃒
+      "NotSuperset" => "\N{SUPERSET OF}\N{COMBINING LONG VERTICAL LINE OVERLAY}",	# ⊃⃒
+	      "nGt" => "\N{MUCH GREATER-THAN}\N{COMBINING LONG VERTICAL LINE OVERLAY}",	# ≫⃒
+	      "nLt" => "\N{MUCH LESS-THAN}\N{COMBINING LONG VERTICAL LINE OVERLAY}",	# ≪⃒
+	  "nvltrie" => "\N{NORMAL SUBGROUP OF OR EQUAL TO}\N{COMBINING LONG VERTICAL LINE OVERLAY}",	# ⊴⃒
+	     "nvge" => "\N{GREATER-THAN OR EQUAL TO}\N{COMBINING LONG VERTICAL LINE OVERLAY}",	# ≥⃒
+	     "nvle" => "\N{LESS-THAN OR EQUAL TO}\N{COMBINING LONG VERTICAL LINE OVERLAY}",	# ≤⃒
+	  "nvrtrie" => "\N{CONTAINS AS NORMAL SUBGROUP OR EQUAL TO}\N{COMBINING LONG VERTICAL LINE OVERLAY}",	# ⊵⃒
+	     "nvap" => "\N{EQUIVALENT TO}\N{COMBINING LONG VERTICAL LINE OVERLAY}",	# ≍⃒
+	    "nvsim" => "\N{TILDE OPERATOR}\N{COMBINING LONG VERTICAL LINE OVERLAY}",	# ∼⃒
+	     "nvgt" => ">\N{COMBINING LONG VERTICAL LINE OVERLAY}",	# >⃒
+	     "nvlt" => "<\N{COMBINING LONG VERTICAL LINE OVERLAY}",	# <⃒
+	      "bne" => "=\N{COMBINING REVERSE SOLIDUS OVERLAY}",	# =⃥
+	  "bnequiv" => "\N{IDENTICAL TO}\N{COMBINING REVERSE SOLIDUS OVERLAY}",	# ≡⃥
+	   "nparsl" => "\N{DOUBLE SOLIDUS OPERATOR}\N{COMBINING REVERSE SOLIDUS OVERLAY}",	# ⫽⃥
+	    "napid" => "\N{TRIPLE TILDE}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ≋̸
+    "NotEqualTilde" => "\N{MINUS TILDE}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ≂̸
+	    "nesim" => "\N{MINUS TILDE}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ≂̸
+    "NotRightTriangleBar" => "\N{VERTICAL BAR BESIDE RIGHT TRIANGLE}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⧐̸
+	 "notindot" => "\N{ELEMENT OF WITH DOT ABOVE}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⋵̸
+	 "ncongdot" => "\N{CONGRUENT WITH DOT ABOVE}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⩭̸
+    "NotSquareSubset" => "\N{SQUARE IMAGE OF}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⊏̸
+    "NotSquareSuperset" => "\N{SQUARE ORIGINAL OF}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⊐̸
+	    "npart" => "\N{PARTIAL DIFFERENTIAL}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ∂̸
+    "NotNestedGreaterGreater" => "\N{DOUBLE NESTED GREATER-THAN}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⪢̸
+    "NotGreaterGreater" => "\N{MUCH GREATER-THAN}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ≫̸
+	     "nGtv" => "\N{MUCH GREATER-THAN}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ≫̸
+	      "nGg" => "\N{VERY MUCH GREATER-THAN}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⋙̸
+    "NotNestedLessLess" => "\N{DOUBLE NESTED LESS-THAN}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⪡̸
+      "NotLessLess" => "\N{MUCH LESS-THAN}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ≪̸
+	     "nLtv" => "\N{MUCH LESS-THAN}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ≪̸
+	      "nLl" => "\N{VERY MUCH LESS-THAN}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⋘̸
+	   "nbumpe" => "\N{DIFFERENCE BETWEEN}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ≏̸
+     "NotHumpEqual" => "\N{DIFFERENCE BETWEEN}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ≏̸
+	     "nsce" => "\N{SUCCEEDS ABOVE SINGLE-LINE EQUALS SIGN}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⪰̸
+    "NotSucceedsEqual" => "\N{SUCCEEDS ABOVE SINGLE-LINE EQUALS SIGN}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⪰̸
+	  "nsucceq" => "\N{SUCCEEDS ABOVE SINGLE-LINE EQUALS SIGN}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⪰̸
+	     "npre" => "\N{PRECEDES ABOVE SINGLE-LINE EQUALS SIGN}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⪯̸
+    "NotPrecedesEqual" => "\N{PRECEDES ABOVE SINGLE-LINE EQUALS SIGN}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⪯̸
+	  "npreceq" => "\N{PRECEDES ABOVE SINGLE-LINE EQUALS SIGN}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⪯̸
+	    "nsubE" => "\N{SUBSET OF ABOVE EQUALS SIGN}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⫅̸
+       "nsubseteqq" => "\N{SUBSET OF ABOVE EQUALS SIGN}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⫅̸
+	    "nsupE" => "\N{SUPERSET OF ABOVE EQUALS SIGN}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⫆̸
+       "nsupseteqq" => "\N{SUPERSET OF ABOVE EQUALS SIGN}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⫆̸
+    "NotGreaterSlantEqual" => "\N{GREATER-THAN OR SLANTED EQUAL TO}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⩾̸
+	     "nges" => "\N{GREATER-THAN OR SLANTED EQUAL TO}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⩾̸
+	"ngeqslant" => "\N{GREATER-THAN OR SLANTED EQUAL TO}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⩾̸
+    "NotLessSlantEqual" => "\N{LESS-THAN OR SLANTED EQUAL TO}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⩽̸
+	     "nles" => "\N{LESS-THAN OR SLANTED EQUAL TO}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⩽̸
+	"nleqslant" => "\N{LESS-THAN OR SLANTED EQUAL TO}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⩽̸
+	      "ngE" => "\N{GREATER-THAN OVER EQUAL TO}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ≧̸
+    "NotGreaterFullEqual" => "\N{GREATER-THAN OVER EQUAL TO}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ≧̸
+	    "ngeqq" => "\N{GREATER-THAN OVER EQUAL TO}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ≧̸
+	      "nlE" => "\N{LESS-THAN OVER EQUAL TO}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ≦̸
+	    "nleqq" => "\N{LESS-THAN OVER EQUAL TO}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ≦̸
+	     "napE" => "\N{APPROXIMATELY EQUAL OR EQUAL TO}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⩰̸
+    "NotSucceedsTilde" => "\N{SUCCEEDS OR EQUIVALENT TO}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ≿̸
+	    "nbump" => "\N{GEOMETRICALLY EQUIVALENT TO}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ≎̸
+    "NotHumpDownHump" => "\N{GEOMETRICALLY EQUIVALENT TO}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ≎̸
+    "NotLeftTriangleBar" => "\N{LEFT TRIANGLE BESIDE VERTICAL BAR}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⧏̸
+	   "notinE" => "\N{ELEMENT OF WITH TWO HORIZONTAL STROKES}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⋹̸
+	   "nrarrc" => "\N{WAVE ARROW POINTING DIRECTLY RIGHT}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ⤳̸
+	    "nedot" => "\N{APPROACHES THE LIMIT}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ≐̸
+	   "nrarrw" => "\N{RIGHTWARDS WAVE ARROW}\N{COMBINING LONG SOLIDUS OVERLAY}",	# ↝̸
+	   "cylcty" => "\N{CYLINDRICITY}",	# ⌭
+	   "iinfin" => "\N{INCOMPLETE INFINITY}",	# ⧜
+	    "infin" => "\N{INFINITY}",	# ∞
+	 "infintie" => "\N{TIE OVER INFINITY}",	# ⧝
+	    "Ycirc" => "\N{LATIN CAPITAL LETTER Y WITH CIRCUMFLEX}",	# Ŷ
+	    "ycirc" => "\N{LATIN SMALL LETTER Y WITH CIRCUMFLEX}",	# ŷ
+	     "Yopf" => "\N{MATHEMATICAL DOUBLE-STRUCK CAPITAL Y}",	# 𝕐
+	      "Yfr" => "\N{MATHEMATICAL FRAKTUR CAPITAL Y}",	# 𝔜
+	     "Yscr" => "\N{MATHEMATICAL SCRIPT CAPITAL Y}",	# 𝒴
+	     "yopf" => "\N{MATHEMATICAL DOUBLE-STRUCK SMALL Y}",	# 𝕪
+	      "yfr" => "\N{MATHEMATICAL FRAKTUR SMALL Y}",	# 𝔶
+	     "yscr" => "\N{MATHEMATICAL SCRIPT SMALL Y}",	# 𝓎
+
+);
+
+sub convert_to_html4(_) {
+    state $entity;
+    if (!$entity && $Opt{names}) {
+        $entity = {};
+        while (my($hsym, $usym) = each %html4_2unicode) {
+            my $codepoint = charnames::vianame($usym) || panic("huh?");
+            $entity->{ chr $codepoint } = "&$hsym;";
+        }
+        debug("entity count: " . keys %$entity); 
+    }
+    no warnings "utf8";
+    my $_ = $_[0];
+    s/&/&amp;/g;
+    s/</&lt;/g;
+    s/>/&gt;/g;
+    s/"/&quot;/g;
+    # &apos; is only in XHTML, not HTML4.  Be conservative
+    ###s/'/&apos;/g;
+    s {
+        ( $Ugly_RX )
+    }{
+        $entity->{$1} || sprintf("&#%d;", ord $1)
+    }gxe;
+    return $_;;
+}
+
+sub convert_to_html5(_) {
+    state $entity;
+
+    if (!$entity && $Opt{names}) {
+        $entity = {};
+        while (my($hsym, $ustr) = each %html5_2unicode) {
+            $entity->{ $ustr } = "&$hsym;";
+        }
+        debug("entity count: " . keys %$entity); 
+    }
+    no warnings "utf8";
+    my $_ = $_[0];
+
+    s/&/&amp;/g;
+    s/</&lt;/g;
+    s/>/&gt;/g;
+    s/"/&quot;/g;
+    s/'/&apos;/g;
+
+    s {
+        ( $Ugly_RX )
+    }{
+        $entity->{$1} || sprintf("&#%d;", ord $1)
+    }gxe;
+    return $_;;
+}
+
+} # end UNITCHECK private scope for hash
+
+sub convert_to_xml(_) {
+    my $_ = shift();
+    no warnings "utf8";
+
+    s/&/&amp;/g;
+    s/</&lt;/g;
+    s/>/&gt;/g;
+    s/"/&quot;/g;
+    s/'/&apos;/g;
+
+    s/($Ugly_RX+)/sprintf("&#x%x;", ord $1)/ge;
+    return $_;
+}
+
+sub convert_to_U_numbers(_) {
+    my $string = shift();
+    no warnings "utf8";
+    $string =~ s/($Ugly_RX)/sprintf("\\N{U+%v02X}", $1)/ge;
+    return $string;;
+}
+
+sub convert_to_hex(_) {
+    my $string = shift();
+    my $minwidth = $Opt{bytes} ? 2 : 4;
+    $string =~ s/($Ugly_RX)/sprintf("\\x{%02X}", ord $1)/ge;
+    return $string;;
+}
+
+sub convert_to_octal(_) {
+    my $string = shift();
+    no warnings "utf8";
+    $string =~ s/($Ugly_RX)/sprintf("\\%o", ord $1)/ge;
+    return $string;;
+}
+
+sub convert_to_bytes(_) {
+    require Encode;
+    my $string = shift();
+    $string =~ s/($Ugly_RX)/sprintf("\\x%02X", ord $1)/ge;
+    return $string;
+}
+
+sub commaʼd_list {
+    my($argc, @arg) = (scalar @_, @_);
+    my $sepchar = grep(/,/ => @arg) ? ";" : ",";
+    given ($argc)  {
+        when (0)  { return q() }
+        when (1)  { return $arg[0] }
+        when (2)  {
+            panic("list @arg already has an and in it") if @arg ~~ /\band\b/;
+            return "$arg[0] and $arg[1]";
+        }
+        default   {
+            panic("list @arg already has an and in it") if @arg ~~ /\band\b/;
+            return join "$sepchar " => (
+                @arg[ 0 .. ($#arg-1) ],
+                "and $arg[-1]",
+            );
+        }
+    }
+}
+
+sub usage($) {
+    my $_ = $_[0];
+    s/^(\p{Ll})/\u$1/;
+    s/$/./ if /^\pL/ && !/\.$/;
+    pod2usage("$0: [USAGE] $_");
+}
+
+sub load_options() {
+
+    Getopt::Long::Configure qw[ bundling auto_version ];
+
+    my @options = (
+
+        # standard options
+        qw[
+            help|h|?
+            man
+            debug
+        ],
+
+	# other options
+	qw[
+            encoding|E=s
+
+	    names|verbose|v|n
+	    hex|x
+
+	    bytes|binary|b
+	    octal|o|0
+
+            html4|html|4|H
+            html5|5
+            xml|X
+
+	    backslash|t
+	    fix-newlines|l
+	    unbuffer|u
+	    endings|e
+
+	],
+
+    );
+
+    GetOptions(\%Opt => @options) || pod2usage(2);
+
+    pod2usage(0)                                 if $Opt{help};
+    pod2usage(-exitstatus => 0, -verbose => 2)   if $Opt{man};
+
+    return;
+
+    my @valid = find_converters();
+    if (grep ($Opt{$_}, @valid) > 1) {
+        usage("specify no more than one of " .  commaʼd_list(@valid));
+    }
+
+
+}
+
+
+#################################################################
+#################################################################
+#################################################################
+
+__END__
+
+=encoding utf8
+
+=head1 NAME
+
+uniquote - escape special characters using various quoting conventions
+
+=head1 SYNOPSIS
+
+uniquote [I<options>] [ I<textfile> ... ]
+
+ Standard options:
+
+    --version       print version information and exit
+    --help          this message
+    --man           full manpage
+    --debug         add some debugging output
+
+ Character mode options:
+
+            Without a specified encoding, utf8 is assumed
+            unless file has encoding extension.
+
+    --verbose   -v  show full character names like \N{EN DASH}
+
+    --hex       -x  use singleton \x{...} esapes instead of \N{U+XXX}
+
+    --encoding  -E  specify encoding for all input files
+
+    --html      -H  show HTML entities (add --verbose for names)
+    --xml       -X  show XML entities
+
+  Binary mode options:
+
+    --bytes     -b  binary file in hex
+    --octal     -0  binary file in octal
+
+  Other options:
+
+    --endings       -n   place $ at EOL so trailing spaces visible
+    --backslash     -t   use backslash escapes for unprintable ASCII
+    --fix-newlines  -l   consider any Unicode linebreak sequence as EOL
+    --unbuffer      -u   flush each output line
+
+=head1 DESCRIPTION
+
+The I<uniquote> program it means as a Unicode-aware replacement
+for programs like ol(1) and C<cat -v>.  It converts ASCII control code
+and all non-ASCII code points into a quoted form such as one might use
+in a Perl literal.
+
+Use B<--endings> or C<-e> to cat like C<cat -e> and add a dollar at the end
+of each line so trailing spaces become apparent.
+
+Use B<--backslash> or C<-t> to show tabs and other ASCII control codes 
+as backslash escapes.
+
+By default, I<uniquote> converts each such code points into the form
+C<< \N{U+I<hex>} >>, making code point 962 appear as C<< \N{U+3C2} >>.
+The B<--hex> option instead shows eligible points in backslash-X notation,
+so code point 962 would be displayed as C<< \x{3C2} >>.
+
+The B<--verbose> option instead displays eligible code points by name.
+Code point 962 would then be shown as C<< \N{GREEK SMALL LETTER FINAL SIGMA} >>.
+
+The B<--xml> and B<--html> options show code point using numeric entities.
+Adding B<--verbose> to B<--html> will use named HTML entities where
+available.
+
+=head2 Character Modes vs Binary Mode
+
+To treat the file as a sequence a bytes, use B<--binary>.  This displays
+all bytes escaped in the form C<< \xXX >>.  The other way to specify binary
+input uses the <--octal> option.
+
+If you have not specified binary mode, then you are in character mode.  The
+default encoding in character mode us not ASCII but UTF-8.  If you have not
+specified an optional encoding with B<--encoding>, but the filename ends
+with the name of an encoding that Perl recognizes, that encoding will be
+assumed.
+
+Note that no matter the actual input character encoding, code points
+reflect the Unicode number of that code point.  You can use this property
+to normalize input, or to check that you actually know a file's encoding.
+For example, you can test the same file with various 8-bit encodings like
+Latin1, MacRoman, and CP1252.
+
+The default input encoding is actually C<utf8>; that is, Perl's permissive
+version of UTF-8.  If you want strict UTF-8, override it.
+
+=head1 EXAMPLES
+
+  $ perl -E 'say "ascii:\tnayeeve fassodd"' 							> /tmp/nf.ascii
+  $ perl -E 'binmode(STDOUT, "encoding(macroman)")||die; say "macroman:\tna\xEFve fa\xE7ade"' 	> /tmp/nf.macroman
+  $ perl -E 'binmode(STDOUT, "encoding(utf8)")||die;     say "utf8:\tna\xEFve fa\xE7ade"' 	> /tmp/nf.utf8
+  $ perl -E 'binmode(STDOUT, "encoding(utf16)")||die;    say "utf16:\tna\xEFve fa\xE7ade"' 	> /tmp/nf.utf16
+  $ perl -E 'binmode(STDOUT, "encoding(utf32)")||die;    say "utf32:\tna\xEFve fa\xE7ade"' 	> /tmp/nf.utf32
+  $ perl -E 'binmode(STDOUT, "encoding(latin1)")||die;   say "latin1:\tna\xEFve fa\xE7ade"' 	> /tmp/nf.latin1
+  $ perl -E 'binmode(STDOUT, "encoding(cp1252)")||die;   say "cp1252:\tna\xEFve fa\xE7ade"' 	> /tmp/nf.cp1252
+
+
+  $ wc -c /tmp/nf*
+      23 /tmp/nf.ascii
+      21 /tmp/nf.cp1252
+      21 /tmp/nf.latin1
+      23 /tmp/nf.macroman
+      42 /tmp/nf.utf16
+      84 /tmp/nf.utf32
+      21 /tmp/nf.utf8
+     235 total
+
+  $ uniquote /tmp/nf.*
+ascii:\N{U+09}nayeeve fassodd
+cp1252:\N{U+09}na\N{U+EF}ve fa\N{U+E7}ade
+latin1:\N{U+09}na\N{U+EF}ve fa\N{U+E7}ade
+macroman:\N{U+09}na\N{U+EF}ve fa\N{U+E7}ade
+utf16:\N{U+09}na\N{U+EF}ve fa\N{U+E7}ade
+utf32:\N{U+09}na\N{U+EF}ve fa\N{U+E7}ade
+utf8:\N{U+09}na\N{U+EF}ve fa\N{U+E7}ade
+
+  $ uniquote --backslash --endings /tmp/nf.*
+ascii:\tnayeeve fassodd$
+cp1252:\tna\N{U+EF}ve fa\N{U+E7}ade$
+latin1:\tna\N{U+EF}ve fa\N{U+E7}ade$
+macroman:\tna\N{U+EF}ve fa\N{U+E7}ade$
+utf16:\tna\N{U+EF}ve fa\N{U+E7}ade$
+utf32:\tna\N{U+EF}ve fa\N{U+E7}ade$
+utf8:\tna\N{U+EF}ve fa\N{U+E7}ade$
+
+  $ uniquote --verbose /tmp/nf.*
+ascii:\N{CHARACTER TABULATION}nayeeve fassodd
+cp1252:\N{CHARACTER TABULATION}na\N{LATIN SMALL LETTER I WITH DIAERESIS}ve fa\N{LATIN SMALL LETTER C WITH CEDILLA}ade
+latin1:\N{CHARACTER TABULATION}na\N{LATIN SMALL LETTER I WITH DIAERESIS}ve fa\N{LATIN SMALL LETTER C WITH CEDILLA}ade
+macroman:\N{CHARACTER TABULATION}na\N{LATIN SMALL LETTER I WITH DIAERESIS}ve fa\N{LATIN SMALL LETTER C WITH CEDILLA}ade
+utf16:\N{CHARACTER TABULATION}na\N{LATIN SMALL LETTER I WITH DIAERESIS}ve fa\N{LATIN SMALL LETTER C WITH CEDILLA}ade
+utf32:\N{CHARACTER TABULATION}na\N{LATIN SMALL LETTER I WITH DIAERESIS}ve fa\N{LATIN SMALL LETTER C WITH CEDILLA}ade
+utf8:\N{CHARACTER TABULATION}na\N{LATIN SMALL LETTER I WITH DIAERESIS}ve fa\N{LATIN SMALL LETTER C WITH CEDILLA}ade
+
+  $ uniquote --binary /tmp/nf.*
+ascii:\x09nayeeve fassodd
+cp1252:\x09na\xEFve fa\xE7ade
+latin1:\x09na\xEFve fa\xE7ade
+macroman:\x09na\x95ve fa\x8Dade
+\xFE\xFF\x00u\x00t\x00f\x001\x006\x00:\x00\x09\x00n\x00a\x00\xEF\x00v\x00e\x00 \x00f\x00a\x00\xE7\x00a\x00d\x00e\x00
+\x00\x00\xFE\xFF\x00\x00\x00u\x00\x00\x00t\x00\x00\x00f\x00\x00\x003\x00\x00\x002\x00\x00\x00:\x00\x00\x00\x09\x00\x00\x00n\x00\x00\x00a\x00\x00\x00\xEF\x00\x00\x00v\x00\x00\x00e\x00\x00\x00 \x00\x00\x00f\x00\x00\x00a\x00\x00\x00\xE7\x00\x00\x00a\x00\x00\x00d\x00\x00\x00e\x00\x00\x00
+utf8:\x09na\xC3\xAFve fa\xC3\xA7ade
+
+  $ uniquote --xml /tmp/nf.*
+ascii:&#x9;nayeeve fassodd
+cp1252:&#x9;na&#xef;ve fa&#xe7;ade
+latin1:&#x9;na&#xef;ve fa&#xe7;ade
+macroman:&#x9;na&#xef;ve fa&#xe7;ade
+utf16:&#x9;na&#xef;ve fa&#xe7;ade
+utf32:&#x9;na&#xef;ve fa&#xe7;ade
+utf8:&#x9;na&#xef;ve fa&#xe7;ade
+
+  $ uniquote --html /tmp/nf.*
+ascii:&#9;nayeeve fassodd
+cp1252:&#9;na&#239;ve fa&#231;ade
+latin1:&#9;na&#239;ve fa&#231;ade
+macroman:&#9;na&#239;ve fa&#231;ade
+utf16:&#9;na&#239;ve fa&#231;ade
+utf32:&#9;na&#239;ve fa&#231;ade
+utf8:&#9;na&#239;ve fa&#231;ade
+
+  $ uniquote --html --verbose /tmp/nf.*
+ascii:&#9;nayeeve fassodd
+cp1252:&#9;na&iuml;ve fa&ccedil;ade
+latin1:&#9;na&iuml;ve fa&ccedil;ade
+macroman:&#9;na&iuml;ve fa&ccedil;ade
+utf16:&#9;na&iuml;ve fa&ccedil;ade
+utf32:&#9;na&iuml;ve fa&ccedil;ade
+utf8:&#9;na&iuml;ve fa&ccedil;ade
+
+  $ uniquote --backslash --encoding latin1   --verbose /tmp/nf.*
+ascii:\tnayeeve fassodd
+cp1252:\tna\N{LATIN SMALL LETTER I WITH DIAERESIS}ve fa\N{LATIN SMALL LETTER C WITH CEDILLA}ade
+latin1:\tna\N{LATIN SMALL LETTER I WITH DIAERESIS}ve fa\N{LATIN SMALL LETTER C WITH CEDILLA}ade
+macroman:\tna\N{MESSAGE WAITING}ve fa\N{REVERSE LINE FEED}ade
+\N{LATIN SMALL LETTER THORN}\N{LATIN SMALL LETTER Y WITH DIAERESIS}\0u\0t\0f\01\06\0:\0\t\0n\0a\0\N{LATIN SMALL LETTER I WITH DIAERESIS}\0v\0e\0 \0f\0a\0\N{LATIN SMALL LETTER C WITH CEDILLA}\0a\0d\0e\0
+\0\0\N{LATIN SMALL LETTER THORN}\N{LATIN SMALL LETTER Y WITH DIAERESIS}\0\0\0u\0\0\0t\0\0\0f\0\0\03\0\0\02\0\0\0:\0\0\0\t\0\0\0n\0\0\0a\0\0\0\N{LATIN SMALL LETTER I WITH DIAERESIS}\0\0\0v\0\0\0e\0\0\0 \0\0\0f\0\0\0a\0\0\0\N{LATIN SMALL LETTER C WITH CEDILLA}\0\0\0a\0\0\0d\0\0\0e\0\0\0
+utf8:\tna\N{LATIN CAPITAL LETTER A WITH TILDE}\N{MACRON}ve fa\N{LATIN CAPITAL LETTER A WITH TILDE}\N{SECTION SIGN}ade
+
+  $ uniquote --backslash --encoding cp1252   --verbose /tmp/nf.*
+ascii:\tnayeeve fassodd
+uniquote: cp1252 "\x8D" does not map to Unicode at /tmp/nf.macroman line 0
+cp1252:\tna\N{LATIN SMALL LETTER I WITH DIAERESIS}ve fa\N{LATIN SMALL LETTER C WITH CEDILLA}ade
+latin1:\tna\N{LATIN SMALL LETTER I WITH DIAERESIS}ve fa\N{LATIN SMALL LETTER C WITH CEDILLA}ade
+\N{LATIN SMALL LETTER THORN}\N{LATIN SMALL LETTER Y WITH DIAERESIS}\0u\0t\0f\01\06\0:\0\t\0n\0a\0\N{LATIN SMALL LETTER I WITH DIAERESIS}\0v\0e\0 \0f\0a\0\N{LATIN SMALL LETTER C WITH CEDILLA}\0a\0d\0e\0
+\0\0\N{LATIN SMALL LETTER THORN}\N{LATIN SMALL LETTER Y WITH DIAERESIS}\0\0\0u\0\0\0t\0\0\0f\0\0\03\0\0\02\0\0\0:\0\0\0\t\0\0\0n\0\0\0a\0\0\0\N{LATIN SMALL LETTER I WITH DIAERESIS}\0\0\0v\0\0\0e\0\0\0 \0\0\0f\0\0\0a\0\0\0\N{LATIN SMALL LETTER C WITH CEDILLA}\0\0\0a\0\0\0d\0\0\0e\0\0\0
+utf8:\tna\N{LATIN CAPITAL LETTER A WITH TILDE}\N{MACRON}ve fa\N{LATIN CAPITAL LETTER A WITH TILDE}\N{SECTION SIGN}ade
+
+  $ uniquote --backslash --encoding macroman --verbose /tmp/nf.*
+ascii:\tnayeeve fassodd
+cp1252:\tna\N{LATIN CAPITAL LETTER O WITH CIRCUMFLEX}ve fa\N{LATIN CAPITAL LETTER A WITH ACUTE}ade
+latin1:\tna\N{LATIN CAPITAL LETTER O WITH CIRCUMFLEX}ve fa\N{LATIN CAPITAL LETTER A WITH ACUTE}ade
+macroman:\tna\N{LATIN SMALL LETTER I WITH DIAERESIS}ve fa\N{LATIN SMALL LETTER C WITH CEDILLA}ade
+\N{OGONEK}\N{CARON}\0u\0t\0f\01\06\0:\0\t\0n\0a\0\N{LATIN CAPITAL LETTER O WITH CIRCUMFLEX}\0v\0e\0 \0f\0a\0\N{LATIN CAPITAL LETTER A WITH ACUTE}\0a\0d\0e\0
+\0\0\N{OGONEK}\N{CARON}\0\0\0u\0\0\0t\0\0\0f\0\0\03\0\0\02\0\0\0:\0\0\0\t\0\0\0n\0\0\0a\0\0\0\N{LATIN CAPITAL LETTER O WITH CIRCUMFLEX}\0\0\0v\0\0\0e\0\0\0 \0\0\0f\0\0\0a\0\0\0\N{LATIN CAPITAL LETTER A WITH ACUTE}\0\0\0a\0\0\0d\0\0\0e\0\0\0
+utf8:\tna\N{SQUARE ROOT}\N{LATIN CAPITAL LETTER O WITH STROKE}ve fa\N{SQUARE ROOT}\N{LATIN SMALL LETTER SHARP S}ade
+
+=head1 ERRORS
+
+Exits 0 if all is well, 1 otherwise.
+
+Errors include inaccessible files, bogus encodings, 
+and contents that do not match a specified encoding.
+
+=head1 BUGS
+
+Good question.
+
+=head1 SEE ALSO
+
+od(1), cat(1), Encode(3)
+
+=head1 HISTORY
+
+First public release February 27, 2011.
+
+=head1 AUTHOR
+
+Tom Christiansen <I<tchrist@perl.com>>
+
+=head1 COPYRIGHT AND LICENCE
+
+Copyright 2010 Tom Christiansen.
+
+This program is free software; you may redistribute it and/or modify it
+under the same terms as Perl itself.
