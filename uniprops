@@ -1,0 +1,3433 @@
+#!/usr/local/bin/perl 
+
+######################################################################
+# uniprops - list regex properties of one or more characters
+#
+# Tom Christiansen <tchrist@perl.com>
+######################################################################
+# 
+#   This is an sh wrapper to run the script under 
+#   whichever perl occurs first in your path.  See
+#   CHOICEs 1 and 2 below for alternate strategies.
+#
+######################################################################
+#
+#   The next line is legal in both shell and perl, 
+#   but perl sees the if 0 so doesn't execute it.  
+#
+
+eval 'exec perl -x -S $0 ${1+"$@"}'
+      if 0;
+
+### CHOICE 1:
+######################################################################
+### MAKE FOLLOWING #! line THE TOP LINE, REPLACING /usr/local/bin  ###
+###   with wherever you have a late enough version of Perl is      ###
+###   installed.  Will run under 5.10, but prefers 5.12 or better. ###
+######################################################################
+#!/usr/local/bin/perl 
+# ^^^^^^^^^^^^^^  <=== CHANGE ME                                   ###
+######################################################################
+
+### CHOICE 2:
+######################################################################
+### ALTERNATELY, the following #! line does the same thing as      ###
+###   the tricksy sh eval exec line:  it finds whichever Perl is   ###
+###   first in your path.  However, it works only on BSD systems   ###
+###   (including MacOS), but breaks under Solaris and Linux.       ###
+######################################################################
+#!/usr/bin/env perl 
+######################################################################
+
+# Revision History:
+#   v1.0: Fri Oct 22 19:17:20 MDT 2010
+#   v1.1: Sun Oct 24 16:33:07 MDT 2010
+#           linux patches
+#   v1.2: Sun Oct 24 17:51:29 MDT 2010
+#           rework proplist reading for backwards compat on 5.10
+#           or anywhere can't find proplist
+#   v1.3: Tue Oct 26 08:00:30 MDT 2010
+#
+
+######################################################################
+
+use 5.10.0;     # but prefer 5.12.0
+
+use strict;
+use warnings;           # qw[ FATAL all ]
+
+# gives flexibility in specifying chars
+use charnames qw[ 
+    :short 
+    :full 
+     latin 
+     greek 
+];  
+
+################################################################
+
+use Scalar::Util        qw[ looks_like_number   ];
+use Encode              qw[ decode              ];
+use File::Basename      qw[ basename            ];
+use Getopt::Long        qw[ GetOptions          ];
+use Carp		qw[ confess             ];
+
+use Pod::Usage;
+
+# don't need to import this
+sub utf::is_utf8($);
+
+################################################################
+
+sub am_unixy();
+sub attractively;
+sub cp2name($);
+sub debug($);
+sub dequeue($$);
+sub init_screen();
+sub load_properties();
+sub main();
+sub perlprops($);
+sub quote($);
+sub reorder(@);
+sub sysprops();
+sub uniprops($);
+sub uprops_chr($);
+sub uprops_cp($);
+sub valid_prop($);
+sub verbose(@);
+sub writeln(@);
+
+################################################################
+
+$| = 1;             # feed the hungry pipe
+
+$0 = basename($0);  # shorten up warnings/errors
+
+our  @All_Properties = ();
+our  %Opt = ();
+
+our $VERSION = "1.5 (2011-04-11)";
+
+our  $Errors  = 0;
+main();
+exit($Errors != 0);
+
+# good idea in general, but critical if forkopened in sysprops()
+END {
+    close(STDOUT)
+        || die "can't close STDOUT: $!";
+}
+
+################################################################
+
+sub main() {
+
+    for my $fh ( qw[STDOUT STDERR] ) {
+        binmode($fh, ":utf8")
+            || die "can't binmode($fh) to :utf8 encoding: $!";
+    }
+
+    pod2usage("$0: usage error: expected arguments\n") if @ARGV == 0;
+
+    local $SIG{__DIE__} = sub {
+	confess "Untrapped fatal exception: @_" unless $^S;
+    };
+
+    Getopt::Long::Configure qw[ bundling auto_version ];
+
+    GetOptions(\%Opt => qw[
+
+        all|a
+        debug|d
+        general|g
+        help|?
+        list|l
+        man|m
+        negated|n
+        perl|p
+        reorder|r
+        single|1
+	CamelCase|C
+	titlecase|t
+        unicode|u
+        verbose|v
+        width|w|columns|c=i
+
+    ]) || pod2usage(2);
+
+   pod2usage(0)                                 if $Opt{help};
+   pod2usage(-exitstatus => 0, -verbose => 2)   if $Opt{man};
+
+   sysprops()                                   if $Opt{list};
+
+   pod2usage("$0: expected arguments\n")        if @ARGV == 0;
+
+   if (grep /\P{ASCII}/ => @ARGV) { 
+       @ARGV = map { decode("UTF-8", $_) } @ARGV;
+   }
+
+   my $hex_spec = qr{
+
+        # let them specify hex code point in many ways
+
+        (?: 0x  | U\+ ) (?<HEX> (?&hex) )
+      |
+        \\[xu] (?:
+                        (?<HEX> (?&hex) )
+                 |
+                     \{ (?<HEX> (?&hex) ) \}
+               )
+
+        (?(DEFINE) (?<hex> \p{HexDigit}+ ) )
+
+    }xi;
+
+ARG: for my $_ (@ARGV) {
+
+        if (length == 1) {
+            uprops_chr($_);
+            next ARG;
+        }
+
+        if (/^$hex_spec$/) {
+            my $codepoint = hex($+{HEX});
+            uprops_cp($codepoint);
+            next ARG;
+        }
+
+        my $codepoint = charnames::vianame($_);
+        if (!defined $codepoint) {
+            # can't get use warnings qw[FATAL all] to work here
+            local $SIG{__WARN__} = sub {
+                if ($_[0] =~ /Unknown charname/) {
+                    die "@_";
+                } else {
+                    my $err = $_[0];
+                    $err =~ s/ at .*\n//;
+                    $Errors++;
+                    warn "$0: $err.\n";
+                }
+            };
+            eval "\$codepoint = ord qq(\\N{$_})";
+            undef $codepoint if $@;
+        }
+
+        if (!defined $codepoint) {
+            if (/^\p{HexDigit}+$/) {
+                $codepoint = hex();
+            } else {
+                printf STDERR "$0: no character named ". quote($_). "\n";
+                $Errors++;
+                next ARG;
+            }
+        }
+
+        uprops_cp($codepoint);
+    }
+
+}
+
+################################################################
+
+sub debug($) {
+    return unless $Opt{debug};
+    my $msg = shift();
+    print STDERR "$msg\n";
+} 
+
+sub quote($) {
+    my $_ = shift();
+    my($LQ, $RQ) = ${^UTF8LOCALE}
+                     ? ("\N{SINGLE LEFT-POINTING ANGLE QUOTATION MARK}",
+                        "\N{SINGLE RIGHT-POINTING ANGLE QUOTATION MARK}")
+                     : qw[ < > ];
+
+    # my $quoted = $LQ . ((ord > 0x10_FFFF || /^[\pC\pZ]\z/) ? sprintf("U+%04X", ord) : $_) . $RQ;
+    my $string = $_;
+    $string = sprintf("U+%04X", ord)  if ord > 0x10_FFFF || /^[\pC\pZ]\z/;
+    return $LQ . $string . $RQ;
+}
+
+sub cp2name($) {
+    my $cp = shift();
+    if (! looks_like_number($cp)) {
+        die "bad number: $cp";
+    }
+    return "NULL" if $cp == 0;
+    return ($cp <= 0x10_FFFF && charnames::viacode($cp)) || sprintf("U+%04X",  $cp);
+}
+
+{
+
+    my $_Format_Line;
+
+    sub init_screen() {
+        my $cols;
+
+        if ($Opt{width}) {
+            $cols = $Opt{width};
+        } elsif (am_unixy()) {
+            ($cols) = `stty size 2>&1` =~ /^\d+ (\d+)$/;
+        }
+
+        $cols ||= 80; # non-unix or stty error
+        debug("columns are $cols");
+
+        $cols  -=  2;
+
+        my $format  = "format STDOUT = \n"
+                    . '    ^'    . '<' x ($cols-4) . "\n"
+                    . '$_Format_Line' . "\n"
+                    . " ~~    ^" . "<" x ($cols-7) . "\n"
+                    . '$_Format_Line' . "\n"
+                    . ".\n"
+                    . "1;"
+                    ;
+
+        debug($format);
+        eval($format) || die "FORMAT FAILED: $@";
+    }
+
+    sub writeln(@) {
+        return unless @_;
+
+        if ($Opt{single}) {
+            say for verbose @_;
+            return;
+        } 
+
+        init_screen() unless *STDOUT{FORMAT};
+        $_Format_Line = join (" " => verbose @_);
+        write if length($_Format_Line);
+    }
+
+}
+
+sub verbose(@) {
+    die("MISCALLED") unless wantarray();
+    return map { 
+                    $Opt{verbose} 
+                        ? "\\p{$_}" 
+                        :      $_ 
+               } @_;
+} 
+
+sub am_unixy() {
+
+    my @aliens = qw[
+                     MSWin32    MacOS   VMS     DOS
+                     NetWare    beos    epoc    os2
+                     symbian
+                 ];
+
+    for my $alien (@aliens) {
+        return 0 if lc($^O) eq lc($alien);
+    }
+
+    return 1;
+}
+
+sub uprops_cp($) {
+    my $codepoint = shift();
+
+    if ($codepoint >= 0x00_D800 && $codepoint <= 0x00_DFFF) {{
+	next if $^V gt 5.13.4;
+        printf STDERR "$0: code point U+%06X is a UTF-16 surrogate\n",
+            $codepoint;
+        $Errors++;
+        return;
+    }}
+
+    my $am_super = ($codepoint > 0x10_FFFF);
+
+    if ($am_super) {{
+	next if $^V gt 5.13.4;
+        printf STDERR "$0: code point U+%06X above Unicode maximum\n",
+            $codepoint;
+        $Errors++;
+        return;
+    }}
+
+    local $Opt{negated} = 1 if $am_super;
+
+    printf STDERR <<"EO_WARNING", $codepoint if $am_super;
+$0: Code point 0x%X is not Unicode: No properties match it, but all inverse properties do so.
+EO_WARNING
+
+    # see "Unicode non-character %s is illegal for interchange" in perldiag(1)
+    my $character = eval {
+        # use warnings "utf8";
+        no warnings "utf8";
+        chr($codepoint);
+    };
+
+    if ($@) {
+        if ($@ =~ /is illegal/) {
+            chomp $@;
+            $@ =~ s/ at \S+ line \d+//;
+            printf STDERR "$0: $@\n";
+            $Errors++;
+            # return;
+        }
+
+        # propagate unforeseen exception
+        die "UNFORESEEN EXCEPTION $@";
+    }
+    uprops_chr($character);
+}
+
+sub uprops_chr($) {
+    my @props;
+
+    my $char = shift();
+
+    # fixes "the Unicode bug"
+    unless (utf8::is_utf8($char)) {
+        $char = decode("iso-8859-1", $char);
+    }
+
+    printf "U+%04X %s ", ord($char), quote($char);
+    printf "\\N{%s}\n", cp2name(ord $char);
+
+    if (!$Opt{unicode} || $Opt{perl} || $Opt{negated}) {
+
+        @props = perlprops($char);
+        writeln(grep {       / \\ ( \p{Lower} | R ) /x } @props);
+
+        if ($Opt{negated}) {
+            writeln(grep { ! / \\ ( \p{Lower} | R ) /x } @props);
+        }
+
+    }
+
+    if (!$Opt{perl} || $Opt{unicode}) {
+
+        @props = uniprops($char);
+
+        my @shortprops = grep {   /\\/ } @props;
+           @props      = grep { ! /\\/ } @props;
+
+        writeln(reorder @shortprops);
+
+        my @longprops = grep {   /(?:^_|[=:])/ } @props;
+           @props     = grep { ! /(?:^_|[=:])/ } @props;
+
+        writeln(reorder @props);
+
+        if ($Opt{all} || $Opt{general}) {
+            @longprops = grep { ! /^(?:gc|general_category)[:=]/i } @longprops
+                unless $Opt{general};
+            @longprops = grep {   /^(?:gc|general_category)[:=]/i } @longprops
+                unless $Opt{all};
+            writeln(reorder @longprops);
+        }
+    }
+
+}
+
+sub reorder(@) {
+    if ($Opt{reorder}) {
+        return sort attractively @_;
+    } else {
+        return                   @_;
+    }
+}
+
+sub attractively {
+
+    length($a)    <=>   length($b)
+                  ||
+        uc($a)    cmp       uc($b)
+                  ||
+           $a     cmp          $b
+
+}
+
+sub perlprops($) {
+    my $_ = shift();
+    my @retlist = ();
+
+    no warnings "utf8";
+
+    /\w/        && push @retlist => q/\w/;
+    /\W/        && push @retlist => q/\W/;
+
+    /\s/        && push @retlist => q/\s/;
+    /\S/        && push @retlist => q/\S/;
+
+    /\d/        && push @retlist => q/\d/;
+    /\D/        && push @retlist => q/\D/;
+
+    /\h/        && push @retlist => q/\h/;
+    /\H/        && push @retlist => q/\H/;
+
+    /\v/        && push @retlist => q/\v/;
+    /\V/        && push @retlist => q/\V/;
+
+    /\R/        && push @retlist => q/\R/;
+
+    # General_Category=Letter
+    /\pL/       && push @retlist => q/\pL/;
+    /\p{LC}/    && push @retlist => q/\p{LC}/;
+    /\p{L_}/    && push @retlist => q/\p{L_}/;
+    /\p{L&}/    && push @retlist => q/\p{L&}/;
+    /\p{Lu}/    && push @retlist => q/\p{Lu}/;
+    /\p{Ll}/    && push @retlist => q/\p{Ll}/;
+    /\p{Lt}/    && push @retlist => q/\p{Lt}/;
+    /\p{Lm}/    && push @retlist => q/\p{Lm}/;
+    /\p{Lo}/    && push @retlist => q/\p{Lo}/;
+
+    # General_Category=Mark
+    /\pM/       && push @retlist => q/\pM/;
+    /\p{Mn}/    && push @retlist => q/\p{Mn}/;
+    /\p{Mc}/    && push @retlist => q/\p{Mc}/;
+    /\p{Me}/    && push @retlist => q/\p{Me}/;
+
+    # General_Category=Number
+    /\pN/       && push @retlist => q/\pN/;
+    /\p{Nd}/    && push @retlist => q/\p{Nd}/;
+    /\p{Nl}/    && push @retlist => q/\p{Nl}/;
+    /\p{No}/    && push @retlist => q/\p{No}/;
+
+    # General_Category=Punctuation
+    /\pP/       && push @retlist => q/\pP/;
+    /\p{Pc}/    && push @retlist => q/\p{Pc}/;
+    /\p{Pd}/    && push @retlist => q/\p{Pd}/;
+    /\p{Ps}/    && push @retlist => q/\p{Ps}/;
+    /\p{Pe}/    && push @retlist => q/\p{Pe}/;
+    /\p{Pi}/    && push @retlist => q/\p{Pi}/;
+    /\p{Pf}/    && push @retlist => q/\p{Pf}/;
+    /\p{Po}/    && push @retlist => q/\p{Po}/;
+
+    # General_Category=Symbol
+    /\pS/       && push @retlist => q/\pS/;
+    /\p{Sm}/    && push @retlist => q/\p{Sm}/;
+    /\p{Sc}/    && push @retlist => q/\p{Sc}/;
+    /\p{Sk}/    && push @retlist => q/\p{Sk}/;
+    /\p{So}/    && push @retlist => q/\p{So}/;
+
+    # General_Category=Separator
+    /\pZ/       && push @retlist => q/\pZ/;
+    /\p{Zs}/    && push @retlist => q/\p{Zs}/;
+    /\p{Zl}/    && push @retlist => q/\p{Zl}/;
+    /\p{Zp}/    && push @retlist => q/\p{Zp}/;
+
+    # General_Category=Other
+    /\pC/       && push @retlist => q/\pC/;
+    /\p{Cc}/    && push @retlist => q/\p{Cc}/;
+    /\p{Cf}/    && push @retlist => q/\p{Cf}/;
+    /\p{Cs}/    && push @retlist => q/\p{Cs}/;
+    /\p{Co}/    && push @retlist => q/\p{Co}/;
+    /\p{Cn}/    && push @retlist => q/\p{Cn}/;
+
+    return @retlist;
+}
+
+
+
+################################################################
+# This autoloading stub replaces itself with the real function,
+# then jumps directly into its replacement via magic goto.
+################################################################
+sub uniprops($) {
+
+    load_properties() unless @All_Properties;
+
+    my $code = dequeue q<|Q|> => <<'END_OF_CODE_1';
+
+            |Q|
+            |Q| no warnings "redefine";
+            |Q|
+            |Q| sub uniprops($) {
+            |Q|     my $_ = shift();
+            |Q|     my @retlist = ();
+            |Q|
+
+END_OF_CODE_1
+
+    for my $propname (@All_Properties) {
+
+        $code .= dequeue qq<|QQ|> => <<"END_OF_CODE_2";
+
+            |QQ|    
+            |QQ|    no warnings "utf8";
+            |QQ|    
+            |QQ|    /\\p{$propname}/ && push \@retlist => "$propname";
+            |QQ|
+
+END_OF_CODE_2
+
+    }
+
+    $code .= dequeue q<|Q|> => <<'END_OF_CODE_3';
+
+            |Q|
+            |Q|     return @retlist;
+            |Q| }
+            |Q|
+            |Q| 1;  # so result evals to true
+            |Q|
+
+END_OF_CODE_3
+
+    eval($code) || die "CODE ERR";
+
+    goto \&uniprops;
+}
+
+sub dequeue($$) {
+    my($leader, $body) = @_;
+    $body =~ s/^\s*\Q$leader\E ?//gm;
+    return $body;
+}
+
+sub beautify(_) {
+    my $_ = shift();
+    s/\s//g;
+    s/:/=/g;
+    s/-/_/g;
+
+    my $short  = qr{
+	Bc
+      | Blk | Ccc | Dt | Ea | Gc | GCB | Hst | In | Jg 
+      | Jt  | Lb  | Nt | Nv | SB | Sc  | WB
+    }ix;
+
+    s/CJK\K(\p{Lu})/_$1/;
+    s/IPA\K(\p{Lu})/_$1/;
+    s/POSIX(\p{Lu})/POSIX_$1/i;
+    s/XPOSIX/X_POSIX/;
+
+    s/Linear_?B\K(\p{Lu})/_\u$1/;
+
+    s/^($short)(?==)/\U$1/;
+
+    if ($Opt{titlecase}) { 
+	s/(?!NaN)\pL\K(\p{Ll})(\p{Lu})/${1}_${2}/g;
+	s/_(and|to)_/_\L${1}_/gi;
+    } 
+    elsif ($Opt{CamelCase}) {
+	s/\p{Ll}\K_(\pL)/\u$1/g;
+    } 
+
+    return $_;
+}
+
+sub load_properties() {
+
+    my %seen;
+
+    use Config;
+    my $privlib = "$Config{installprivlib}";
+    my $podlib = "";
+
+    if (-d "$privlib/pods") {
+        $podlib = "$privlib/pods";
+    } 
+    elsif (-d "$privlib/pod") {
+        $podlib = "$privlib/pod";
+    } 
+    elsif (-d "pod") {
+        $podlib = "pod";
+    }
+    else {
+        # FALL THROUGH  
+    } 
+
+    my $unipod = "$podlib/perluniprops.pod";
+
+    if (-e $unipod) {
+        debug("reading props from $unipod");
+    } else {
+        debug("reading properties from DATA");
+        # can't find it, reading static list from <DATA>
+        my $_;
+        while (<DATA>) {
+            chomp;
+            next if /^\s*$/;
+            next if /^\s*#/;    # in case wish some commented out 
+            next unless valid_prop($_);
+
+	    $_ = beautify($_);
+
+            next if $seen{$_}++;
+
+            push @All_Properties, $_;
+        } 
+
+        # perl5.10 bug: leaves "In" in the format accumulator!!
+        $^A = q();
+
+        my $count = @All_Properties;
+        debug("read $count properties from <DATA>");
+
+        return;
+    } 
+
+    open(my $pod_fh, "< $unipod")
+        || die "can't open $unipod: $!";
+
+    local $/ = undef;
+    my $_ = <$pod_fh>;
+    close($pod_fh)      || die "$0: can't close $unipod: $!";
+
+    s/ .*? ^ \s+ NAME \s+ INFO \s* \n //msx
+                        || die "$0: $unipod changed format";
+
+    s/ ^ =head1 .* \z //msx
+                        || die "$0: $unipod changed format";
+
+    s/\n {10,}/ /g;     # fix continuation lines
+
+        ## D means this is deprecated.
+        ## O means this is obsolete.
+        ## S means this is stabilized.
+        ## T means tighter (stricter) name matching applies.
+        ## X means use of this form is discouraged.
+
+    0 and s/ ^ \s+ [DSX] \s+ .* \n//gmx;
+
+    my $prop_rx = qr{
+        \\ p \{
+            (?<PROPNAME> [\w\s\-.:=] + )
+        \}
+    }x;
+
+    while (/$prop_rx/g) {
+        my $propname = beautify($+{PROPNAME});
+
+        next unless valid_prop($propname);
+
+        # just once each
+        next if $seen{$propname}++;
+
+        # remove props with leading underscores
+        next if 0 and $propname =~ /^_/;
+
+        # remove redundant booleans
+        next if $propname =~ m{
+            [:=]
+            (?:
+                Y  (?: es )?
+              | N      o   ?
+            )
+            $
+        }x;
+
+        push @All_Properties, $propname;
+
+    }
+
+    my $count = @All_Properties;
+    debug("read $count properties from $unipod");
+
+}
+
+sub valid_prop($) {
+    my $propname = shift();
+    return eval(dequeue("|QQ|", <<"VALIDATE_PROPERTY")) || 0;
+        |QQ|
+        |QQ|    \$SIG{__WARN__} = sub {die "PROPERTY ERROR \@_"};
+        |QQ|
+        |QQ|    "whatever" =~ /\\p{$propname}/; 
+        |QQ|
+        |QQ|    1; 
+        |QQ|
+VALIDATE_PROPERTY
+} 
+
+sub sysprops() {
+
+    load_properties() unless @All_Properties;
+
+    if (-t STDOUT) {
+        my $pager = $ENV{PAGER} || "more";
+        if ($pager =~ /more|less/ && ($ENV{LESSCHARSET} || "") ne "utf-8") {
+            $ENV{LESSCHARSET} = "utf-8";
+        }
+        open(STDOUT, "| $pager")
+            || die "can't open pipe to $pager: $!";
+        $SIG{PIPE} = sub { exit };
+    }
+
+    say for reorder verbose @All_Properties;
+
+    exit;  # explicit pclose() in atexit() handler
+}
+
+################################################################
+################################################################
+################################################################
+
+=encoding utf8
+
+=head1 NAME
+
+uniprops - list unicode properties for one or more characters
+
+=head1 SYNOPSIS
+
+uniprops [I<options>] I<character> | U+I<codepoint> | "I<name>" ...
+
+ Options:
+
+    --version   print version information 
+    --help      this message
+    --man       full manpage
+
+    --unicode   list simple Unicode properties (DEFAULT)
+    --general   include even the long form of general properties
+
+    --perl      list lowercase Perl short-cuts, plus \R (DEFAULT)
+    --negated   list uppercase Perl short-cuts
+
+    --all       list all Unicode categories, not just one-parters
+    --list      list all known Unicode properties, then exit
+
+    --reorder   sort Unicode property lists shortest first
+    --single    output each property one per line
+
+    --verbose   wrap Unicode properties in \p{xxx}
+    --width N   set column width
+
+    --debug     noisy internal processing
+
+  options may be bundled if used in the short form; e.g., -va
+
+
+=head1 DESCRIPTION
+
+Each argument to I<uniprops> specifies a character in one of three forms:
+
+=over
+
+=item 1.
+
+a one-character literal, such as "#" or "A".
+
+=item 2.
+
+a code point number in hex, (optionally) prefixed by "0x" or "U+", or "\x"
+or "\u", with the backslash prefixes admitting but not requiring enclosing
+curly braces.  Examples: "0x23", "U+394", "\x{0394}", "0394".
+
+=item 3.
+
+a case-sensitive character name, such as "COMMA" or "GREEK CAPITAL LETTER DELTA".
+Names may be specified by their full names or their short names
+per the L<charnames> pragma, or they may be Latin or Greek (in that order).
+See the EXAMPLES.
+
+=back
+
+The I<uniprops> program reports the properties that apply to a given
+character for use in regular expressions.  By default, the Perl character
+class short-cuts and the one-part Unicode properties are listed, which 
+are mostly those from the general category.  
+
+The B<--all> option adds all the two-part Unicode properties from the
+non-general categories.    
+
+Long, two-part forms of general category properties are not listed unless
+the B<--general> option is given.
+
+The B<--negated> option adds the Perl shortcuts that are in capitals.  The
+B<--verbose> option encloses Unicode properties with C<\p{I<PROPNAME>}>.
+
+To simply list out all available Unicode properties, use the B<--list>
+option, which then exits without processing further arguments.
+
+Lines will be wrapped before the edge of your screen.  You can override
+the window width with the B<--width I<NN>> option.  To get only one property
+per line without any indentation, use the B<--single> or B<-1> option.
+
+Unicode properties are by default listed in the same order in which they
+occur in L<perluniprops>(), but the B<--reorder> option will sort them
+smallest to largest.
+
+Unicode properties designated as deprecated, obsolete, or discouraged,
+or which begin with an underscore, are ignored.
+
+It takes quite some time to load up and test all the Unicode properties,
+so if you just need confirmation of a character, just ask for Perl 
+properties, not Unicode ones, and it will run at least six times faster.
+
+=head1 EXAMPLES
+
+Count known Unicode properties:
+
+    $ uniprops -l | wc -l
+    2478
+
+List all known Unicode properties, sorted by length:
+
+    $ uniprops -lr
+
+List all known Unicode properties, sorted by name:
+
+    $ uniprops -l | sort -df | more
+
+List Greek-related Unicode properties:
+
+    $ uniprops -l | grep Greek | sort -dfu
+    Blk=Greek
+    Block:Ancient_Greek_Musical_Notation
+    Block:Ancient_Greek_Numbers
+    Block:Greek
+    Block=Greek_And_Coptic
+    Block:Greek_Extended
+    Greek
+    Greek_And_Coptic
+    InAncientGreekMusicalNotation
+    InAncientGreekNumbers
+    InGreek
+    InGreekExtended
+    Is_Greek
+    Script=Greek
+
+List just Perl properties for three I<named> characters:
+
+    $ uniprops -p delta greek:delta Greek:Delta
+    U+1E9F ‹ẟ› \N{ LATIN SMALL LETTER DELTA }:
+        \w \pL \p{LC} \p{L_} \p{L&} \p{Ll}
+    U+03B4 ‹δ› \N{ GREEK SMALL LETTER DELTA }:
+        \w \pL \p{LC} \p{L_} \p{L&} \p{Ll}
+    U+0394 ‹Δ› \N{ GREEK CAPITAL LETTER DELTA }:
+        \w \pL \p{LC} \p{L_} \p{L&} \p{Lu}
+
+List just Perl properties negations for four I<named> characters:
+
+    $ uniprops -p Thorn pi hebrew:alef cyrillic:be
+    U+00DE ‹Þ› \N{ LATIN CAPITAL LETTER THORN }:
+        \w \pL \p{LC} \p{L_} \p{L&} \p{Lu}
+    U+03C0 ‹π› \N{ GREEK SMALL LETTER PI }:
+        \w \pL \p{LC} \p{L_} \p{L&} \p{Ll}
+    U+05D0 ‹א› \N{ HEBREW LETTER ALEF }:
+        \w \pL \p{L_} \p{Lo}
+    U+0431 ‹б› \N{ CYRILLIC SMALL LETTER BE }:
+        \w \pL \p{LC} \p{L_} \p{L&} \p{Ll}
+
+List Perl and Unicode properties for three different I<literal> characters:
+
+    $ uniprops \# ç π
+    U+0023 ‹#› \N{ NUMBER SIGN }:
+        \pP \p{Po}
+        All Any ASCII Assigned Common Zyyy Po P Gr_Base
+           Grapheme_Base Graph GrBase Other_Punctuation Punct Pat_Syn
+           Pattern_Syntax PatSyn PosixGraph PosixPrint PosixPunct
+           Print Punctuation
+    U+00E7 ‹ç› \N{ LATIN SMALL LETTER C WITH CEDILLA }:
+        \w \pL \p{LC} \p{L_} \p{L&} \p{Ll}
+        All Any Alnum Alpha Alphabetic Assigned InLatin1 Cased
+           Cased_Letter LC Changes_When_Casemapped CWCM
+           Changes_When_Titlecased CWT Changes_When_Uppercased CWU Ll
+           L Gr_Base Grapheme_Base Graph GrBase ID_Continue IDC
+           ID_Start IDS Letter L_ Latin Latn Lowercase_Letter Lower
+           Lowercase Print Word XID_Continue XIDC XID_Start XIDS
+    U+03C0 ‹π› \N{ GREEK SMALL LETTER PI }:
+        \w \pL \p{LC} \p{L_} \p{L&} \p{Ll}
+        All Any Alnum Alpha Alphabetic Assigned Greek Is_Greek
+           InGreek Cased Cased_Letter LC Changes_When_Casemapped CWCM
+           Changes_When_Titlecased CWT Changes_When_Uppercased CWU Ll
+           L Gr_Base Grapheme_Base Graph GrBase Grek Greek_And_Coptic
+           ID_Continue IDC ID_Start IDS Letter L_ Lowercase_Letter
+           Lower Lowercase Print Word XID_Continue XIDC XID_Start XIDS
+
+Just list Perl shortcuts, including negated ones, for a named character:
+
+    $ uniprops -pn LF
+    U+000A ‹U+000A› \N{ LINE FEED (LF) }:
+        \s \v \R \pC \p{Cc}
+        \W \D \H
+
+For the Greek final sigma character, list Unicode properties that are
+either one-parters or else two-part general categories
+
+    $ uniprops -ug "greek:final sigma"
+    U+03C2 ‹ς› \N{ GREEK SMALL LETTER FINAL SIGMA }:
+        All Any Alnum Alpha Alphabetic Assigned Greek Is_Greek InGreek
+           Cased Cased_Letter LC Changes_When_Casefolded CWCF
+           Changes_When_Casemapped CWCM Changes_When_NFKC_Casefolded CWKCF
+           Changes_When_Titlecased CWT Changes_When_Uppercased CWU Ll L
+           Gr_Base Grapheme_Base Graph GrBase Grek Greek_And_Coptic
+           ID_Continue IDC ID_Start IDS Letter L_ Lowercase_Letter Lower
+           Lowercase Print Word XID_Continue XIDC XID_Start XIDS
+        General_Category=Cased_Letter General_Category:Cased_Letter Gc=LC
+           General_Category:L General_Category=Letter General_Category:LC
+           General_Category:Letter Gc=L General_Category:Ll
+           General_Category=Lowercase_Letter
+           General_Category:Lowercase_Letter Gc=Ll
+
+List just Unicode properties for a code point, given in hex:
+
+    $ uniprops -u 0xDF
+    U+00DF ‹ß› \N{ LATIN SMALL LETTER SHARP S }:
+        All Any Alnum Alpha Alphabetic Assigned InLatin1 Cased
+           Cased_Letter LC Changes_When_Casefolded CWCF
+           Changes_When_Casemapped CWCM Changes_When_NFKC_Casefolded
+           CWKCF Changes_When_Titlecased CWT Changes_When_Uppercased
+           CWU Ll L Gr_Base Grapheme_Base Graph GrBase ID_Continue
+           IDC ID_Start IDS Letter L_ Latin Latn Lowercase_Letter
+           Lower Lowercase Print Word XID_Continue XIDC XID_Start XIDS
+
+List Perl and Unicode properties for a named character, verbosely:
+
+    $ uniprops -v "ALEF SYMBOL"
+    U+2135 ‹ℵ› \N{ ALEF SYMBOL }:
+        \w \pL \p{L_} \p{Lo}
+        \p{All} \p{Any} \p{Alnum} \p{Alpha} \p{Alphabetic} \p{Assigned}
+           \p{InLetterlikeSymbols} \p{Changes_When_NFKC_Casefolded}
+           \p{CWKCF} \p{Common} \p{Zyyy} \p{L} \p{Lo} \p{Gr_Base}
+           \p{Grapheme_Base} \p{Graph} \p{GrBase} \p{ID_Continue} \p{IDC}
+           \p{ID_Start} \p{IDS} \p{Letter} \p{L_} \p{Other_Letter}
+           \p{Math} \p{Print} \p{Word} \p{XID_Continue} \p{XIDC}
+           \p{XID_Start} \p{XIDS}
+
+List Unicode properties in all categories except for two-part
+general categories:
+
+    $ uniprops -au INFINITY
+    U+221E ‹∞› \N{ INFINITY }:
+        All Any Assigned InMathematicalOperators Common Zyyy Sm S
+           Gr_Base Grapheme_Base Graph GrBase Math Math_Symbol
+           Pat_Syn Pattern_Syntax PatSyn Print Symbol
+        Age:1.1 Bidi_Class:ON Bidi_Class=Other_Neutral
+           Bidi_Class:Other_Neutral Bc=ON Block:Mathematical_Operators
+           Canonical_Combining_Class:0
+           Canonical_Combining_Class=Not_Reordered
+           Canonical_Combining_Class:Not_Reordered Ccc=NR
+           Canonical_Combining_Class:NR Script=Common
+           Decomposition_Type:None Dt=None East_Asian_Width:A
+           East_Asian_Width=Ambiguous East_Asian_Width:Ambiguous Ea=A
+           Grapheme_Cluster_Break:Other GCB=XX Grapheme_Cluster_Break:XX
+           Grapheme_Cluster_Break=Other Hangul_Syllable_Type:NA
+           Hangul_Syllable_Type=Not_Applicable
+           Hangul_Syllable_Type:Not_Applicable Hst=NA
+           Joining_Group:No_Joining_Group Jg=NoJoiningGroup
+           Joining_Type:Non_Joining Jt=U Joining_Type:U
+           Joining_Type=Non_Joining Line_Break:AI Line_Break=Ambiguous
+           Line_Break:Ambiguous Lb=AI Numeric_Type:None Nt=None
+           Numeric_Value:NaN Nv=NaN Present_In:1.1 Age=1.1 In=1.1
+           Present_In:2.0 In=2.0 Present_In:2.1 In=2.1 Present_In:3.0
+           In=3.0 Present_In:3.1 In=3.1 Present_In:3.2 In=3.2
+           Present_In:4.0 In=4.0 Present_In:4.1 In=4.1 Present_In:5.0
+           In=5.0 Present_In:5.1 In=5.1 Present_In:5.2 In=5.2
+           Script:Common Sc=Zyyy Script:Zyyy Sentence_Break:Other SB=XX
+           Sentence_Break:XX Sentence_Break=Other Word_Break:Other WB=XX
+           Word_Break:XX Word_Break=Other
+
+For the HYPHEN character, verbosely list all Unicode properties 
+including the two-part general categories, one per line, and sort them:
+
+    $ uniprops -1vgau HYPHEN | sort
+
+List Perl and Unicode properties for code point U+2212, reordered by
+length and with width set to 50:
+
+    $ uniprops -r -w 50 U+2212
+    U+2212 ‹−› \N{ MINUS SIGN }:
+        \pS \p{Sm}
+        S Sm All Any Dash Math Zyyy Graph Print
+           Common GrBase PatSyn Symbol Gr_Base Pat_Syn
+           Assigned Math_Symbol Grapheme_Base
+           Pattern_Syntax InMathematicalOperators
+
+Ask for a (currently) unassigned code point:
+
+    $ uniprops 1F12F
+    U+1F12F ‹U+1F12F› \N{ U+1F12F }:
+        \pC \p{Cn}
+        All Any InEnclosedAlphanumericSupplement C Other Cn
+            Unassigned Zzzz Unknown
+
+=head1 ERRORS
+
+It is an error to ask for properties of code points representing
+a UTF-16 surrogate.
+
+Characters not legal for interchange are flagged as errors.
+
+=head1 ENVIRONMENT
+
+If your environment smells like it's in a Unicode encoding,
+program arguments and output will be in UTF-8.  This allows you
+to enter a single, literal UTF-8 character as a program argument.
+
+The PAGER environment variable is used for the B<--list> option.
+
+=head1 FILES
+
+The pod source for the L<perluniprops>(1) manpage is parsed to
+determine Unicode properties.  This is expected to be found
+in the Config module's F<$installprivlib/pods> directory.
+
+=head1 PROGRAMS
+
+The L<stty>(1) program is called on Unix systems to determine
+the window size.
+
+If the standard output is to a tty when the B<--list> option
+is requested, the user's pager is used, defaulting to L<more>(1).
+
+=head1 BUGS
+
+The B<--man> option does not correctly process the page
+for UTF-8; L<pod2text>(1) works fine, though.
+
+=head1 SEE ALSO
+
+L<unichars>,
+L<uninames>,
+L<perluniprops>,
+L<perlunicode>,
+L<perlrecharclass>,
+L<perlre>
+
+=head1 AUTHOR
+
+Tom Christiansen <I<tchrist@perl.com>>
+
+=head1 COPYRIGHT AND LICENCE
+
+Copyright 2011 Tom Christiansen.
+
+This program is free software; you may redistribute it and/or modify it
+under the same terms as Perl itself.
+
+=cut
+
+# static list of properties from 5.14.0 in case can't find 
+# proplist (like on 5.10)
+
+__END__
+Aegean_Numbers
+Block=Aegean_Numbers
+Age=1.1
+Age=2.0
+Age=2.1
+Age=3.0
+Age=3.1
+Age=3.2
+Age=4.0
+Age=4.1
+Age=5.0
+Age=5.1
+Age=5.2
+Age=6.0
+Age=Unassigned
+AHex
+ASCII_Hex_Digit
+Alchemical_Symbols
+Block=Alchemical_Symbols
+All
+Any
+Alnum
+Alpha
+Alphabetic
+Alphabetic_Presentation_Forms
+Block=Alphabetic_Presentation_Forms
+Ancient_Greek_Musical_Notation
+Block=Ancient_Greek_Musical_Notation
+Ancient_Greek_Numbers
+Block=Ancient_Greek_Numbers
+Ancient_Symbols
+Block=Ancient_Symbols
+Arab
+Arabic
+Script=Arabic
+Block=Arabic
+Arabic_Presentation_Forms_A
+Block=Arabic_Presentation_Forms_A
+Arabic_Presentation_Forms_B
+Block=Arabic_Presentation_Forms_B
+Arabic_Supplement
+Block=Arabic_Supplement
+Armenian
+Script=Armenian
+Armn
+Block=Armenian
+Armi
+Imperial_Aramaic
+Script=Imperial_Aramaic
+Block=Imperial_Aramaic
+Arrows
+Block=Arrows
+ASCII
+Block=Basic_Latin
+Assigned
+Avestan
+Script=Avestan
+Avst
+Block=Avestan
+Bali
+Balinese
+Script=Balinese
+Block=Balinese
+Bamu
+Bamum
+Script=Bamum
+Block=Bamum
+Bamum_Supplement
+Block=Bamum_Supplement
+Basic_Latin
+Batak
+Script=Batak
+Batk
+Block=Batak
+Beng
+Bengali
+Script=Bengali
+Block=Bengali
+Bidi_C
+Bidi_Control
+Bidi_Class=AL
+Bidi_Class=Arabic_Letter
+Bidi_Class=AN
+Bidi_Class=Arabic_Number
+BC=AL
+BC=AN
+Bidi_Class=B
+Bidi_Class=Paragraph_Separator
+Bidi_Class=BN
+Bidi_Class=Boundary_Neutral
+BC=BN
+Bidi_Class=Common_Separator
+BC=CS
+Bidi_Class=CS
+Bidi_Class=EN
+Bidi_Class=European_Number
+Bidi_Class=ES
+Bidi_Class=European_Separator
+Bidi_Class=ET
+Bidi_Class=European_Terminator
+BC=EN
+BC=ES
+BC=ET
+Bidi_Class=L
+Bidi_Class=Left_To_Right
+BC=L
+Bidi_Class=Left_To_Right_Embedding
+BC=LRE
+Bidi_Class=Left_To_Right_Override
+BC=LRO
+Bidi_Class=LRE
+Bidi_Class=LRO
+Bidi_Class=Nonspacing_Mark
+BC=NSM
+Bidi_Class=NSM
+Bidi_Class=ON
+Bidi_Class=Other_Neutral
+BC=ON
+BC=B
+Bidi_Class=PDF
+Bidi_Class=Pop_Directional_Format
+BC=PDF
+Bidi_Class=R
+Bidi_Class=Right_To_Left
+BC=R
+Bidi_Class=Right_To_Left_Embedding
+BC=RLE
+Bidi_Class=Right_To_Left_Override
+BC=RLO
+Bidi_Class=RLE
+Bidi_Class=RLO
+Bidi_Class=S
+Bidi_Class=Segment_Separator
+BC=S
+Bidi_Class=White_Space
+BC=WS
+Bidi_Class=WS
+BidiC
+Bidi_M
+Bidi_Mirrored
+BidiM
+Blank
+InAegeanNumbers
+InAlchemicalSymbols
+InAlphabeticPresentationForms
+InAncientGreekMusicalNotation
+InAncientGreekNumbers
+InAncientSymbols
+InArabic
+Is_Arabic
+InArabicPresentationFormsA
+InArabicPresentationFormsB
+InArabicSupplement
+InArmenian
+Is_Armenian
+InArrows
+Block=ASCII
+InAvestan
+Is_Avestan
+InBalinese
+Is_Balinese
+InBamum
+Is_Bamum
+InBamumSupplement
+BLK=ASCII
+InBatak
+Is_Batak
+InBengali
+Is_Bengali
+Block=Block_Elements
+InBlockElements
+Block=Bopomofo
+InBopomofo
+Bopomofo
+Is_Bopomofo
+Block=Bopomofo_Extended
+InBopomofoExtended
+Block=Box_Drawing
+InBoxDrawing
+Block=Brahmi
+InBrahmi
+Brahmi
+Is_Brahmi
+Block=Braille_Patterns
+InBraillePatterns
+Block=Buginese
+InBuginese
+Buginese
+Is_Buginese
+Block=Buhid
+InBuhid
+Buhid
+Is_Buhid
+Block=Byzantine_Musical_Symbols
+InByzantineMusicalSymbols
+Block=Canadian_Syllabics
+Block=Unified_Canadian_Aboriginal_Syllabics
+Block=Carian
+InCarian
+Carian
+Is_Carian
+Block=Cham
+InCham
+Cham
+Is_Cham
+Block=Cherokee
+InCherokee
+Cherokee
+Is_Cherokee
+Block=CJK_Compatibility
+InCJK_Compatibility
+Block=CJK_Compatibility_Forms
+InCJK_CompatibilityForms
+Block=CJK_Compatibility_Ideographs
+InCJK_CompatibilityIdeographs
+Block=CJK_Compatibility_Ideographs_Supplement
+InCJK_CompatibilityIdeographs_Supplement
+Block=CJK_Radicals_Supplement
+InCJK_RadicalsSupplement
+Block=CJK_Strokes
+InCJK_Strokes
+Block=CJK_Symbols_And_Punctuation
+InCJK_SymbolsAndPunctuation
+Block=CJK_Unified_Ideographs
+InCJK_UnifiedIdeographs
+Block=CJK_Unified_Ideographs_Extension_A
+InCJK_UnifiedIdeographsExtensionA
+Block=CJK_Unified_Ideographs_Extension_B
+InCJK_UnifiedIdeographsExtensionB
+Block=CJK_Unified_Ideographs_Extension_C
+InCJK_UnifiedIdeographsExtensionC
+Block=CJK_Unified_Ideographs_Extension_D
+InCJK_UnifiedIdeographsExtensionD
+Block=Combining_Diacritical_Marks
+InCombiningDiacriticalMarks
+Block=Combining_Diacritical_Marks_For_Symbols
+BLK=CombiningMarksForSymbols
+InCombiningMarksForSymbols
+Block=Combining_Diacritical_Marks_Supplement
+InCombiningDiacriticalMarks_Supplement
+Block=Combining_Half_Marks
+InCombiningHalfMarks
+Block=Combining_Marks_For_Symbols
+Block=Common_Indic_Number_Forms
+InCommonIndicNumberForms
+Block=Control_Pictures
+InControlPictures
+Block=Coptic
+InCoptic
+Coptic
+Is_Coptic
+Block=Counting_Rod_Numerals
+InCountingRodNumerals
+Block=Cuneiform
+InCuneiform
+Cuneiform
+Is_Cuneiform
+Block=Cuneiform_Numbers_And_Punctuation
+InCuneiformNumbersAndPunctuation
+Block=Currency_Symbols
+InCurrencySymbols
+Block=Cypriot_Syllabary
+InCypriotSyllabary
+Block=Cyrillic
+InCyrillic
+Cyrillic
+Is_Cyrillic
+Block=Cyrillic_Extended_A
+InCyrillicExtendedA
+Block=Cyrillic_Extended_B
+InCyrillicExtendedB
+Block=Cyrillic_Supplement
+InCyrillicSupplement
+Block=Cyrillic_Supplementary
+Block=Deseret
+InDeseret
+Block=Devanagari
+InDevanagari
+Devanagari
+Is_Devanagari
+Block=Devanagari_Extended
+InDevanagariExtended
+Block=Dingbats
+InDingbats
+Block=Domino_Tiles
+InDominoTiles
+Block=Egyptian_Hieroglyphs
+InEgyptianHieroglyphs
+Egyptian_Hieroglyphs
+Is_Egyptian_Hieroglyphs
+Block=Emoticons
+InEmoticons
+Block=Enclosed_Alphanumeric_Supplement
+InEnclosedAlphanumericSupplement
+Block=Enclosed_Alphanumerics
+InEnclosedAlphanumerics
+Block=Enclosed_CJK_Letters_And_Months
+InEnclosedCJK_LettersAndMonths
+Block=Enclosed_Ideographic_Supplement
+InEnclosedIdeographicSupplement
+Block=Ethiopic
+InEthiopic
+Ethiopic
+Is_Ethiopic
+Block=Ethiopic_Extended
+InEthiopicExtended
+Block=Ethiopic_Extended_A
+InEthiopicExtendedA
+Block=Ethiopic_Supplement
+InEthiopicSupplement
+Block=General_Punctuation
+InGeneralPunctuation
+Block=Geometric_Shapes
+InGeometricShapes
+Block=Georgian
+InGeorgian
+Georgian
+Is_Georgian
+Block=Georgian_Supplement
+InGeorgianSupplement
+Block=Glagolitic
+InGlagolitic
+Glagolitic
+Is_Glagolitic
+Block=Gothic
+InGothic
+Gothic
+Is_Gothic
+Block=Greek
+Block=Greek_And_Coptic
+Greek
+Is_Greek
+BLK=Greek
+InGreek
+Block=Greek_Extended
+InGreekExtended
+Block=Gujarati
+InGujarati
+Gujarati
+Is_Gujarati
+Block=Gurmukhi
+InGurmukhi
+Gurmukhi
+Is_Gurmukhi
+Block=Halfwidth_And_Fullwidth_Forms
+InHalfwidthAndFullwidthForms
+Block=Hangul_Compatibility_Jamo
+InHangulCompatibilityJamo
+Block=Hangul_Jamo
+InHangulJamo
+Block=Hangul_Jamo_Extended_A
+InHangulJamoExtendedA
+Block=Hangul_Jamo_Extended_B
+InHangulJamoExtendedB
+Block=Hangul_Syllables
+InHangulSyllables
+Block=Hanunoo
+InHanunoo
+Hanunoo
+Is_Hanunoo
+Block=Hebrew
+InHebrew
+Hebrew
+Is_Hebrew
+Block=High_Private_Use_Surrogates
+InHighPrivateUseSurrogates
+Block=High_Surrogates
+InHighSurrogates
+Block=Hiragana
+InHiragana
+Hiragana
+Is_Hiragana
+Block=Ideographic_Description_Characters
+InIdeographicDescriptionCharacters
+InImperialAramaic
+Is_Imperial_Aramaic
+Block=Inscriptional_Pahlavi
+InInscriptionalPahlavi
+Inscriptional_Pahlavi
+Is_Inscriptional_Pahlavi
+Block=Inscriptional_Parthian
+InInscriptionalParthian
+Inscriptional_Parthian
+Is_Inscriptional_Parthian
+Block=IPA_Extensions
+InIPA_Extensions
+Block=Javanese
+InJavanese
+Javanese
+Is_Javanese
+Block=Kaithi
+InKaithi
+Kaithi
+Is_Kaithi
+Block=Kana_Supplement
+InKanaSupplement
+Block=Kanbun
+InKanbun
+Block=Kangxi_Radicals
+InKangxiRadicals
+Block=Kannada
+InKannada
+Kannada
+Is_Kannada
+Block=Katakana
+InKatakana
+Katakana
+Is_Katakana
+Block=Katakana_Phonetic_Extensions
+InKatakanaPhoneticExtensions
+Block=Kayah_Li
+InKayahLi
+Block=Kharoshthi
+InKharoshthi
+Kharoshthi
+Is_Kharoshthi
+Block=Khmer
+InKhmer
+Khmer
+Is_Khmer
+Block=Khmer_Symbols
+InKhmerSymbols
+Block=Lao
+InLao
+Lao
+Is_Lao
+Block=Latin_1
+Block=Latin_1_Supplement
+BLK=Latin1
+InLatin1
+Block=Latin_Extended_A
+InLatinExtendedA
+Block=Latin_Extended_Additional
+InLatinExtendedAdditional
+Block=Latin_Extended_B
+InLatinExtendedB
+Block=Latin_Extended_C
+InLatinExtendedC
+Block=Latin_Extended_D
+InLatinExtendedD
+Block=Lepcha
+InLepcha
+Lepcha
+Is_Lepcha
+Block=Letterlike_Symbols
+InLetterlikeSymbols
+Block=Limbu
+InLimbu
+Limbu
+Is_Limbu
+Block=Linear_B_Ideograms
+InLinearB_Ideograms
+Block=Linear_B_Syllabary
+InLinearB_Syllabary
+Block=Lisu
+InLisu
+Block=Low_Surrogates
+InLowSurrogates
+Block=Lycian
+InLycian
+Lycian
+Is_Lycian
+Block=Lydian
+InLydian
+Lydian
+Is_Lydian
+Block=Mahjong_Tiles
+InMahjongTiles
+Block=Malayalam
+InMalayalam
+Malayalam
+Is_Malayalam
+Block=Mandaic
+InMandaic
+Mandaic
+Is_Mandaic
+Block=Mathematical_Alphanumeric_Symbols
+InMathematicalAlphanumericSymbols
+Block=Mathematical_Operators
+InMathematicalOperators
+Block=Meetei_Mayek
+InMeeteiMayek
+Meetei_Mayek
+Is_Meetei_Mayek
+Block=Miscellaneous_Mathematical_Symbols_A
+InMiscellaneousMathematicalSymbolsA
+Block=Miscellaneous_Mathematical_Symbols_B
+InMiscellaneousMathematicalSymbolsB
+Block=Miscellaneous_Symbols
+InMiscellaneousSymbols
+Block=Miscellaneous_Symbols_And_Arrows
+InMiscellaneousSymbolsAndArrows
+Block=Miscellaneous_Symbols_And_Pictographs
+InMiscellaneousSymbolsAnd_Pictographs
+Block=Miscellaneous_Technical
+InMiscellaneousTechnical
+Block=Modifier_Tone_Letters
+InModifierToneLetters
+Block=Mongolian
+InMongolian
+Mongolian
+Is_Mongolian
+Block=Musical_Symbols
+InMusicalSymbols
+Block=Myanmar
+InMyanmar
+Myanmar
+Is_Myanmar
+Block=Myanmar_Extended_A
+InMyanmarExtendedA
+Block=New_Tai_Lue
+InNewTaiLue
+New_Tai_Lue
+Is_New_Tai_Lue
+Block=NKo
+InNKo
+Nko
+Is_NKo
+Block=No_Block
+InNoBlock
+Block=Number_Forms
+InNumberForms
+Block=Ogham
+InOgham
+Ogham
+Is_Ogham
+Block=Ol_Chiki
+InOlChiki
+Block=Old_Italic
+InOldItalic
+Old_Italic
+Is_Old_Italic
+Block=Old_Persian
+InOldPersian
+Old_Persian
+Is_Old_Persian
+Block=Old_South_Arabian
+InOldSouthArabian
+Block=Old_Turkic
+InOldTurkic
+Old_Turkic
+Is_Old_Turkic
+Block=Optical_Character_Recognition
+InOpticalCharacterRecognition
+Block=Oriya
+InOriya
+Oriya
+Is_Oriya
+Block=Osmanya
+InOsmanya
+Osmanya
+Is_Osmanya
+Block=Phags_Pa
+InPhagsPa
+Phags_Pa
+Is_Phags_Pa
+Block=Phaistos_Disc
+InPhaistosDisc
+Block=Phoenician
+InPhoenician
+Phoenician
+Is_Phoenician
+Block=Phonetic_Extensions
+InPhoneticExtensions
+Block=Phonetic_Extensions_Supplement
+InPhoneticExtensionsSupplement
+Block=Playing_Cards
+InPlayingCards
+Block=Private_Use
+Block=Private_Use_Area
+Private_Use
+Is_Private_Use
+BLK=PrivateUse
+InPrivateUse
+Block=Rejang
+InRejang
+Rejang
+Is_Rejang
+Block=Rumi_Numeral_Symbols
+InRumiNumeralSymbols
+Block=Runic
+InRunic
+Runic
+Is_Runic
+Block=Samaritan
+InSamaritan
+Samaritan
+Is_Samaritan
+Block=Saurashtra
+InSaurashtra
+Saurashtra
+Is_Saurashtra
+Block=Shavian
+InShavian
+Block=Sinhala
+InSinhala
+Sinhala
+Is_Sinhala
+Block=Small_Form_Variants
+InSmallFormVariants
+Block=Spacing_Modifier_Letters
+InSpacingModifierLetters
+Block=Specials
+InSpecials
+Block=Sundanese
+InSundanese
+Sundanese
+Is_Sundanese
+Block=Superscripts_And_Subscripts
+InSuperscriptsAndSubscripts
+Block=Supplemental_Arrows_A
+InSupplementalArrowsA
+Block=Supplemental_Arrows_B
+InSupplementalArrowsB
+Block=Supplemental_Mathematical_Operators
+InSupplementalMathematicalOperators
+Block=Supplemental_Punctuation
+InSupplementalPunctuation
+Block=Supplementary_Private_Use_Area_A
+InSupplementaryPrivateUseAreaA
+Block=Supplementary_Private_Use_Area_B
+InSupplementaryPrivateUseAreaB
+Block=Syloti_Nagri
+InSylotiNagri
+Syloti_Nagri
+Is_Syloti_Nagri
+Block=Syriac
+InSyriac
+Syriac
+Is_Syriac
+Block=Tagalog
+InTagalog
+Tagalog
+Is_Tagalog
+Block=Tagbanwa
+InTagbanwa
+Tagbanwa
+Is_Tagbanwa
+Block=Tags
+InTags
+Block=Tai_Le
+InTaiLe
+Tai_Le
+Is_Tai_Le
+Block=Tai_Tham
+InTaiTham
+Tai_Tham
+Is_Tai_Tham
+Block=Tai_Viet
+InTaiViet
+Tai_Viet
+Is_Tai_Viet
+Block=Tai_Xuan_Jing_Symbols
+InTaiXuanJingSymbols
+Block=Tamil
+InTamil
+Tamil
+Is_Tamil
+Block=Telugu
+InTelugu
+Telugu
+Is_Telugu
+Block=Thaana
+InThaana
+Thaana
+Is_Thaana
+Block=Thai
+InThai
+Thai
+Is_Thai
+Block=Tibetan
+InTibetan
+Tibetan
+Is_Tibetan
+Block=Tifinagh
+InTifinagh
+Tifinagh
+Is_Tifinagh
+Block=Transport_And_Map_Symbols
+InTransportAndMapSymbols
+Block=Ugaritic
+InUgaritic
+Ugaritic
+Is_Ugaritic
+BLK=CanadianSyllabics
+InCanadianSyllabics
+Block=Unified_Canadian_Aboriginal_Syllabics_Extended
+InUnifiedCanadianAboriginalSyllabics_Extended
+Block=Vai
+InVai
+Vai
+Is_Vai
+Block=Variation_Selectors
+InVariationSelectors
+Block=Variation_Selectors_Supplement
+InVariationSelectorsSupplement
+Block=Vedic_Extensions
+InVedicExtensions
+Block=Vertical_Forms
+InVerticalForms
+Block=Yi_Radicals
+InYiRadicals
+Block=Yi_Syllables
+InYiSyllables
+Block=Yijing_Hexagram_Symbols
+InYijingHexagramSymbols
+Block_Elements
+Bopo
+Script=Bopomofo
+Bopomofo_Extended
+Box_Drawing
+Brah
+Script=Brahmi
+Brai
+Braille
+Script=Braille
+Braille_Patterns
+Bugi
+Script=Buginese
+Buhd
+Script=Buhid
+Byzantine_Musical_Symbols
+C
+Other
+General_Category=Other
+Canadian_Aboriginal
+Script=Canadian_Aboriginal
+Cans
+Canadian_Syllabics
+Unified_Canadian_Aboriginal_Syllabics
+Canonical_Combining_Class=0
+Canonical_Combining_Class=Not_Reordered
+Canonical_Combining_Class=1
+Canonical_Combining_Class=Overlay
+Canonical_Combining_Class=7
+Canonical_Combining_Class=Nukta
+Canonical_Combining_Class=8
+Canonical_Combining_Class=Kana_Voicing
+Canonical_Combining_Class=9
+Canonical_Combining_Class=Virama
+Canonical_Combining_Class=10
+CCC=10
+Canonical_Combining_Class=11
+CCC=11
+Canonical_Combining_Class=12
+CCC=12
+Canonical_Combining_Class=13
+CCC=13
+Canonical_Combining_Class=14
+CCC=14
+Canonical_Combining_Class=15
+CCC=15
+Canonical_Combining_Class=16
+CCC=16
+Canonical_Combining_Class=17
+CCC=17
+Canonical_Combining_Class=18
+CCC=18
+Canonical_Combining_Class=19
+CCC=19
+Canonical_Combining_Class=20
+CCC=20
+Canonical_Combining_Class=21
+CCC=21
+Canonical_Combining_Class=22
+CCC=22
+Canonical_Combining_Class=23
+CCC=23
+Canonical_Combining_Class=24
+CCC=24
+Canonical_Combining_Class=25
+CCC=25
+Canonical_Combining_Class=26
+CCC=26
+Canonical_Combining_Class=27
+CCC=27
+Canonical_Combining_Class=28
+CCC=28
+Canonical_Combining_Class=29
+CCC=29
+Canonical_Combining_Class=30
+CCC=30
+Canonical_Combining_Class=31
+CCC=31
+Canonical_Combining_Class=32
+CCC=32
+Canonical_Combining_Class=33
+CCC=33
+Canonical_Combining_Class=34
+CCC=34
+Canonical_Combining_Class=35
+CCC=35
+Canonical_Combining_Class=36
+CCC=36
+Canonical_Combining_Class=84
+CCC=84
+Canonical_Combining_Class=91
+CCC=91
+Canonical_Combining_Class=103
+CCC=103
+Canonical_Combining_Class=107
+CCC=107
+Canonical_Combining_Class=118
+CCC=118
+Canonical_Combining_Class=122
+CCC=122
+Canonical_Combining_Class=129
+CCC=129
+Canonical_Combining_Class=130
+CCC=130
+Canonical_Combining_Class=132
+CCC=132
+Canonical_Combining_Class=200
+Canonical_Combining_Class=Attached_Below_Left
+Canonical_Combining_Class=202
+Canonical_Combining_Class=Attached_Below
+Canonical_Combining_Class=214
+Canonical_Combining_Class=Attached_Above
+Canonical_Combining_Class=216
+Canonical_Combining_Class=Attached_Above_Right
+Canonical_Combining_Class=218
+Canonical_Combining_Class=Below_Left
+Canonical_Combining_Class=220
+Canonical_Combining_Class=Below
+Canonical_Combining_Class=222
+Canonical_Combining_Class=Below_Right
+Canonical_Combining_Class=224
+Canonical_Combining_Class=Left
+Canonical_Combining_Class=226
+Canonical_Combining_Class=Right
+Canonical_Combining_Class=228
+Canonical_Combining_Class=Above_Left
+Canonical_Combining_Class=230
+Canonical_Combining_Class=Above
+Canonical_Combining_Class=232
+Canonical_Combining_Class=Above_Right
+Canonical_Combining_Class=233
+Canonical_Combining_Class=Double_Below
+Canonical_Combining_Class=234
+Canonical_Combining_Class=Double_Above
+Canonical_Combining_Class=240
+Canonical_Combining_Class=Iota_Subscript
+Canonical_Combining_Class=A
+CCC=A
+CCC=AL
+CCC=AR
+Canonical_Combining_Class=AL
+Canonical_Combining_Class=AR
+Canonical_Combining_Class=ATA
+Canonical_Combining_Class=ATAR
+Canonical_Combining_Class=ATB
+Canonical_Combining_Class=ATBL
+CCC=ATA
+CCC=ATAR
+CCC=ATB
+CCC=ATBL
+Canonical_Combining_Class=B
+CCC=B
+CCC=BL
+CCC=BR
+Canonical_Combining_Class=BL
+Canonical_Combining_Class=BR
+Canonical_Combining_Class=DA
+Canonical_Combining_Class=DB
+CCC=DA
+CCC=DB
+CCC=IS
+Canonical_Combining_Class=IS
+CCC=KV
+Canonical_Combining_Class=KV
+Canonical_Combining_Class=L
+CCC=L
+Canonical_Combining_Class=NK
+CCC=NR
+Canonical_Combining_Class=NR
+CCC=NK
+Canonical_Combining_Class=OV
+CCC=OV
+Canonical_Combining_Class=R
+CCC=R
+CCC=VR
+Canonical_Combining_Class=VR
+Cari
+Script=Carian
+Case_Ignorable
+CI
+Cased
+Cased_Letter
+General_Category=Cased_Letter
+LC
+Cc
+Cntrl
+General_Category=Control
+CE
+Composition_Exclusion
+Cf
+Format
+General_Category=Format
+Script=Cham
+Changes_When_Casefolded
+CWCF
+Changes_When_Casemapped
+CWCM
+Changes_When_Lowercased
+CWL
+Changes_When_NFKC_Casefolded
+CWKCF
+Changes_When_Titlecased
+CWT
+Changes_When_Uppercased
+CWU
+Cher
+Script=Cherokee
+CJK_Compatibility
+CJK_Compatibility_Forms
+CJK_Compatibility_Ideographs
+CJK_Compatibility_Ideographs_Supplement
+CJK_Radicals_Supplement
+CJK_Strokes
+CJK_Symbols_And_Punctuation
+CJK_Unified_Ideographs
+CJK_Unified_Ideographs_Extension_A
+CJK_Unified_Ideographs_Extension_B
+CJK_Unified_Ideographs_Extension_C
+CJK_Unified_Ideographs_Extension_D
+Close_Punctuation
+General_Category=Close_Punctuation
+Pe
+Cn
+Unassigned
+General_Category=Unassigned
+Co
+General_Category=Private_Use
+Private_Use_Area
+Combining_Diacritical_Marks
+Combining_Diacritical_Marks_For_Symbols
+Combining_Diacritical_Marks_Supplement
+Combining_Half_Marks
+Combining_Marks_For_Symbols
+Combining_Diacritical_Marks_For__Symbols
+Block=Combining_Diacritical_Marks_For__Symbols
+Common
+Script=Common
+Zyyy
+Common_Indic_Number_Forms
+Comp_Ex
+Full_Composition_Exclusion
+Connector_Punctuation
+General_Category=Connector_Punctuation
+Pc
+Control
+Control_Pictures
+Copt
+Script=Coptic
+Counting_Rod_Numerals
+Cprt
+Cypriot
+Script=Cypriot
+Cs
+Surrogate
+General_Category=Surrogate
+Script=Cuneiform
+Xsux
+Cuneiform_Numbers_And_Punctuation
+Currency_Symbol
+General_Category=Currency_Symbol
+Sc
+Currency_Symbols
+Cypriot_Syllabary
+Script=Cyrillic
+Cyrl
+Cyrillic_Extended_A
+Cyrillic_Extended_B
+Cyrillic_Supplement
+Cyrillic_Supplementary
+Dash
+Dash_Punctuation
+General_Category=Dash_Punctuation
+Pd
+Decimal_Number
+Digit
+General_Category=Decimal_Number
+Decomposition_Type=Can
+Decomposition_Type=Canonical
+DT=Can
+Decomposition_Type=Circle
+DT=Enc
+Decomposition_Type=Com
+Decomposition_Type=Compat
+DT=Com
+Decomposition_Type=Enc
+Decomposition_Type=Fin
+Decomposition_Type=Final
+DT=Fin
+Decomposition_Type=Font
+DT=Font
+Decomposition_Type=Fra
+Decomposition_Type=Fraction
+DT=Fra
+Decomposition_Type=Init
+Decomposition_Type=Initial
+DT=Init
+Decomposition_Type=Iso
+Decomposition_Type=Isolated
+DT=Iso
+Decomposition_Type=Med
+Decomposition_Type=Medial
+DT=Med
+Decomposition_Type=Nar
+Decomposition_Type=Narrow
+DT=Nar
+Decomposition_Type=Nb
+Decomposition_Type=Nobreak
+DT=Nb
+Decomposition_Type=Non_Canon
+Decomposition_Type=Non_Canonical
+DT=NonCanon
+Decomposition_Type=None
+DT=None
+Decomposition_Type=Small
+DT=Sml
+Decomposition_Type=Sml
+Decomposition_Type=Sqr
+Decomposition_Type=Square
+DT=Sqr
+Decomposition_Type=Sub
+DT=Sub
+Decomposition_Type=Sup
+Decomposition_Type=Super
+DT=Sup
+Decomposition_Type=Vert
+Decomposition_Type=Vertical
+DT=Vert
+Decomposition_Type=Wide
+DT=Wide
+Default_Ignorable_Code_Point
+DI
+Dep
+Deprecated
+Deseret
+Script=Deseret
+Dsrt
+Deva
+Script=Devanagari
+Devanagari_Extended
+Dia
+Diacritic
+Nd
+Dingbats
+Domino_Tiles
+East_Asian_Width=A
+East_Asian_Width=Ambiguous
+EA=A
+East_Asian_Width=F
+East_Asian_Width=Fullwidth
+EA=F
+East_Asian_Width=H
+East_Asian_Width=Halfwidth
+EA=H
+East_Asian_Width=Neutral
+East_Asian_Width=Na
+East_Asian_Width=Narrow
+EA=Na
+East_Asian_Width=W
+East_Asian_Width=Wide
+EA=W
+Egyp
+Script=Egyptian_Hieroglyphs
+Emoticons
+Enclosed_Alphanumeric_Supplement
+Enclosed_Alphanumerics
+Enclosed_CJK_Letters_And_Months
+Enclosed_Ideographic_Supplement
+Enclosing_Mark
+General_Category=Enclosing_Mark
+Me
+Ethi
+Script=Ethiopic
+Ethiopic_Extended
+Ethiopic_Extended_A
+Ethiopic_Supplement
+Ext
+Extender
+Final_Punctuation
+General_Category=Final_Punctuation
+Pf
+CompEx
+General_Category=C
+Ll
+Lu
+Lt
+GC=LC
+General_Category=Cc
+General_Category=Cf
+GC=Pe
+General_Category=Cn
+General_Category=Cntrl
+General_Category=Co
+GC=Pc
+GC=Cc
+General_Category=Cs
+GC=Sc
+GC=Pd
+GC=Nd
+General_Category=Digit
+GC=Me
+GC=Pf
+GC=Cf
+General_Category=Initial_Punctuation
+GC=Pi
+Pi
+General_Category=L
+General_Category=Letter
+General_Category=L_
+General_Category=LC
+GC=L
+L
+General_Category=Letter_Number
+GC=Nl
+Nl
+General_Category=Line_Separator
+GC=Zl
+Zl
+General_Category=Ll
+General_Category=Lowercase_Letter
+General_Category=Lm
+General_Category=Modifier_Letter
+General_Category=Lo
+General_Category=Other_Letter
+GC=Ll
+General_Category=Lt
+General_Category=Titlecase_Letter
+General_Category=Lu
+General_Category=Uppercase_Letter
+General_Category=M
+General_Category=Mark
+GC=M
+M
+General_Category=Math_Symbol
+GC=Sm
+Sm
+General_Category=Mc
+General_Category=Spacing_Mark
+General_Category=Me
+General_Category=Mn
+General_Category=Nonspacing_Mark
+GC=Lm
+Lm
+General_Category=Modifier_Symbol
+GC=Sk
+Sk
+General_Category=Number
+General_Category=Nd
+General_Category=Nl
+General_Category=Other_Number
+GC=Mn
+Mn
+N
+General_Category=Open_Punctuation
+GC=Ps
+Ps
+GC=C
+GC=Lo
+Lo
+No
+General_Category=Other_Punctuation
+GC=Po
+Po
+General_Category=Other_Symbol
+GC=So
+So
+General_Category=P
+General_Category=Punctuation
+General_Category=Paragraph_Separator
+GC=Zp
+Zp
+General_Category=Pc
+General_Category=Pd
+General_Category=Pe
+General_Category=Pf
+General_Category=Pi
+General_Category=Po
+GC=Co
+General_Category=Ps
+General_Category=Punct
+GC=P
+P
+General_Category=S
+General_Category=Symbol
+General_Category=Sc
+General_Category=Separator
+GC=Z
+Z
+General_Category=Sk
+General_Category=Sm
+General_Category=So
+General_Category=Space_Separator
+GC=Zs
+Zs
+GC=Mc
+Mc
+GC=Cs
+GC=S
+S
+GC=Lt
+GC=Cn
+GC=Lu
+General_Category=Z
+General_Category=Zl
+General_Category=Zp
+General_Category=Zs
+General_Punctuation
+Geometric_Shapes
+Geor
+Script=Georgian
+Georgian_Supplement
+Glag
+Script=Glagolitic
+Goth
+Script=Gothic
+Gr_Base
+Grapheme_Base
+Gr_Ext
+Grapheme_Extend
+Graph
+GrBase
+Grapheme_Cluster_Break=CN
+Grapheme_Cluster_Break=Control
+GCB=CN
+Grapheme_Cluster_Break=CR
+GCB=CR
+Grapheme_Cluster_Break=EX
+Grapheme_Cluster_Break=Extend
+GCB=EX
+Grapheme_Cluster_Break=L
+GCB=L
+Grapheme_Cluster_Break=LF
+GCB=LF
+Grapheme_Cluster_Break=LV
+GCB=LV
+Grapheme_Cluster_Break=LVT
+GCB=LVT
+Grapheme_Cluster_Break=Other
+GCB=XX
+Grapheme_Cluster_Break=PP
+Grapheme_Cluster_Break=Prepend
+GCB=PP
+Grapheme_Cluster_Break=SM
+Grapheme_Cluster_Break=SpacingMark
+GCB=SM
+Grapheme_Cluster_Break=T
+GCB=T
+Grapheme_Cluster_Break=V
+GCB=V
+Grapheme_Cluster_Break=XX
+GrExt
+Script=Greek
+Grek
+Greek_And_Coptic
+Greek_Extended
+Script=Gujarati
+Gujr
+Script=Gurmukhi
+Guru
+Halfwidth_And_Fullwidth_Forms
+Han
+Script=Han
+Hang
+Hangul
+Script=Hangul
+Hangul_Compatibility_Jamo
+Hangul_Jamo
+Hangul_Jamo_Extended_A
+Hangul_Jamo_Extended_B
+Hangul_Syllable_Type=L
+Hangul_Syllable_Type=Leading_Jamo
+HST=L
+Hangul_Syllable_Type=LV
+Hangul_Syllable_Type=LV_Syllable
+HST=LV
+Hangul_Syllable_Type=LVT
+Hangul_Syllable_Type=LVT_Syllable
+HST=LVT
+Hangul_Syllable_Type=NA
+Hangul_Syllable_Type=Not_Applicable
+HST=NA
+Hangul_Syllable_Type=T
+Hangul_Syllable_Type=Trailing_Jamo
+HST=T
+Hangul_Syllable_Type=V
+Hangul_Syllable_Type=Vowel_Jamo
+HST=V
+Hangul_Syllables
+Hani
+Hano
+Script=Hanunoo
+Hebr
+Script=Hebrew
+Hex
+XDigit
+Hex_Digit
+High_Private_Use_Surrogates
+High_Surrogates
+Hira
+Script=Hiragana
+HorizSpace
+ID_Continue
+IDC
+ID_Start
+IDS
+Ideo
+Ideographic
+Ideographic_Description_Characters
+IDS_Binary_Operator
+IDSB
+IDS_Trinary_Operator
+IDST
+Inherited
+Script=Inherited
+Zinh
+Initial_Punctuation
+Script=Inscriptional_Pahlavi
+Phli
+Script=Inscriptional_Parthian
+Prti
+IPA_Extensions
+Ital
+Script=Old_Italic
+Java
+Script=Javanese
+Join_C
+Join_Control
+JoinC
+Joining_Group=Ain
+JG=Ain
+Joining_Group=Alaph
+JG=Alaph
+Joining_Group=Alef
+JG=Alef
+Joining_Group=Beh
+JG=Beh
+Joining_Group=Beth
+JG=Beth
+Joining_Group=Burushaski_Yeh_Barree
+JG=BurushaskiYehBarree
+Joining_Group=Dal
+JG=Dal
+Joining_Group=Dalath_Rish
+JG=DalathRish
+Joining_Group=E
+JG=E
+Joining_Group=Farsi_Yeh
+JG=FarsiYeh
+Joining_Group=Fe
+JG=Fe
+Joining_Group=Feh
+JG=Feh
+Joining_Group=Final_Semkath
+JG=FinalSemkath
+Joining_Group=Gaf
+JG=Gaf
+Joining_Group=Gamal
+JG=Gamal
+Joining_Group=Hah
+JG=Hah
+Joining_Group=Hamza_On_Heh_Goal
+Joining_Group=Teh_Marbuta_Goal
+Joining_Group=He
+JG=He
+Joining_Group=Heh
+JG=Heh
+Joining_Group=Heh_Goal
+JG=HehGoal
+Joining_Group=Heth
+JG=Heth
+Joining_Group=Kaf
+JG=Kaf
+Joining_Group=Kaph
+JG=Kaph
+Joining_Group=Khaph
+JG=Khaph
+Joining_Group=Knotted_Heh
+JG=KnottedHeh
+Joining_Group=Lam
+JG=Lam
+Joining_Group=Lamadh
+JG=Lamadh
+Joining_Group=Meem
+JG=Meem
+Joining_Group=Mim
+JG=Mim
+Joining_Group=No_Joining_Group
+JG=NoJoiningGroup
+Joining_Group=Noon
+JG=Noon
+Joining_Group=Nun
+JG=Nun
+Joining_Group=Nya
+JG=Nya
+Joining_Group=Pe
+JG=Pe
+Joining_Group=Qaf
+JG=Qaf
+Joining_Group=Qaph
+JG=Qaph
+Joining_Group=Reh
+JG=Reh
+Joining_Group=Reversed_Pe
+JG=ReversedPe
+Joining_Group=Sad
+JG=Sad
+Joining_Group=Sadhe
+JG=Sadhe
+Joining_Group=Seen
+JG=Seen
+Joining_Group=Semkath
+JG=Semkath
+Joining_Group=Shin
+JG=Shin
+Joining_Group=Swash_Kaf
+JG=SwashKaf
+Joining_Group=Syriac_Waw
+JG=SyriacWaw
+Joining_Group=Tah
+JG=Tah
+Joining_Group=Taw
+JG=Taw
+Joining_Group=Teh_Marbuta
+JG=TehMarbuta
+JG=TehMarbutaGoal
+Joining_Group=Teth
+JG=Teth
+Joining_Group=Waw
+JG=Waw
+Joining_Group=Yeh
+JG=Yeh
+Joining_Group=Yeh_Barree
+JG=YehBarree
+Joining_Group=Yeh_With_Tail
+JG=YehWithTail
+Joining_Group=Yudh
+JG=Yudh
+Joining_Group=Yudh_He
+JG=YudhHe
+Joining_Group=Zain
+JG=Zain
+Joining_Group=Zhain
+JG=Zhain
+Joining_Type=C
+Joining_Type=Join_Causing
+Joining_Type=D
+Joining_Type=Dual_Joining
+JT=D
+JT=C
+Joining_Type=L
+Joining_Type=Left_Joining
+JT=L
+Joining_Type=Non_Joining
+JT=U
+Joining_Type=R
+Joining_Type=Right_Joining
+JT=R
+Joining_Type=T
+Joining_Type=Transparent
+JT=T
+Joining_Type=U
+Script=Kaithi
+Kthi
+Kali
+Kayah_Li
+Script=Kayah_Li
+Kana
+Script=Katakana
+Kana_Supplement
+Kanbun
+Kangxi_Radicals
+Script=Kannada
+Knda
+Katakana_Phonetic_Extensions
+Khar
+Script=Kharoshthi
+Script=Khmer
+Khmr
+Khmer_Symbols
+Letter
+L_
+Lana
+Script=Tai_Tham
+Script=Lao
+Laoo
+Latin
+Script=Latin
+Latn
+Latin_1
+Latin_1_Supplement
+Latin_Extended_A
+Latin_Extended_Additional
+Latin_Extended_B
+Latin_Extended_C
+Latin_Extended_D
+Lepc
+Script=Lepcha
+Letter_Number
+Letterlike_Symbols
+Limb
+Script=Limbu
+Linb
+Linear_B
+Script=Linear_B
+Line_Break=AI
+Line_Break=Ambiguous
+Line_Break=AL
+Line_Break=Alphabetic
+LB=AL
+LB=AI
+Line_Break=B2
+Line_Break=Break_Both
+Line_Break=BA
+Line_Break=Break_After
+Line_Break=BB
+Line_Break=Break_Before
+Line_Break=BK
+Line_Break=Mandatory_Break
+LB=BA
+LB=BB
+LB=B2
+Line_Break=Break_Symbols
+LB=SY
+Line_Break=Carriage_Return
+LB=CR
+Line_Break=CB
+Line_Break=Contingent_Break
+Line_Break=CL
+Line_Break=Close_Punctuation
+Line_Break=Close_Parenthesis
+LB=CP
+LB=CL
+Line_Break=CM
+Line_Break=Combining_Mark
+LB=CM
+Line_Break=Complex_Context
+LB=SA
+LB=CB
+Line_Break=CP
+Line_Break=CR
+Line_Break=EX
+Line_Break=Exclamation
+LB=EX
+Line_Break=GL
+Line_Break=Glue
+LB=GL
+Line_Break=H2
+LB=H2
+Line_Break=H3
+LB=H3
+Line_Break=HY
+Line_Break=Hyphen
+LB=HY
+Line_Break=ID
+Line_Break=Ideographic
+LB=ID
+Line_Break=IN
+Line_Break=Inseparable
+Line_Break=Infix_Numeric
+LB=IS
+LB=IN
+Line_Break=Inseperable
+Line_Break=IS
+Line_Break=JL
+LB=JL
+Line_Break=JT
+LB=JT
+Line_Break=JV
+LB=JV
+Line_Break=LF
+Line_Break=Line_Feed
+LB=LF
+LB=BK
+Line_Break=Next_Line
+LB=NL
+Line_Break=NL
+Line_Break=Nonstarter
+LB=NS
+Line_Break=NS
+Line_Break=NU
+Line_Break=Numeric
+LB=NU
+Line_Break=OP
+Line_Break=Open_Punctuation
+LB=OP
+Line_Break=PO
+Line_Break=Postfix_Numeric
+LB=PO
+Line_Break=PR
+Line_Break=Prefix_Numeric
+LB=PR
+Line_Break=QU
+Line_Break=Quotation
+LB=QU
+Line_Break=SA
+Line_Break=SP
+Line_Break=Space
+LB=SP
+Line_Break=SY
+Line_Break=Unknown
+LB=XX
+Line_Break=WJ
+Line_Break=Word_Joiner
+LB=WJ
+Line_Break=XX
+Line_Break=ZW
+Line_Break=ZWSpace
+LB=ZW
+Line_Separator
+Linear_B_Ideograms
+Linear_B_Syllabary
+Lisu
+Script=Lisu
+Lowercase_Letter
+Modifier_Letter
+Other_Letter
+LOE
+Logical_Order_Exception
+Low_Surrogates
+Lower
+Lowercase
+Titlecase_Letter
+Uppercase_Letter
+Lyci
+Script=Lycian
+Lydi
+Script=Lydian
+Mark
+Mahjong_Tiles
+Script=Malayalam
+Mlym
+Mand
+Script=Mandaic
+Math
+Math_Symbol
+Mathematical_Alphanumeric_Symbols
+Mathematical_Operators
+Spacing_Mark
+Script=Meetei_Mayek
+Mtei
+Miscellaneous_Mathematical_Symbols_A
+Miscellaneous_Mathematical_Symbols_B
+Miscellaneous_Symbols
+Miscellaneous_Symbols_And_Arrows
+Miscellaneous_Symbols_And_Pictographs
+Miscellaneous_Technical
+Nonspacing_Mark
+Modifier_Symbol
+Modifier_Tone_Letters
+Mong
+Script=Mongolian
+Musical_Symbols
+Script=Myanmar
+Mymr
+Myanmar_Extended_A
+Number
+NChar
+Noncharacter_Code_Point
+Script=New_Tai_Lue
+Talu
+NFC_Quick_Check=M
+NFC_Quick_Check=Maybe
+NFCQC=M
+NFKC_Quick_Check=M
+NFKC_Quick_Check=Maybe
+NFKCQC=M
+Script=Nko
+NKo
+Nkoo
+Other_Number
+No_Block
+Number_Forms
+Numeric_Type=De
+Numeric_Type=Decimal
+NT=De
+Numeric_Type=Di
+Numeric_Type=Digit
+NT=Di
+Numeric_Type=None
+NT=None
+Numeric_Type=Nu
+Numeric_Type=Numeric
+NT=Nu
+Numeric_Value=0
+NV=0
+Numeric_Value=1
+NV=1
+Numeric_Value=2
+NV=2
+Numeric_Value=3
+NV=3
+Numeric_Value=4
+NV=4
+Numeric_Value=5
+NV=5
+Numeric_Value=6
+NV=6
+Numeric_Value=7
+NV=7
+Numeric_Value=8
+NV=8
+Numeric_Value=9
+NV=9
+Numeric_Value=10
+NV=10
+Numeric_Value=11
+NV=11
+Numeric_Value=12
+NV=12
+Numeric_Value=13
+NV=13
+Numeric_Value=14
+NV=14
+Numeric_Value=15
+NV=15
+Numeric_Value=16
+NV=16
+Numeric_Value=17
+NV=17
+Numeric_Value=18
+NV=18
+Numeric_Value=19
+NV=19
+Numeric_Value=20
+NV=20
+Numeric_Value=21
+NV=21
+Numeric_Value=22
+NV=22
+Numeric_Value=23
+NV=23
+Numeric_Value=24
+NV=24
+Numeric_Value=25
+NV=25
+Numeric_Value=26
+NV=26
+Numeric_Value=27
+NV=27
+Numeric_Value=28
+NV=28
+Numeric_Value=29
+NV=29
+Numeric_Value=30
+NV=30
+Numeric_Value=31
+NV=31
+Numeric_Value=32
+NV=32
+Numeric_Value=33
+NV=33
+Numeric_Value=34
+NV=34
+Numeric_Value=35
+NV=35
+Numeric_Value=36
+NV=36
+Numeric_Value=37
+NV=37
+Numeric_Value=38
+NV=38
+Numeric_Value=39
+NV=39
+Numeric_Value=40
+NV=40
+Numeric_Value=41
+NV=41
+Numeric_Value=42
+NV=42
+Numeric_Value=43
+NV=43
+Numeric_Value=44
+NV=44
+Numeric_Value=45
+NV=45
+Numeric_Value=46
+NV=46
+Numeric_Value=47
+NV=47
+Numeric_Value=48
+NV=48
+Numeric_Value=49
+NV=49
+Numeric_Value=50
+NV=50
+Numeric_Value=60
+NV=60
+Numeric_Value=70
+NV=70
+Numeric_Value=80
+NV=80
+Numeric_Value=90
+NV=90
+Numeric_Value=100
+NV=100
+Numeric_Value=200
+NV=200
+Numeric_Value=300
+NV=300
+Numeric_Value=400
+NV=400
+Numeric_Value=500
+NV=500
+Numeric_Value=600
+NV=600
+Numeric_Value=700
+NV=700
+Numeric_Value=800
+NV=800
+Numeric_Value=900
+NV=900
+Numeric_Value=1000
+NV=1000
+Numeric_Value=2000
+NV=2000
+Numeric_Value=3000
+NV=3000
+Numeric_Value=4000
+NV=4000
+Numeric_Value=5000
+NV=5000
+Numeric_Value=6000
+NV=6000
+Numeric_Value=7000
+NV=7000
+Numeric_Value=8000
+NV=8000
+Numeric_Value=9000
+NV=9000
+Numeric_Value=10000
+NV=10000
+Numeric_Value=20000
+NV=20000
+Numeric_Value=30000
+NV=30000
+Numeric_Value=40000
+NV=40000
+Numeric_Value=50000
+NV=50000
+Numeric_Value=60000
+NV=60000
+Numeric_Value=70000
+NV=70000
+Numeric_Value=80000
+NV=80000
+Numeric_Value=90000
+NV=90000
+Numeric_Value=100000
+NV=100000
+Numeric_Value=100000000
+NV=100000000
+Numeric_Value=1000000000000
+NV=1000000000000
+Numeric_Value=NaN
+NV=NaN
+Ogam
+Script=Ogham
+Ol_Chiki
+Script=Ol_Chiki
+Olck
+Script=Old_Persian
+Xpeo
+Old_South_Arabian
+Script=Old_South_Arabian
+Sarb
+Script=Old_Turkic
+Orkh
+Open_Punctuation
+Optical_Character_Recognition
+Script=Oriya
+Orya
+Osma
+Script=Osmanya
+Other_Punctuation
+Other_Symbol
+Punct
+Paragraph_Separator
+Pat_Syn
+Pattern_Syntax
+Pat_WS
+Pattern_White_Space
+PatSyn
+PatWS
+PerlSpace
+PerlWord
+Phag
+Script=Phags_Pa
+Phaistos_Disc
+Phnx
+Script=Phoenician
+Phonetic_Extensions
+Phonetic_Extensions_Supplement
+Playing_Cards
+POSIX_Alnum
+POSIX_Alpha
+POSIX_Blank
+POSIX_Cntrl
+POSIX_Digit
+POSIX_Graph
+POSIX_Lower
+POSIX_Print
+POSIX_Punct
+POSIX_Space
+POSIX_Upper
+POSIX_Word
+POSIX_XDigit
+Present_In=1.1
+IN=1.1
+Present_In=2.0
+IN=2.0
+Present_In=2.1
+IN=2.1
+Present_In=3.0
+IN=3.0
+Present_In=3.1
+IN=3.1
+Present_In=3.2
+IN=3.2
+Present_In=4.0
+IN=4.0
+Present_In=4.1
+IN=4.1
+Present_In=5.0
+IN=5.0
+Present_In=5.1
+IN=5.1
+Present_In=5.2
+IN=5.2
+Present_In=6.0
+IN=6.0
+Present_In=Unassigned
+IN=Unassigned
+Print
+Punctuation
+Qaac
+Qaai
+QMark
+Quotation_Mark
+Radical
+Script=Rejang
+Rjng
+Rumi_Numeral_Symbols
+Script=Runic
+Runr
+Symbol
+Script=Samaritan
+Samr
+Saur
+Script=Saurashtra
+Script=Arab
+SC=Arab
+SC=Armn
+Script=Armi
+Script=Armn
+SC=Avst
+Script=Avst
+Script=Bali
+SC=Bali
+Script=Bamu
+SC=Bamu
+SC=Batk
+Script=Batk
+Script=Beng
+SC=Beng
+Script=Bopo
+SC=Bopo
+Script=Brah
+SC=Brah
+Script=Brai
+SC=Brai
+Script=Bugi
+SC=Bugi
+Script=Buhd
+SC=Buhd
+SC=Cans
+Script=Cans
+Script=Cari
+SC=Cari
+SC=Cham
+Script=Cher
+SC=Cher
+SC=Zyyy
+Script=Copt
+SC=Copt
+Script=Cprt
+SC=Xsux
+SC=Cprt
+SC=Cyrl
+Script=Cyrl
+SC=Dsrt
+Script=Deva
+SC=Deva
+Script=Dsrt
+Script=Egyp
+SC=Egyp
+Script=Ethi
+SC=Ethi
+Script=Geor
+SC=Geor
+Script=Glag
+SC=Glag
+Script=Goth
+SC=Goth
+SC=Grek
+Script=Grek
+SC=Gujr
+Script=Gujr
+SC=Guru
+Script=Guru
+SC=Han
+Script=Hang
+SC=Hang
+Script=Hani
+Script=Hano
+SC=Hano
+Script=Hebr
+SC=Hebr
+Script=Hira
+SC=Hira
+SC=Armi
+SC=Zinh
+SC=Phli
+SC=Prti
+Script=Ital
+Script=Java
+SC=Java
+SC=Kthi
+Script=Kali
+Script=Kana
+SC=Knda
+SC=Kana
+SC=Kali
+Script=Khar
+SC=Khar
+SC=Khmr
+Script=Khmr
+Script=Knda
+Script=Kthi
+Script=Lana
+SC=Lao
+Script=Laoo
+SC=Latn
+Script=Latn
+Script=Lepc
+SC=Lepc
+Script=Limb
+SC=Limb
+Script=Linb
+SC=Linb
+SC=Lisu
+Script=Lyci
+SC=Lyci
+Script=Lydi
+SC=Lydi
+SC=Mlym
+Script=Mand
+SC=Mand
+SC=Mtei
+Script=Mlym
+Script=Mong
+SC=Mong
+Script=Mtei
+SC=Mymr
+Script=Mymr
+SC=Talu
+SC=Nko
+Script=Nkoo
+Script=Ogam
+SC=Ogam
+SC=Olck
+Script=Olck
+SC=Ital
+SC=Xpeo
+SC=Sarb
+SC=Orkh
+SC=Orya
+Script=Orkh
+Script=Orya
+Script=Osma
+SC=Osma
+Script=Phag
+SC=Phag
+Script=Phli
+Script=Phnx
+SC=Phnx
+Script=Prti
+Script=Qaac
+Script=Qaai
+SC=Rjng
+Script=Rjng
+SC=Runr
+Script=Runr
+SC=Samr
+Script=Samr
+Script=Sarb
+Script=Saur
+SC=Saur
+Script=Shavian
+SC=Shaw
+Shaw
+Script=Shaw
+Script=Sinh
+Script=Sinhala
+SC=Sinh
+Sinh
+Script=Sund
+Script=Sundanese
+SC=Sund
+Sund
+Script=Sylo
+Script=Syloti_Nagri
+SC=Sylo
+Sylo
+Script=Syrc
+Script=Syriac
+SC=Syrc
+Syrc
+Script=Tagalog
+SC=Tglg
+Tglg
+Script=Tagb
+Script=Tagbanwa
+SC=Tagb
+Tagb
+Script=Tai_Le
+SC=Tale
+Tale
+SC=Lana
+Script=Tai_Viet
+SC=Tavt
+Tavt
+Script=Tale
+Script=Talu
+Script=Tamil
+SC=Taml
+Taml
+Script=Taml
+Script=Tavt
+Script=Telu
+Script=Telugu
+SC=Telu
+Telu
+Script=Tfng
+Script=Tifinagh
+Script=Tglg
+Script=Thaa
+Script=Thaana
+SC=Thaa
+Thaa
+Script=Thai
+SC=Thai
+Script=Tibetan
+SC=Tibt
+Tibt
+Script=Tibt
+SC=Tfng
+Tfng
+Script=Ugar
+Script=Ugaritic
+SC=Ugar
+Ugar
+Script=Unknown
+SC=Zzzz
+Zzzz
+Script=Vai
+SC=Vai
+Script=Vaii
+Script=Xpeo
+Script=Xsux
+Script=Yi
+SC=Yi
+Yi
+Script=Yiii
+Script=Zinh
+Script=Zyyy
+Script=Zzzz
+SD
+Soft_Dotted
+Sentence_Break=AT
+Sentence_Break=ATerm
+SB=AT
+Sentence_Break=CL
+Sentence_Break=Close
+SB=CL
+Sentence_Break=CR
+SB=CR
+Sentence_Break=EX
+Sentence_Break=Extend
+SB=EX
+Sentence_Break=FO
+Sentence_Break=Format
+SB=FO
+Sentence_Break=LE
+Sentence_Break=OLetter
+Sentence_Break=LF
+SB=LF
+Sentence_Break=LO
+Sentence_Break=Lower
+SB=LO
+Sentence_Break=NU
+Sentence_Break=Numeric
+SB=NU
+SB=LE
+Sentence_Break=Other
+SB=XX
+Sentence_Break=SC
+Sentence_Break=SContinue
+SB=SC
+Sentence_Break=SE
+Sentence_Break=Sep
+SB=SE
+Sentence_Break=Sp
+SB=Sp
+Sentence_Break=ST
+Sentence_Break=STerm
+SB=ST
+Sentence_Break=UP
+Sentence_Break=Upper
+SB=UP
+Sentence_Break=XX
+Separator
+Shavian
+Small_Form_Variants
+Space
+Space_Separator
+SpacePerl
+XPerlSpace
+Spacing_Modifier_Letters
+Specials
+STerm
+Superscripts_And_Subscripts
+Supplemental_Arrows_A
+Supplemental_Arrows_B
+Supplemental_Mathematical_Operators
+Supplemental_Punctuation
+Supplementary_Private_Use_Area_A
+Supplementary_Private_Use_Area_B
+Tags
+Tai_Xuan_Jing_Symbols
+Term
+Terminal_Punctuation
+Title
+Titlecase
+Transport_And_Map_Symbols
+UIdeo
+Unified_Ideograph
+Unified_Canadian_Aboriginal_Syllabics_Extended
+Block=Unified_Canadian_Aboriginal_Syllabics__Extended
+Unknown
+Upper
+Uppercase
+Vaii
+Variation_Selector
+VS
+Variation_Selectors
+Variation_Selectors_Supplement
+Vedic_Extensions
+Vertical_Forms
+VertSpace
+White_Space
+WSpace
+Word
+Word_Break=ALetter
+WB=LE
+Word_Break=CR
+WB=CR
+Word_Break=EX
+Word_Break=ExtendNumLet
+Word_Break=Extend
+WB=Extend
+WB=EX
+Word_Break=FO
+Word_Break=Format
+WB=FO
+Word_Break=KA
+Word_Break=Katakana
+WB=KA
+Word_Break=LE
+Word_Break=LF
+WB=LF
+Word_Break=MB
+Word_Break=MidNumLet
+Word_Break=MidLetter
+WB=ML
+Word_Break=MidNum
+WB=MN
+WB=MB
+Word_Break=ML
+Word_Break=MN
+Word_Break=Newline
+WB=NL
+Word_Break=NL
+Word_Break=NU
+Word_Break=Numeric
+WB=NU
+Word_Break=Other
+WB=XX
+Word_Break=XX
+XID_Continue
+XIDC
+XID_Start
+XIDS
+X_POSIX_Alnum
+X_POSIX_Alpha
+X_POSIX_Blank
+X_POSIX_Cntrl
+X_POSIX_Digit
+X_POSIX_Graph
+X_POSIX_Lower
+X_POSIX_Print
+X_POSIX_Punct
+X_POSIX_Space
+X_POSIX_Upper
+X_POSIX_Word
+X_POSIX_XDigit
+Yi_Radicals
+Yi_Syllables
+Yiii
+Yijing_Hexagram_Symbols
+_CanonDCIJ
+_Case_Ignorable
+_CombAbove
+_X_Begin
+_X_Extend
+_X_LV_LVT_V
