@@ -1,0 +1,33 @@
+#!/usr/bin/perl
+
+use strict;
+use Data::Dumper;
+
+{
+  package Data::Dumper;
+  no strict 'vars';
+  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
+  $Quotekeys = 0;
+}
+
+
+my $map = "$ENV{XDG_CONFIG_HOME}/vim/mappings.vim";
+
+open(my $fh, '<', $map) or die($!);
+
+my $m;
+while(<$fh>) {
+  chomp;
+
+  if($_ =~ m/^([cnv]no(?:remap))\s+(.+)/) {
+    push(@{ $m->{$1} }, $2);
+  }
+  elsif($_ =~ m/^(map!?)\s+(.+)/) {
+    push(@{ $m->{$1} }, $2);
+  }
+}
+
+for my $k(sort(keys(%{ $m }))) {
+  print "\n\n\e[34m>\e[m $k\n\n";
+  print join("\n  ", @{ $m->{$k} });
+}
