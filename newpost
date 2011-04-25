@@ -6,7 +6,7 @@ use Data::Dumper;
 
 chomp(my $date = `date +%Y-%m-%d`);
 
-my $dir = "$ENV{HOME}/devel/trapd00r.se/all";
+my $dir = "$ENV{HOME}/dev/trapd00r.se/all";
 my @categories = grep{!/_site/} glob("$dir/*");
 
 print "Categories available:\n";
