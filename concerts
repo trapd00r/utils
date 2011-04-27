@@ -3,7 +3,51 @@ use strict;
 
 use LWP::Simple;
 use HTML::FormatText::Lynx;
+use XML::Simple;
+use Text::Autoformat qw(autoformat);
 
-my $upcoming = 'http://www.choppevent.se/categories/kalendarium.htm';
+use Data::Dumper;
 
-print HTML::FormatText::Lynx->format_string( get($upcoming) );
+{
+  package Data::Dumper;
+  no strict "vars";
+
+  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
+  $Quotekeys = 0;
+}
+
+
+my $chop_event = 'http://www.choppevent.se/categories/kalendarium.htm';
+my $lucky_you  = 'http://www.luckyyou.se/rss_calendar.php';
+
+
+
+_chop_event();
+_lucky_you();
+
+sub _chop_event {
+  print HTML::FormatText::Lynx->format_string( get($chop_event) );
+}
+
+sub _lucky_you {
+  my $xml = XMLin( get($lucky_you) );
+
+  print '-' x 80, "\n";
+  print "Lucky You ( http://www.luckyyou.se )\n";
+  print '-' x 80, "\n";
+
+  for my $tag( @{ $xml->{channel}->{item} } ) {
+    printf("> \e[36;1m%s\e[m\n", $tag->{title});
+
+    my $desc = join(' ', split(/\n/, $tag->{description}));
+
+
+    print autoformat($desc,
+      {
+        justify => 'left',
+        left    => 4,
+        right   => 72,
+      },
+    ), "\n";
+  }
+}
