@@ -1,0 +1,9 @@
+#!/usr/bin/perl
+use strict;
+
+use LWP::Simple;
+use HTML::FormatText::Lynx;
+
+my $upcoming = 'http://www.choppevent.se/categories/kalendarium.htm';
+
+print HTML::FormatText::Lynx->format_string( get($upcoming) );
