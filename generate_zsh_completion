@@ -1,0 +1,9 @@
+#!/usr/bin/perl
+use strict;
+
+my @apps = @ARGV or die "Files?\n";
+
+for my $app(@apps) {
+  open(my $fh, '>', "_$app") or die "$!\n";
+  print $fh "#compdef $app\ncompdef _gnu_generic $app\n";
+}
