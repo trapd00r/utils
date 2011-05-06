@@ -1,0 +1,3 @@
+#!/bin/sh
+
+mplayer http://www.radioreference.com/scripts/playlists/1/899/0-5218582748.m3u
