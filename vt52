@@ -1,0 +1,2 @@
+#!/bin/sh
+printf "\e[?2t"
