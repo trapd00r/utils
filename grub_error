@@ -1,0 +1,227 @@
+#!/usr/bin/perl
+use strict;
+use warnings FATAL => 'all';
+
+my $grub = {
+  'stage_2'   => {
+    1 => [
+      "Filename must be either an absolute filename or blocklist\n",
+      'This error is returned if a file name is requested which does not fit'
+        , 'the syntax/rules listed in the section Filesystem syntax and'
+        , 'semantics.',
+    ],
+
+    2 => [
+      "Bad file or directory type\n",
+      , 'This error is returned if a file requested is not a regular file,'
+      , 'but something like a symbolic link, directory, or FIFO.'
+    ],
+
+    3 => [
+      "Bad or corrupt data while decompressing file\n",
+      , 'This error is returned if the run-length decompression code gets an'
+      , 'internal error. This is usually from a corrupt file.'
+    ],
+
+    4 => [
+      "Bad or incompatible header in compressed file\n",
+      , 'This error is returned if the file header for a supposedly compressed'
+      , 'file is bad.',
+    ],
+    5 => [
+      "Partition table invalid or corrupt\n",
+      , 'This error is returned if the sanity checks on the integrity of the'
+      , 'partition table fail. This is a bad sign.',
+    ],
+
+    6 => [
+      "Mismatched or corrupt version of stage1/stage2\n",
+      , 'This error is returned if the install command is pointed to'
+      , 'incompatible or corrupt versions of the stage1 or stage2.'
+      , 'It can not detect corruption in general, but this is a sanity check'
+      , 'on the version numbers, which should be correct.'
+    ],
+    7 => [
+      "Loading below 1MB is not supported\n",
+      , 'This error is returned if the lowest address in a kernel is below'
+      , 'the 1MB boundary.'
+      , 'The Linux zImage format is a special case and can be'
+      , 'handled since it has a fixed loading address and maximum size.'
+    ],
+
+    8 => [
+      "Kernel must be loaded before booting\n",
+      , 'This error is returned if GRUB is told to execute the boot sequence'
+      , 'without having a kernel to start.'
+    ],
+    9 => [
+      "Unknown boot failure\n",
+      , 'This error is returned if the boot attempt did not succeed for'
+      , 'reasons which are unknown.',
+    ],
+    10 => [
+      "Unsupported Multiboot features requested\n",
+      , 'This error is returned when the Multiboot features word in the'
+      , 'Multiboot header requires a feature that is not recognized. The point'
+      , 'of this is that the kernel requires special handling which GRUB is'
+      , 'likely unable to provide.'
+    ],
+    11 => [
+      "Unrecognized device string\n",
+      , 'This error is returned if a device string was expected, and the'
+      , 'string encountered did not fit the syntax/rules listed in the section'
+      , 'Filesystem syntax and semantics.'
+    ],
+    12 => [
+      "Invalid device requested\n",
+      , 'This error is returned if a device string is recognizable but does not'
+      , 'fall under the other device errors.'
+    ],
+
+    13 => [
+      "Invalid or unsupported executable format\n",
+      , 'This error is returned if the kernel image being loaded is not'
+      , 'recognized as Multiboot or one of the supported native formats (Linux'
+      , 'zImage or bzImage, FreeBSD, or NetBSD).'
+    ],
+    14 => [
+      "Filesystem compatibility error, cannot read whole file\n",
+      , 'Some of the filesystem reading code in GRUB has limits on the length'
+      , 'of the files it can read. This error is returned when the user runs'
+      , 'into such a limit.'
+    ],
+
+    15 => [
+      "File not found\n",
+      , 'This error is returned if the specified file name cannot be found,'
+      , 'but everything else (like the disk/partition info) is OK.'
+    ],
+
+    16 => [
+      "Inconsistent filesystem structure\n",
+      , 'This error is returned by the filesystem code to denote an internal'
+      , 'error caused by the sanity checks of the filesystem structure on disk'
+      , 'not matching what it expects. This is usually caused by a corrupt'
+      , 'filesystem or bugs in the code handling it in GRUB.'
+    ],
+
+    17 => [
+      "Cannot mount selected parition\n",
+      , 'This error is returned if the partition requested exists, but the'
+      , 'filesystem type cannot be recognized by GRUB.'
+    ],
+    18 => [
+      "Selected cylinder exceeds maximum supported by BIOS\n",
+      , 'This error is returned when a read is attempted at a linear block'
+      , 'address beyond the end of the BIOS translated area. This generally'
+      , 'happens if your disk is larger than the BIOS can handle (512MB for'
+      , '(E)IDE disks on older machines or larger than 8GB in general).'
+    ],
+    19 => [
+      "Linux kernel must be loaded before initrd\n",
+      , 'This error is returned if the initrd command is used before loading a'
+      , 'Linux kernel. Similar to the above error, it only makes sense in that'
+      , 'case anyway.'
+    ],
+    20  => [
+      "Multiboot kernel must be loaded before modules\n",
+      , 'This error is returned if the module load command is used before'
+      , 'loading a Multiboot kernel. It only makes sense in this case anyway,'
+      , 'as GRUB has no idea how to communicate the presence of location of'
+      , 'such modules to a non-Multiboot-aware kernel.'
+    ],
+    21 => [
+      "Selected disk does not exist\n",
+      , 'This error is returned if the device part of a device- or full file'
+      , 'name refers to a disk or BIOS device that is not present or not'
+      , 'recognized by the BIOS in the system.'
+    ],
+    22 => [
+      "No such partition",
+      , 'This error is returned if a partition is requested in the device part'
+      , 'of a device- or full file name which is not on the selected disk.'
+    ],
+    23 => [
+      "Error while parsing number\n",
+      , 'This error is returned if GRUB was expecting to read a number and'
+      , 'encountered bad data.'
+    ],
+
+    24 => [
+      "Attempt to access block outside partition\n",
+      , 'This error is returned if a linear block address is outside of the'
+      , 'disk partition. This generally happens because of a corrupt'
+      , 'filesystem on the disk or a bug in the code handling it in GRUB'
+      , '(it is a great debugging tool).'
+    ],
+    25 => [
+      "Disk read error",
+      , 'This error is returned if there is a disk read error when trying to'
+      , 'probe or read data from a particular disk.'
+    ],
+    26 => [
+      "Too many symbolic links",
+      , 'This error is returned if the link count is beyond the maximum'
+      , '(currently 5), possibly the symbolic links are looped.'
+    ],
+    27 => [
+      "Unrecognized command\n",
+      , 'This error is returned if an unrecognized command is entered into the'
+      , 'command-line or in a boot sequence section of a configuration file'
+      , 'and that entry is selected.'
+    ],
+    28 => [
+      "Selected item cannot fit into memory\n",
+      , 'This error is returned if a kernel, module, or raw file load command'
+      , 'is either trying to load its data such that it will not  fit into'
+      , 'memory or it is simply too big.'
+    ],
+    29 => [
+      "Disk write error\n",
+      , 'This error is returned if there is a disk write error when trying to'
+      , 'write to a particular disk. This would generally only occur during an'
+      , 'install of set active partition command.'
+    ],
+    30 => [
+      "Invalid argument\n",
+      , 'This error is returned if an argument specified to a command is'
+      , 'invalid.'
+    ],
+    31 => [
+      "File is not sector aligned\n",
+      , 'This error may occur only when you access a ReiserFS partition by'
+      , 'block-lists (e.g. the command @command{install}).'
+      , 'In this case, you should mount the partition with the `-o notail'
+      , 'option.'
+    ],
+    32 => [
+      "Must be authenticated\n",
+      , 'This error is returned if you try to run a locked entry. You should'
+      , 'enter a correct password before running such an entry.'
+    ],
+
+  },
+};
+
+%{$grub->{'stage_1.5'}} = %{$grub->{stage_2}};
+
+my $error = shift;
+
+if(!$error) {
+  for my $e(sort{ $a <=> $b }(keys(%{ $grub->{'stage_2'} }))) {
+    print "\n";
+    my $i = 0;
+    for my $line(@{ $grub->{stage_2}->{$e} }) {
+      if($i > 0) {
+        printf("\t%s\n", $line);
+      }
+      else {
+        printf("\e[1;31m% 2d\e[m: \e[1m%s\e[m\n", $e, $line);
+      }
+      $i++;
+    }
+  }
+  exit;
+}
+
+print "$_\n" for @{ $grub->{stage_2}->{ $error } }, "\n";
