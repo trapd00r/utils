@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use Term::ExtendedColor qw(fg);
-use File::Lscolor qw(ls_color);
+use File::LsColor qw(ls_color);
 
 my @disks = qw(
   TV_1
