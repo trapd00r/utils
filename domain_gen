@@ -1,8 +1,8 @@
 #!/usr/bin/perl
 use strict;
 
-open(my $fh, '<', '/usr/share/dict/cracklib-small') or die($!);
-#open(my $fh, '<', '/home/scp1/doc/wordlist_swedish.txt');
+#open(my $fh, '<', '/usr/share/dict/cracklib-small') or die($!);
+open(my $fh, '<', "$ENV{HOME}/usr/share/doc/wordlists/big.txt");
 my @words = grep{ (length($_) > 4) && lc(chomp($_)) } (<$fh>);
 
 my $tld =  (shift // 'se');
