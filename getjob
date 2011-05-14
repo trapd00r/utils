@@ -1,0 +1,61 @@
+#!/usr/bin/perl
+use strict;
+
+use utf8;
+use open qw(:utf8 :std);
+use WWW::Mechanize;
+use Text::Autoformat;
+use Data::Dumper;
+
+{
+  package Data::Dumper;
+  no strict 'vars';
+  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
+  $Quotekeys = 0;
+}
+
+
+my $format_options = {
+  left     =>  2,
+  right    => 76,
+  justify  => 'left',
+  tabspace => 2,
+  case     => 'sentence',
+};
+
+my $base = 'http://arbetsformedlingen.se/4.38a41afd11d99fbdb65800016.html?T';
+
+my $query = shift // 'perl';
+
+my $url = "$base=$query";
+
+
+my $m = WWW::Mechanize->new(
+  agent_alias => 'Linux Mozilla',
+);
+
+$m->get( $url );
+for my $l($m->find_all_links) {
+  if($l->url_abs =~ m{sitevision}) {
+
+    $m->get( $l->url_abs );
+
+    my $content = do { $m->content( format => 'text' ); };
+
+
+    if($content =~ s/.*(Publicerad:.+)/$1/) {
+
+      # hilight the search term
+      $content =~ s/($query)/\e[38;5;220;1m$query\e[m/mig;
+      print autoformat( $content , $format_options);
+      print "\n-\n";
+      next;
+    }
+    else {
+      next;
+    }
+  }
+}
+
+
+__END__
