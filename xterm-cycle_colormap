@@ -1,0 +1,27 @@
+#!/usr/bin/perl
+use strict;
+use warnings FATAL => 'all';
+
+# move color definition to index -1 
+# works in urxvt and xterm compatible terminals
+
+use Term::ExtendedColor::Xresources qw(get_xterm_color set_xterm_color);
+
+my $existing = get_xterm_color(
+  {
+    index => [0 .. 255],
+    type  => 'hex',
+  },
+);
+
+
+for my $index(keys(%{ $existing })) {
+  my $previous = $index -1;
+  $previous = 255 if $previous == -1;
+
+  set_xterm_color(
+    {
+      $previous => $existing->{$index}->{rgb},
+    },
+  );
+}
