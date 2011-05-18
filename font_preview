@@ -1,0 +1,16 @@
+#!/bin/sh
+
+setty alternate
+setty ttyscroll
+setty wrap
+setty reverse
+
+for x in $(xlsfonts | grep -P 'mono|tiny|cod[ie]|altsys|erus|proggy|fixed'); do
+  printf "  %s\n" $x
+  pickyfont "$x"
+done
+
+setty reverse
+setty wrap
+setty ttyscroll
+setty alternate
