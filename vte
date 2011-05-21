@@ -1,0 +1,3 @@
+#!/bin/sh
+
+/usr/bin/vte -G -h -n 1000 -a -D -A --reverse
