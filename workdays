@@ -1,0 +1,13 @@
+#!/usr/bin/perl
+use POSIX 'mktime';
+
+my ( $mon, $year ) = (localtime)[4,5];
+my $total = 0;
+
+for( my $day = 1; ; $day++ ) {
+  my @t = localtime(mktime(0,0,0, $day, $mon, $year));
+  last if $t[4] > $mon;
+  $total++ if $t[6] >= 1 and $t[6] <= 6;
+}
+print "Total of $total working days this month\n"
+
