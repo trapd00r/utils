@@ -1,0 +1,30 @@
+#!/usr/bin/perl
+# I want to know when a database update is finished.
+
+use Audio::MPD;
+
+$SIG{INT} = sub { printf("\e[?25h"); exit };
+
+my $mpd = Audio::MPD->new(
+  host => $ENV{MPD_HOST},
+  port => $ENV{MPD_PORT},
+);
+
+
+printf("\e[?25l");
+
+my $stats = $mpd->stats;
+
+$|++;
+while($mpd->status->updating_db == 1) {
+  printf("Updating db...\r");
+  sleep 5;
+}
+print "\nUpdate finished!\n";
+printf("%10s: %s\n", $_, $stats->{$_}) for qw(artists albums songs db_update);
+
+
+END {
+  printf("\e[?25h");
+  exit
+};
