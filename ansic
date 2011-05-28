@@ -1,0 +1,6 @@
+#!/usr/bin/perl
+use strict;
+
+for(0 .. 15) {
+  printf("\e[48;5;%d%s       \e[1m% 3d         \e[m\n", $_, 'm', $_);
+}
