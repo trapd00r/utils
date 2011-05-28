@@ -1,6 +1,26 @@
 #!/usr/bin/perl
 use strict;
 
+my $map = {
+  0   => 'black',
+  1   => 'red',
+  2   => 'green',
+  3   => 'yellow',
+  4   => 'blue',
+  5   => 'magenta',
+  6   => 'cyan',
+  7   => 'white',
+
+  8   => 'bright black',
+  9   => 'bright red',
+  10  => 'bright green',
+  11  => 'bright yellow',
+  12  => 'bright magenta',
+  13  => 'bright cyan',
+  14  => 'bright white',
+};
+
 for(0 .. 15) {
-  printf("\e[48;5;%d%s       \e[1m% 3d         \e[m\n", $_, 'm', $_);
+  print "\n" if $_ == 7;
+  printf("\e[1m\e[48;5;$_%s %15s - % 3d\e[m\n", 'm', $map->{$_}, $_);
 }
