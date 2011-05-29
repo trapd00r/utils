@@ -1,0 +1,27 @@
+#!/usr/bin/perl
+
+use JSON::XS;
+use Data::Dumper;
+use LWP::Simple;
+
+my $user = shift // $ENV{REDDIT_USERNAME} // get_username();
+my $url  = "http://www.reddit.com/user/$user/about.json";
+
+my $status = decode_json(get($url));
+
+for my $tag(qw(link_karma comment_karma has_mail)) {
+  if( ($tag == 'has_mail') && (!defined($status->{data}->{$tag})) ) {
+    next;
+  }
+  printf("%13s: %s\n", $tag, $status->{data}->{$tag});
+}
+
+
+sub get_username {
+  print 'user: ';
+  chomp(my $answer = <STDIN>);
+
+  die("No username provided, giving up...\n") if ! defined($answer);
+
+  return $answer;
+}
