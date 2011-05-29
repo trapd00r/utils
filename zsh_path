@@ -1,4 +1,7 @@
 #!/usr/bin/perl
+# This script transforms and splits up the current path for use in my zsh shell
+# theme.
+
 use strict;
 use Term::ExtendedColor 'fg';
 
@@ -24,7 +27,7 @@ for(@chars) {
         next;
       }
     }
-    
+
     if(defined($ENV{DISPLAY})) {
       print fg("yellow$i", " » ");
       $i += 6
