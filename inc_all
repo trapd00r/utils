@@ -3,11 +3,14 @@ use strict;
 use feature 'say';
 use File::Find::Rule;
 
+my $pattern = shift // '.+';
+
 my @pm = sort(
   File::Find::Rule->file()
                   ->name('*.pm')
                   ->in(@INC)
 );
 
-
-say for @pm;
+for(@pm) {
+  say $_ if $_ =~ m/$pattern/i;
+};
