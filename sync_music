@@ -1,0 +1,8 @@
+#!/bin/sh
+
+if [[ -d "/mnt/mp3/MUSIC" ]]; then
+  rm -vr /mnt/mp3/MUSIC/* &&
+    mv -v /mnt/Leftover/TransferMusic/* /mnt/mp3/MUSIC/
+else
+  printf "Not mounted!\n"
+fi
