@@ -1,0 +1,184 @@
+#!/usr/bin/env perl
+#
+# unifuck - print infinite permutations of fuck in unicode aliases
+#
+# Tom Christiansen <tchrist@perl.com>
+# Mon May 23 09:37:27 MDT 2011
+
+use strict;
+use warnings;
+use charnames ":full";
+
+use Unicode::Normalize;
+
+binmode(STDOUT, ":utf8");
+
+our(@diddle, @fuck, %fuck); # initted down below
+while (my($f,$u,$c,$k) = splice(@fuck, 0, 4)) {
+    $fuck{F}{$f}++;
+    $fuck{U}{$u}++;
+    $fuck{C}{$c}++;
+    $fuck{K}{$k}++;
+} 
+
+my @F = keys %{ $fuck{F} };
+my @U = keys %{ $fuck{U} };
+my @C = keys %{ $fuck{C} };
+my @K = keys %{ $fuck{K} };
+
+while (1) { 
+    my $f = $F[rand @F];
+    my $u = $U[rand @U];
+    my $c = $C[rand @C];
+    my $k = $K[rand @K];
+
+    for ($f,$u,$c,$k) {  
+        next if length > 1;
+        next if /\p{EA=W}/;
+        next if /\pM/;
+        next if /\p{InEnclosedAlphanumerics}/;
+        s/$/$diddle[rand @diddle]/          if rand(100) < 15;
+        s/$/\N{COMBINING ENCLOSING KEYCAP}/ if rand(100) <  1;
+    }
+
+    if    (             0) {                                       }
+    elsif (rand(100) <  5) {     $u        = q(@)                  } 
+    elsif (rand(100) <  5) {        $c     = q(*)                  } 
+    elsif (rand(100) < 10) {       ($c,$k) = ($k,$c)               } 
+    elsif (rand(100) < 15) { ($f,$u,$c,$k) = reverse ($f,$u,$c,$k) }
+
+    print NFC("$f $u $c $k\n");
+}
+
+BEGIN {
+
+    # ok to have repeats in each position, since they'll be counted only once
+    # per unique strings
+    @fuck = (
+
+        "\N{LATIN CAPITAL LETTER F}",
+        "\N{LATIN CAPITAL LETTER U}",
+        "\N{LATIN CAPITAL LETTER C}",
+        "\N{LATIN CAPITAL LETTER K}",
+
+        "\N{LATIN SMALL LETTER F}",
+        "\N{LATIN SMALL LETTER U}",
+        "\N{LATIN SMALL LETTER C}",
+        "\N{LATIN SMALL LETTER K}",
+
+        "\N{LATIN SMALL LETTER F}",
+        "\N{INFINITY}",
+        "\N{LATIN SMALL LETTER C}",
+        "\N{LATIN SMALL LETTER K}",
+
+        "\N{LATIN SMALL LETTER F}",
+        "\N{LATIN SMALL LETTER O}\N{LATIN SMALL LETTER O}",
+        "\N{LATIN SMALL LETTER C}",
+        "\N{KELVIN SIGN}",
+
+        "\N{LATIN SMALL LETTER F}",
+        "\N{DIGIT ZERO}\N{DIGIT ZERO}",
+        "\N{CENT SIGN}",
+        "\N{LATIN CAPITAL LETTER K}",
+
+        "\N{LATIN LETTER SMALL CAPITAL F}",
+        "\N{LATIN LETTER SMALL CAPITAL U}",
+        "\N{LATIN LETTER SMALL CAPITAL C}",
+        "\N{LATIN LETTER SMALL CAPITAL K}",
+
+        "\N{MODIFIER LETTER SMALL F}",
+        "\N{MODIFIER LETTER SMALL U}",
+        "\N{MODIFIER LETTER SMALL C}",
+        "\N{MODIFIER LETTER SMALL K}",
+
+        "\N{MATHEMATICAL SCRIPT SMALL F}",
+        "\N{MATHEMATICAL SCRIPT SMALL U}",
+        "\N{MATHEMATICAL SCRIPT SMALL C}",
+        "\N{MATHEMATICAL SCRIPT SMALL K}",
+
+        "\N{MATHEMATICAL BOLD FRAKTUR CAPITAL F}",
+        "\N{MATHEMATICAL BOLD FRAKTUR CAPITAL U}",
+        "\N{MATHEMATICAL BOLD FRAKTUR CAPITAL C}",
+        "\N{MATHEMATICAL BOLD FRAKTUR CAPITAL K}",
+
+        "\N{MATHEMATICAL BOLD FRAKTUR SMALL F}",
+        "\N{MATHEMATICAL BOLD FRAKTUR SMALL U}",
+        "\N{MATHEMATICAL BOLD FRAKTUR SMALL C}",
+        "\N{MATHEMATICAL BOLD FRAKTUR SMALL K}",
+
+        "\N{MATHEMATICAL BOLD SCRIPT CAPITAL F}",
+        "\N{MATHEMATICAL SCRIPT CAPITAL U}",
+        "\N{MATHEMATICAL SCRIPT CAPITAL C}",
+        "\N{MATHEMATICAL SCRIPT CAPITAL K}",
+
+        "\N{CIRCLED LATIN SMALL LETTER F}",
+        "\N{CIRCLED LATIN SMALL LETTER U}",
+        "\N{CIRCLED LATIN SMALL LETTER C}",
+        "\N{CIRCLED LATIN SMALL LETTER K}",
+
+        "\N{PARENTHESIZED LATIN SMALL LETTER F}",
+        "\N{PARENTHESIZED LATIN SMALL LETTER U}",
+        "\N{PARENTHESIZED LATIN SMALL LETTER C}",
+        "\N{PARENTHESIZED LATIN SMALL LETTER K}",
+
+        "\N{GREEK CAPITAL LETTER GAMMA}\N{COMBINING SHORT STROKE OVERLAY}",
+        "\N{GOTHIC LETTER QAIRTHRA}",
+        "\N{CHEROKEE LETTER TLI}",
+        "\N{CHEROKEE LETTER TSO}",
+
+        "\N{LATIN SMALL LETTER F WITH HOOK}",
+        "\N{GREEK SMALL LETTER MU}",
+        "\N{LATIN SMALL LETTER C WITH CURL}",
+        "\N{CYRILLIC CAPITAL LETTER IOTIFIED E}",
+
+        "\N{CYRILLIC CAPITAL LETTER GHE}\N{COMBINING SHORT STROKE OVERLAY}",
+        "\N{CYRILLIC CAPITAL LETTER TSE}",
+        "\N{CYRILLIC CAPITAL LETTER ES}",
+        "\N{CYRILLIC CAPITAL LETTER KA}",
+
+        "\N{CYRILLIC SMALL LETTER GHE WITH STROKE}",
+        "\N{LATIN SMALL CAPITAL LETTER U WITH STROKE}",
+        "\N{LATIN SMALL LETTER C WITH STROKE}",
+        "\N{LATIN SMALL LETTER K WITH HOOK}",
+
+        "\N{GREEK LETTER DIGAMMA}",
+        "\N{GREEK SMALL LETTER UPSILON}",
+        "\N{GREEK LETTER STIGMA}",
+        "\N{GREEK CAPITAL LETTER KAPPA}",
+
+        "\N{HANGUL JONGSEONG KHIEUKH}",
+        "\N{LATIN CAPITAL LETTER U}",
+        "\N{ROMAN NUMERAL REVERSED ONE HUNDRED}",
+        "\N{CYRILLIC CAPITAL LETTER ZHE}",
+
+        "\N{LATIN SMALL LETTER DOTLESS J WITH STROKE}",
+        "\N{LATIN SMALL LETTER N}",
+        "\N{LATIN SMALL LETTER OPEN O}",
+        "\N{LATIN SMALL LETTER TURNED K}",
+
+        "\N{FULLWIDTH LATIN CAPITAL LETTER F}",
+        "\N{FULLWIDTH LATIN CAPITAL LETTER U}",
+        "\N{FULLWIDTH LATIN CAPITAL LETTER C}",
+        "\N{FULLWIDTH LATIN CAPITAL LETTER K}",
+
+    );
+
+    @diddle = (
+        "\N{COMBINING GRAVE ACCENT}",
+        "\N{COMBINING ACUTE ACCENT}",
+        "\N{COMBINING CIRCUMFLEX ACCENT}",
+        "\N{COMBINING TILDE}",
+        "\N{COMBINING BREVE}",
+        "\N{COMBINING DOT ABOVE}",
+        "\N{COMBINING DIAERESIS}",
+        "\N{COMBINING CARON}",
+        "\N{COMBINING CANDRABINDU}",
+        "\N{COMBINING INVERTED BREVE}",
+        "\N{COMBINING GRAVE TONE MARK}",
+        "\N{COMBINING ACUTE TONE MARK}",
+        "\N{COMBINING GREEK PERISPOMENI}",
+        "\N{COMBINING FERMATA}",
+        "\N{COMBINING SUSPENSION MARK}",
+    );
+
+}

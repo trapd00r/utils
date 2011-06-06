@@ -1,0 +1,227 @@
+#!/usr/bin/env perl
+
+use 5.014;
+
+use utf8;
+use strict;
+use autodie;
+use warnings;
+use warnings    qw< FATAL  utf8     >;
+use open        qw< :std  :utf8     >;
+use charnames   qw< :full >;
+use feature     qw< unicode_strings >;
+
+use re          "/msux";
+
+#############################################
+
+use File::Basename      qw< basename >;
+use Carp                qw< carp croak confess cluck >;
+use Encode              qw< encode decode >;
+use Unicode::Normalize  qw< NFD NFC NFKD NFKC >;
+
+#############################################
+
+sub compile		    (    ); 
+sub convert_to_subscripts   ( _  );
+sub deQ			    ( $  );
+sub deQQ		    ( $  );
+sub dequeue		    ( $$ );
+sub filter		    (    ); 
+sub fix_encodings	    (    ); 
+sub inits		    (    ); 
+sub last_rites		    (    ); 
+sub main		    (    ); 
+
+#############################################
+
+MAIN: {
+    main();
+    exit(0);
+} 
+die "NOT REACHED";
+
+#############################################
+
+
+sub fix_encodings() { 
+    if (grep /\P{ASCII}/ => @ARGV) {
+       @ARGV = map { decode("UTF-8", $_) } @ARGV;
+    }
+}
+
+sub inits() { 
+    last_rites();
+    fix_encodings();
+    $0 = basename($0);  # shorter messages
+    $| = 1;
+}
+
+sub last_rites() { 
+
+    $SIG{__DIE__} = sub {
+	confess "Uncaught exception: @_" unless $^S;
+    };
+
+    $SIG{__WARN__} = sub {
+	if ($^S) { cluck   "Trapped warning: @_" }
+	else     { confess "Deadly warning: @_"  }
+    };
+
+}
+
+sub main() { 
+    inits();
+    compile();
+    filter();
+}
+
+sub compile() { 
+
+    my $subscripts = q();
+    my $originals  = q();
+
+    local $_;
+
+    binmode(DATA, ":utf8");
+    while (<DATA>) {
+	next if / \A [\h\v] + \z /;
+	next if /  ^ \h* \N{NUMBER SIGN} /;
+	chomp;
+	die "bad data line: $_" unless m{
+	    \A \h+
+
+	    (?<CHAR>
+		\H
+	    )
+
+	    \h+
+
+	    (?<CPNUM>
+		\p{ahex}{4,6}
+	    )
+
+	    \t
+
+	    (?<NAME>
+		(?=  \w )
+		[A-Z0-9\N{SPACE}\N{HYPHEN-MINUS}] +
+		(?<= \w )
+	    )
+
+	    \z
+	};
+
+	my($char, $cpnum, $name) = @+{qw[CHAR CPNUM NAME]};
+	my $nfkd = NFKD($char);
+	if ($char ne $nfkd && length($nfkd) == 1) { 
+	    $subscripts .= $char;
+	    $originals  .= $nfkd;
+	}
+    }
+
+    my $code = deQ<<'LITERAL' . deQQ<<"INTERPOLATED";
+		|Q|
+		|Q|   use utf8;
+		|Q|
+		|Q|   sub convert_to_subscripts (_) {
+		|Q|       confess "argcount" unless @_ == 1;
+		|Q|       my $string = $_[0];
+		|Q|       confess "want string" if ref $_[0];
+LITERAL
+	       |QQ|
+	       |QQ|      \$string =~ tr[$originals][$subscripts];
+	       |QQ|       return \$string;
+	       |QQ|   }
+	       |QQ|
+	       |QQ|   'ig00'
+	       |QQ|
+INTERPOLATED
+
+    eval $code || die;
+
+}
+
+sub filter() { 
+
+    if (@ARGV == 0 && -t STDIN) {
+	print STDERR "$0: reading from standard input\n"
+	    if -t STDERR;
+    }
+
+    eval q{ 
+	END { close STDOUT } 
+	1;
+    } || die;
+
+    while (my $line = <>)  {
+	chomp $line;
+	my $nfline = NFD($line);
+	my $subbed = convert_to_subscripts($nfline);
+	say $subbed;
+    }
+
+}
+
+sub dequeue($$) {
+    my($leader, $body) = @_;
+    $body =~ s/^\s*\Q$leader\E ?//gm;
+    return $body;
+}
+
+sub deQ($) {
+    my $text = $_[0];
+    return dequeue q<|Q|>,  $text;
+}
+
+sub deQQ($) {
+    my $text = $_[0];
+    return dequeue qq<|QQ|>, $text;
+}
+
+
+__END__
+  ͅ  0345	COMBINING GREEK YPOGEGRAMMENI
+  ٖ  0656	ARABIC SUBSCRIPT ALEF
+ ₊  208A	SUBSCRIPT PLUS SIGN
+ ₋  208B	SUBSCRIPT MINUS
+ ₌  208C	SUBSCRIPT EQUALS SIGN
+ ₍  208D	SUBSCRIPT LEFT PARENTHESIS
+ ₎  208E	SUBSCRIPT RIGHT PARENTHESIS
+ ₀  2080	SUBSCRIPT ZERO
+ ₁  2081	SUBSCRIPT ONE
+ ₂  2082	SUBSCRIPT TWO
+ ⨧  2A27	PLUS SIGN WITH SUBSCRIPT TWO
+ ₃  2083	SUBSCRIPT THREE
+ ₄  2084	SUBSCRIPT FOUR
+ ₅  2085	SUBSCRIPT FIVE
+ ₆  2086	SUBSCRIPT SIX
+ ₇  2087	SUBSCRIPT SEVEN
+ ₈  2088	SUBSCRIPT EIGHT
+ ₉  2089	SUBSCRIPT NINE
+ ₐ  2090	LATIN SUBSCRIPT SMALL LETTER A
+ ₑ  2091	LATIN SUBSCRIPT SMALL LETTER E
+ ₔ  2094	LATIN SUBSCRIPT SMALL LETTER SCHWA
+ ₕ  2095	LATIN SUBSCRIPT SMALL LETTER H
+ ᵢ  1D62	LATIN SUBSCRIPT SMALL LETTER I
+ ⱼ  2C7C	LATIN SUBSCRIPT SMALL LETTER J
+ ₖ  2096	LATIN SUBSCRIPT SMALL LETTER K
+ ₗ  2097	LATIN SUBSCRIPT SMALL LETTER L
+ ₘ  2098	LATIN SUBSCRIPT SMALL LETTER M
+ ₙ  2099	LATIN SUBSCRIPT SMALL LETTER N
+ ₒ  2092	LATIN SUBSCRIPT SMALL LETTER O
+ ₚ  209A	LATIN SUBSCRIPT SMALL LETTER P
+ ᵣ  1D63	LATIN SUBSCRIPT SMALL LETTER R
+ ₛ  209B	LATIN SUBSCRIPT SMALL LETTER S
+ ₜ  209C	LATIN SUBSCRIPT SMALL LETTER T
+ ᵤ  1D64	LATIN SUBSCRIPT SMALL LETTER U
+ ᵥ  1D65	LATIN SUBSCRIPT SMALL LETTER V
+ ₓ  2093	LATIN SUBSCRIPT SMALL LETTER X
+ ᵦ  1D66	GREEK SUBSCRIPT SMALL LETTER BETA
+ ᵧ  1D67	GREEK SUBSCRIPT SMALL LETTER GAMMA
+ ͺ  037A	GREEK YPOGEGRAMMENI
+ ᵨ  1D68	GREEK SUBSCRIPT SMALL LETTER RHO
+ ᵩ  1D69	GREEK SUBSCRIPT SMALL LETTER PHI
+ ᵪ  1D6A	GREEK SUBSCRIPT SMALL LETTER CHI
+
+

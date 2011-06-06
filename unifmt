@@ -1,0 +1,271 @@
+#!/usr/bin/env perl
+#
+# unifmt - Unicode text formatter
+# 
+# Tom Christiansen <tchrist@perl.com>
+# Tue Apr 19 12:47:41 MDT 2011
+
+use utf8;
+use strict;
+use 5.10.1;
+use autodie;
+
+# delay fatal warnings till runtime; otherwise screws up compiler msgs
+use warnings; # qw[ FATAL all   ];
+use open        qw[ :utf8 :std  ];
+use charnames   qw[ :full       ];
+
+use Carp qw[ carp croak confess cluck ];
+use Getopt::Long qw[ GetOptions ];
+use Pod::Usage;
+
+use File::Basename;
+
+use Unicode::GCString;                  # UAX#29
+use Unicode::LineBreak qw(:all);        # UAX#14-C2
+
+##
+## ** THIS IS AN UNSUPPORTED, PRE-RELEASE VERSION ONLY **
+##
+our $VERSION = "0.2";
+
+our %Opt;
+our $TABS     =  8;
+our $COLUMNS  = 72;
+
+our $Formatter;
+
+sub wrap_line(_) {
+    my($text) = @_;
+    $Formatter->config(Newline => ("\n" . " " x 4));
+    say $Formatter->break($text);
+}
+
+sub wrap_paragraph(_) {
+    my ($text) = @_;
+    $Formatter->config(Newline => "\n");
+
+    for (split /\R{2,}/, $text) {
+	s/^\s+//gm;
+	s/\p{Dash}\K\h*\n//g;
+        s/(?:(?![\N{NO-BREAK SPACE}\t])\p{White_Space})+/ /g;
+        s/^\s+//;
+        s/\s+$//;
+        say $Formatter->break($_);
+    }
+
+}
+
+sub tabbed_sizing {
+    my ($self, $cols, $pre, $spc, $str) = @_;
+    my $spcstr = $spc.$str;
+    while ($spcstr =~ s/^( *)(\t+)//) {
+        $cols += length($1);
+        $cols += length($2) * $TABS - $cols % $TABS;
+    }
+    $cols += $self->strsize(0, '', '', $spcstr);
+    return $cols;
+};
+
+
+sub usage($) {
+    my $_ = $_[0];
+    s/^(\p{Ll})/\u$1/;
+    s/$/./ if /^\pL/ && !/\.$/;
+    pod2usage("$0: [USAGE] $_");
+}
+
+sub highlander_options {
+    my @optlist  = map { "--$_"} @_;
+    my $commlist = join(", " => @optlist);
+    usage("specify no more than one of: $commlist");
+} 
+
+sub load_options {
+    Getopt::Long::Configure qw[ 
+	bundling 
+	auto_version 
+	pass_through
+	permute
+    ];
+
+    $0 = basename($0);  # shorten up warnings/errors
+
+    my @options = (
+
+        # standard options
+        qw[
+	    version|v
+            help|?|h
+            man|m
+            debug|d
+
+	    tabs|t=i
+	    columns|width|c|w=i
+
+	    lines
+	    paragraphs|p
+        ],
+
+    );
+
+    GetOptions(\%Opt => @options) || pod2usage(2);
+    pod2usage(0)                                 if $Opt{help};
+    pod2usage(-exitstatus => 0, -verbose => 2)   if $Opt{man};
+
+    if (@ARGV && $ARGV[0] =~ /^-([1-9][0-9]*)$/) {
+	shift @ARGV;
+	my $newcols = $1;
+	usage("you already specified columns") if $Opt{columns};
+	$Opt{columns} = $newcols;
+    } 
+
+    $TABS    = $Opt{tabs}    if $Opt{tabs};
+    $COLUMNS = $Opt{columns} if $Opt{columns};
+
+}
+
+
+sub main { 
+    load_options();
+
+    my $wrapper;
+
+    if ($Opt{lines}) {
+	highlander_options(qw[lines paragraphs]) if $Opt{paragraphs};
+	$wrapper = \&wrap_line;
+    } 
+    elsif ($Opt{paragraphs}) {
+	highlander_options(qw[lines paragraphs]) if $Opt{lines};
+	$wrapper = \&wrap_paragraph;
+    } 
+    else {
+	$Opt{paragraphs} = 1;
+	$wrapper = \&wrap_paragraph;
+    } 
+
+    local $SIG{__DIE__} = sub {
+	confess "Untrapped fatal exception: @_" unless $^S;
+    };
+    local $SIG{__WARN__} = sub { 
+	confess "Unexpected fatalized warning: @_";
+    };
+
+    local $SIG{PIPE} = sub { exit };
+    local $/ = q();
+
+    $Formatter = new Unicode::LineBreak (
+    # makes for fewer linebreaks on this dataset:
+	Context => "NONEASTASIAN",      # EASTASIAN, NONEATSIAN
+	ColumnsMax => $COLUMNS,
+	ColumnsMin => 8,
+	Format => "SIMPLE",             # SIMPLE, NEWLINE, TRIM
+	SizingMethod    => \&tabbed_sizing,  # for tab handling
+	TailorLB => [
+	    ord("\t") => LB_SP,
+	    LEFT_QUOTES()  => LB_OP,
+	    RIGHT_QUOTES() => LB_CL,
+	],
+    );
+
+    while (<>) {
+	print $wrapper->($_);
+    } 
+
+    close(STDOUT) || die "$0: couldn't close STDOUT: $!";
+}
+
+main();
+exit();
+
+
+#################################################################
+#################################################################
+
+__END__
+
+=head1 NAME
+
+unifmt - wrap input paragraphs using the ULA
+
+=head1 SYNOPSIS
+
+unifmt [-t tabwidth] [-width | -w columns] [input_files ...]
+
+Standard options:
+
+    --help  -h
+    --man   -m
+    --debug -d
+
+Program options:
+
+    --tabs  NUM  -t NUM    set tab columns to NUM (default 8)
+    --width NUM  -w NUM    set column width to NUM (default 72)
+
+    --paragraphs -p        wrap each paragraph (default)
+    --lines		   wrap each line
+
+=head1 DESCRIPTION
+
+TO BE WRITTEN: DESCRIPTION
+
+=head1 EXAMPLES
+
+TO BE WRITTEN: EXAMPLES
+
+=head1 ERRORS
+
+TO BE WRITTEN: ERRORS
+
+=head1 ENVIRONMENT
+
+TO BE WRITTEN: ENVIRONMENT
+
+=head1 FILES
+
+TO BE WRITTEN: FILES
+
+=head1 PROGRAMS
+
+Calls no other programs.
+
+=head1 BUGS
+
+TO BE WRITTEN: BUGS
+
+=head1 SEE ALSO
+
+=over
+
+=item [UAX #11]
+
+A. Freytag (2008-2009).
+I<Unicode Standard Annex #11: East Asian Width>, Revision 17-19.
+L<http://unicode.org/reports/tr11/>.
+
+=item [UAX #14]
+
+A. Freytag and A. Heninger (2008-2010).
+I<Unicode Standard Annex #14: Unicode Line Breaking Algorithm>, Revision 22-26.
+L<http://unicode.org/reports/tr14/>.
+
+=item Standard Manpages
+
+L<fmt(1)> 
+
+=item Perl Modules
+
+L<Text::Autoformat>, L<Text::LineFold>, L<Text::Wrap>,
+L<Unicode::LineBreak>, and L<Unicode::GCString>.
+
+=head1 AUTHOR
+
+Tom Christiansen <tchrist@perl.com>
+
+=head1 COPYRIGHT AND LICENCE
+
+Copyright 2011 Tom Christiansen.
+
+This program is free software; you may redistribute it and/or modify it
+under the same terms as Perl itself.

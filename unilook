@@ -1,0 +1,1678 @@
+#!/usr/bin/env perl
+
+#################################################################
+#
+# unilook - improved version of look(1) program for Unicode
+# 
+#################################################################
+
+use strict;
+use 5.010_000;
+use if $] > 5.010, "autodie";
+use warnings;  # qw[ FATAL all ];
+
+our $VERSION = v0.6.0;
+
+# In case customer charnames files are in bin not lib...
+use FindBin;
+use lib $FindBin::Bin;
+
+# XXX: These aliases should be in separate files
+#      but that would require a more elaborate deployment strategy.
+#      Note that these are ordered, and that therefore dupes that
+#      occur later are meant to override earlier entries.
+
+use charnames (
+		  ":full"   ,
+		  ":short"  ,
+
+		   "latin"  ,
+		   "greek"  ,
+
+		  ":alias"  => 
+    {
+
+    "Aacu" => "LATIN CAPITAL LETTER A WITH ACUTE",        # Á U+00C1
+    "aacu" => "LATIN SMALL LETTER A WITH ACUTE",          # á U+00E1
+   "Acirc" => "LATIN CAPITAL LETTER A WITH CIRCUMFLEX",   # Â U+00C2
+   "acirc" => "LATIN SMALL LETTER A WITH CIRCUMFLEX",     # â U+00E2
+     "acu" => "COMBINING ACUTE ACCENT",                   # ́ U+0301
+      "AE" => "LATIN CAPITAL LETTER AE",                  # Æ U+00C6
+      "Ae" => "LATIN CAPITAL LETTER AE",                  # Æ U+00C6
+      "ae" => "LATIN SMALL LETTER AE",                    # æ U+00E6
+  "Agrave" => "LATIN CAPITAL LETTER A WITH GRAVE",        # À U+00C0
+  "agrave" => "LATIN SMALL LETTER A WITH GRAVE",          # à U+00E0
+   "Alpha" => "GREEK CAPITAL LETTER ALPHA WITH TONOS",    # Ά U+0386
+   "alpha" => "GREEK SMALL LETTER ALPHA",                 # α U+03B1
+     "ang" => "LATIN SMALL LETTER A WITH RING ABOVE",     # å U+00E5
+     "Asg" => "LATIN CAPITAL LETTER A WITH CIRCUMFLEX",   # Â U+00C2
+     "asg" => "LATIN SMALL LETTER G WITH DOT ABOVE",      # ġ U+0121
+   "asper" => "COMBINING REVERSED COMMA ABOVE",           # ̔ U+0314
+    "Auml" => "LATIN CAPITAL LETTER A WITH DIAERESIS",    # Ä U+00C4
+    "auml" => "LATIN SMALL LETTER A WITH DIAERESIS",      # ä U+00E4
+    "bbar" => "LATIN SMALL LETTER B WITH STROKE",         # ƀ U+0180
+    "Beta" => "GREEK CAPITAL LETTER BETA",                # Β U+0392
+    "beta" => "GREEK SMALL LETTER BETA",                  # β U+03B2
+   "breve" => "COMBINING BREVE",                          # ̆ U+0306
+   "Ccdil" => "LATIN CAPITAL LETTER C WITH CEDILLA",      # Ç U+00C7
+   "ccdil" => "LATIN SMALL LETTER C WITH CEDILLA",        # ç U+00E7
+    "cdil" => "COMBINING CEDILLA",                        # ̧ U+0327
+     "cdl" => "LATIN SMALL LETTER C WITH CEDILLA",        # ç U+00E7
+    "cent" => "CENT SIGN",                                # ¢ U+00A2
+     "Chi" => "GREEK CAPITAL LETTER CHI",                 # Χ U+03A7
+     "chi" => "GREEK SMALL LETTER CHI",                   # χ U+03C7
+    "circ" => "COMBINING CIRCUMFLEX ACCENT",              # ̂ U+0302
+  "circbl" => "COMBINING CIRCUMFLEX ACCENT BELOW",        # ̭ U+032D
+     "dag" => "DAGGER",                                   # † U+2020
+     "deg" => "DEGREE SIGN",                              # ° U+00B0
+   "Delta" => "GREEK CAPITAL LETTER DELTA",               # Δ U+0394
+   "delta" => "GREEK SMALL LETTER DELTA",                 # δ U+03B4
+     "div" => "DIVISION SLASH",                           # ∕ U+2215
+  "dollar" => "DOLLAR SIGN",                              # $ U+0024
+   "dotab" => "COMBINING DOT ABOVE",                      # ̇ U+0307
+   "dotbl" => "COMBINING DOT BELOW",                      # ̣ U+0323
+    "dubh" => "HYPHEN",                                   # ‐ U+2010
+    "Eacu" => "LATIN CAPITAL LETTER E WITH ACUTE",        # É U+00C9
+    "eacu" => "LATIN SMALL LETTER E WITH ACUTE",          # é U+00E9
+   "Ecirc" => "LATIN CAPITAL LETTER E WITH CIRCUMFLEX",   # Ê U+00CA
+   "ecirc" => "LATIN SMALL LETTER E WITH CIRCUMFLEX",     # ê U+00EA
+     "Edh" => "LATIN CAPITAL LETTER ETH",                 # Ð U+00D0
+     "edh" => "LATIN SMALL LETTER ETH",                   # ð U+00F0
+  "Egrave" => "LATIN CAPITAL LETTER E WITH GRAVE",        # È U+00C8
+  "egrave" => "LATIN SMALL LETTER E WITH GRAVE",          # è U+00E8
+ "Epsilon" => "GREEK CAPITAL LETTER EPSILON",             # Ε U+0395
+ "epsilon" => "GREEK SMALL LETTER EPSILON",               # ε U+03B5
+     "Eta" => "GREEK CAPITAL LETTER ETA",                 # Η U+0397
+     "eta" => "GREEK SMALL LETTER BETA",                  # β U+03B2
+     "Eth" => "LATIN CAPITAL LETTER ETH",                 # Ð U+00D0
+     "eth" => "LATIN SMALL LETTER ETH",                   # ð U+00F0
+    "Euml" => "LATIN CAPITAL LETTER E WITH DIAERESIS",    # Ë U+00CB
+    "euml" => "LATIN SMALL LETTER E WITH DIAERESIS",      # ë U+00EB
+    "fata" => "LATIN SMALL LETTER ALPHA",                 # ɑ U+0251
+   "fatax" => "LATIN SMALL LETTER ALPHA",                 # ɑ U+0251
+ "fatpara" => "DOUBLE-STRUCK CAPITAL P",                  # ℙ U+2119
+   "frown" => "COMBINING BREVE",                          # ̆ U+0306
+   "Gamma" => "GREEK CAPITAL LETTER GAMMA",               # Γ U+0393
+   "gamma" => "GREEK SMALL LETTER GAMMA",                 # γ U+03B3
+      "ge" => "GREATER-THAN OR EQUAL TO",                 # ≥ U+2265
+   "grave" => "COMBINING GRAVE ACCENT",                   # ̀ U+0300
+      "gt" => "GREATER-THAN SIGN",                        # > U+003E
+     "h01" => "HEBREW LETTER HET",                        # ח U+05D7
+     "h02" => "ARABIC SHADDA",                            # ّ U+0651
+   "hacek" => "COMBINING CARON",                          # ̌ U+030C
+    "hash" => "NUMBER SIGN",                              # # U+0023
+    "hbar" => "LATIN SMALL LETTER H WITH STROKE",         # ħ U+0127
+     "hgz" => "LATIN SMALL LETTER Z WITH HOOK",           # ȥ U+0225
+    "hook" => "COMBINING CEDILLA",                        # ̧ U+0327
+      "ia" => "LATIN SMALL LETTER ALPHA",                 # ɑ U+0251
+    "Iacu" => "LATIN CAPITAL LETTER I WITH ACUTE",        # Í U+00CD
+    "iacu" => "LATIN SMALL LETTER I WITH ACUTE",          # í U+00ED
+      "ib" => "GREEK SMALL LETTER BETA",                  # β U+03B2
+   "Icirc" => "LATIN CAPITAL LETTER I WITH CIRCUMFLEX",   # Î U+00CE
+   "icirc" => "LATIN SMALL LETTER I WITH CIRCUMFLEX",     # î U+00EE
+      "id" => "GREEK SMALL LETTER DELTA",                 # δ U+03B4
+      "ie" => "LATIN SMALL LETTER OPEN E",                # ɛ U+025B
+      "ig" => "LATIN SMALL LETTER GAMMA",                 # ɣ U+0263
+  "Igrave" => "LATIN CAPITAL LETTER I WITH GRAVE",        # Ì U+00CC
+  "igrave" => "LATIN SMALL LETTER I WITH GRAVE",          # ì U+00EC
+      "ih" => "GREEK SMALL LETTER ETA",                   # η U+03B7
+      "ii" => "LATIN SMALL LETTER IOTA",                  # ɩ U+0269
+   "infin" => "INFINITY",                                 # ∞ U+221E
+    "Iota" => "GREEK CAPITAL LETTER IOTA",                # Ι U+0399
+    "iota" => "GREEK CAPITAL LETTER CHI",                 # Χ U+03A7
+      "iq" => "GREEK SMALL LETTER THETA",                 # θ U+03B8
+    "isub" => "COMBINING GREEK YPOGEGRAMMENI",            # ͅ U+0345
+    "Iuml" => "LATIN CAPITAL LETTER I WITH DIAERESIS",    # Ï U+00CF
+    "iuml" => "LATIN SMALL LETTER I WITH DIAERESIS",      # ï U+00EF
+      "iz" => "GREEK SMALL LETTER ZETA",                  # ζ U+03B6
+   "Kappa" => "GREEK CAPITAL LETTER KAPPA",               # Κ U+039A
+   "kappa" => "GREEK SMALL LETTER KAPPA",                 # κ U+03BA
+  "Lambda" => "GREEK CAPITAL LETTER LAMDA",               # Λ U+039B
+  "lambda" => "GREEK SMALL LETTER LAMDA",                 # λ U+03BB
+     "lar" => "LEFTWARDS ARROW",                          # ← U+2190
+    "Lbar" => "LATIN CAPITAL LETTER L WITH STROKE",       # Ł U+0141
+    "lbar" => "LATIN CAPITAL LETTER O WITH MACRON",       # Ō U+014C
+      "le" => "LESS-THAN OVER EQUAL TO",                  # ≦ U+2266
+   "lenis" => "COMBINING REVERSED COMMA ABOVE",           # ̔ U+0314
+      "lm" => "MODIFIER LETTER TRIANGULAR COLON",         # ː U+02D0
+      "lt" => "LESS-THAN SIGN",                           # < U+003C
+     "mac" => "COMBINING MACRON",                         # ̄ U+0304
+     "min" => "MINUS SIGN",                               # − U+2212
+      "Mu" => "GREEK CAPITAL LETTER MU",                  # Μ U+039C
+      "mu" => "GREEK SMALL LETTER MU",                    # μ U+03BC
+      "ng" => "LATIN SMALL LETTER ENG",                   # ŋ U+014B
+     "ngx" => "LATIN SMALL LETTER ENG",                   # ŋ U+014B
+      "Nu" => "GREEK CAPITAL LETTER NU",                  # Ν U+039D
+      "nu" => "GREEK SMALL LETTER NU",                    # ν U+03BD
+    "Oacu" => "LATIN CAPITAL LETTER O WITH ACUTE",        # Ó U+00D3
+    "oacu" => "LATIN SMALL LETTER O WITH ACUTE",          # ó U+00F3
+    "Obar" => "LATIN CAPITAL LETTER O WITH STROKE",       # Ø U+00D8
+    "obar" => "LATIN SMALL LETTER O WITH STROKE",         # ø U+00F8
+   "Ocirc" => "LATIN CAPITAL LETTER O WITH CIRCUMFLEX",   # Ô U+00D4
+   "ocirc" => "LATIN SMALL LETTER O WITH CIRCUMFLEX",     # ô U+00F4
+      "OE" => "LATIN CAPITAL LIGATURE OE",                # Œ U+0152
+      "Oe" => "LATIN CAPITAL LIGATURE OE",                # Œ U+0152
+      "oe" => "LATIN SMALL LIGATURE OE",                  # œ U+0153
+  "Ograve" => "LATIN CAPITAL LETTER O WITH GRAVE",        # Ò U+00D2
+  "ograve" => "LATIN SMALL LETTER O WITH GRAVE",          # ò U+00F2
+   "Omega" => "GREEK CAPITAL LETTER OMEGA",               # Ω U+03A9
+   "omega" => "GREEK SMALL LETTER OMEGA",                 # ω U+03C9
+ "Omicron" => "GREEK CAPITAL LETTER OMICRON",             # Ο U+039F
+ "omicron" => "GREEK SMALL LETTER OMICRON",               # ο U+03BF
+     "ope" => "LATIN SMALL LETTER OPEN E",                # ɛ U+025B
+    "Ouml" => "LATIN CAPITAL LETTER O WITH DIAERESIS",    # Ö U+00D6
+    "ouml" => "LATIN SMALL LETTER A WITH DIAERESIS",      # ä U+00E4
+      "pa" => "GREEK LETTER ARCHAIC KOPPA",               # Ϙ U+03D8
+    "pall" => "LATIN SMALL LETTER TURNED Y",              # ʎ U+028E
+    "paln" => "LATIN SMALL LETTER N WITH LEFT HOOK",      # ɲ U+0272
+    "para" => "REVERSED PILCROW SIGN",                             # ⁋ U+204B
+     "Phi" => "GREEK CAPITAL LETTER PHI",                 # Φ U+03A6
+     "phi" => "LATIN SMALL LETTER PHI",                   # ɸ U+0278
+      "Pi" => "GREEK CAPITAL LETTER PI",                  # Π U+03A0
+      "pi" => "GREEK SMALL LETTER PI",                    # π U+03C0
+      "pm" => "PLUS-MINUS SIGN",                          # ± U+00B1
+      "pp" => "DOUBLE PRIME",                             # ″ U+2033
+     "Psi" => "GREEK CAPITAL LETTER PSI",                 # Ψ U+03A8
+     "psi" => "GREEK SMALL LETTER PSI",                   # ψ U+03C8
+   "pstlg" => "POUND SIGN",                               # £ U+00A3
+     "rar" => "RIGHTWARDS ARROW",                         # → U+2192
+    "revc" => "LATIN SMALL LETTER OPEN O",                # ɔ U+0254
+  "revope" => "LATIN SMALL LETTER REVERSED OPEN E",       # ɜ U+025C
+    "revr" => "MODIFIER LETTER RHOTIC HOOK",              # ˞ U+02DE
+   "revrx" => "LATIN SMALL LETTER TURNED R",              # ɹ U+0279
+    "revv" => "LATIN SMALL LETTER TURNED V",              # ʌ U+028C
+     "rfa" => "LATIN SMALL LETTER TURNED ALPHA",          # ɒ U+0252
+     "Rho" => "GREEK CAPITAL LETTER RHO",                 # Ρ U+03A1
+     "rho" => "GREEK SMALL LETTER RHO",                   # ρ U+03C1
+   "schwa" => "LATIN SMALL LETTER SCHWA",                 # ə U+0259
+  "schwax" => "LATIN SMALL LETTER SCHWA",                 # ə U+0259
+    "sect" => "SECTION SIGN",                             # § U+00A7
+      "sh" => "LATIN SMALL LETTER ESH",                   # ʃ U+0283
+    "shti" => "LATIN LETTER SMALL CAPITAL I",             # ɪ U+026A
+    "shtu" => "LATIN SMALL LETTER UPSILON",               # ʊ U+028A
+    "shty" => "LATIN LETTER SMALL CAPITAL Y",             # ʏ U+028F
+     "shx" => "LATIN SMALL LETTER ESH",                   # ʃ U+0283
+   "Sigma" => "GREEK CAPITAL LETTER SIGMA",               # Σ U+03A3
+   "sigma" => "GREEK SMALL LETTER SIGMA",                 # σ U+03C3
+      "sm" => "MODIFIER LETTER VERTICAL LINE",            # ˈ U+02C8
+     "smm" => "MODIFIER LETTER LOW VERTICAL LINE",        # ˌ U+02CC
+    "sqrt" => "SQUARE ROOT",                              # √ U+221A
+     "Tau" => "GREEK CAPITAL LETTER TAU",                 # Τ U+03A4
+     "tau" => "GREEK SMALL LETTER TAU",                   # τ U+03C4
+      "Th" => "LATIN CAPITAL LETTER THORN",               # Þ U+00DE
+      "th" => "LATIN SMALL LETTER THORN",                 # þ U+00FE
+   "Theta" => "GREEK CAPITAL LETTER THETA",               # Θ U+0398
+   "theta" => "GREEK SMALL LETTER THETA",                 # θ U+03B8
+   "tilde" => "COMBINING TILDE",                          # ̃ U+0303
+   "times" => "MULTIPLICATION SIGN",                      # × U+00D7
+    "trli" => "PARALLEL TO",                              # ∥ U+2225
+    "Uacu" => "LATIN CAPITAL LETTER U WITH ACUTE",        # Ú U+00DA
+    "uacu" => "LATIN SMALL LETTER U WITH ACUTE",          # ú U+00FA
+   "Ucirc" => "LATIN CAPITAL LETTER U WITH CIRCUMFLEX",   # Û U+00DB
+   "ucirc" => "LATIN SMALL LETTER U WITH CIRCUMFLEX",     # û U+00FB
+    "udtr" => "NABLA",                                    # ∇ U+2207
+  "Ugrave" => "LATIN CAPITAL LETTER U WITH GRAVE",        # Ù U+00D9
+  "ugrave" => "LATIN SMALL LETTER U WITH GRAVE",          # ù U+00F9
+     "uml" => "COMBINING DIAERESIS",                      # ̈ U+0308
+    "undl" => "COMBINING MINUS SIGN BELOW",               # ̠ U+0320
+ "Upsilon" => "GREEK CAPITAL LETTER UPSILON",             # Υ U+03A5
+ "upsilon" => "LATIN SMALL LETTER UPSILON",               # ʊ U+028A
+    "Uuml" => "LATIN CAPITAL LETTER U WITH DIAERESIS",    # Ü U+00DC
+    "uuml" => "LATIN SMALL LETTER U WITH DIAERESIS",      # ü U+00FC
+      "vb" => "VERTICAL LINE",                            # | U+007C
+     "vvf" => "LATIN SMALL LETTER GAMMA",                 # ɣ U+0263
+      "Xi" => "GREEK CAPITAL LETTER XI",                  # Ξ U+039E
+      "xi" => "GREEK SMALL LETTER XI",                    # ξ U+03BE
+    "Yacu" => "LATIN SMALL LETTER Y WITH ACUTE",          # ý U+00FD
+    "yacu" => "LATIN SMALL LETTER Y WITH ACUTE",          # ý U+00FD
+     "Ygh" => "LATIN CAPITAL LETTER YOGH",                # Ȝ U+021C
+     "ygh" => "LATIN SMALL LETTER YOGH",                  # ȝ U+021D
+    "yuml" => "LATIN SMALL LETTER Y WITH DIAERESIS",      # ÿ U+00FF
+    "Zeta" => "GREEK CAPITAL LETTER ZETA",                # Ζ U+0396
+    "zeta" => "GREEK SMALL LETTER ZETA",                  # ζ U+03B6
+      "zh" => "LATIN SMALL LETTER EZH",                   # ʒ U+0292
+
+# Number aliases: these are \p{Other_Number}
+      "sup1" => "SUPERSCRIPT ONE",                            # ¹ U+00B9
+      "sup2" => "SUPERSCRIPT TWO",                            # ² U+00B2
+      "sup3" => "SUPERSCRIPT THREE",                          # ³ U+00B3
+    "frac12" => "VULGAR FRACTION ONE HALF",                   # ½ U+00BD
+    "frac14" => "VULGAR FRACTION ONE QUARTER",                # ¼ U+00BC
+    "frac34" => "VULGAR FRACTION THREE QUARTERS",             # ¾ U+00BE
+
+# Currency sign aliases: \p{Currency_Symbol}
+
+    "curren" => "CURRENCY SIGN",                              # ¤ U+00A4
+      "cent" => "CENT SIGN",                                  # ¢ U+00A2
+     "pound" => "POUND SIGN",                                 # £ U+00A3
+       "yen" => "YEN SIGN",                                   # ¥ U+00A5
+      "euro" => "EURO SIGN",                                  # € U+20AC
+
+# Latin letter aliases in NFC and grouped by first letter
+#
+#   NOTE: some like BLACK LETTER blah and the trademark
+#         symbol are only Latin in NFKD form.
+
+      "ordf" => "FEMININE ORDINAL INDICATOR",                 # ª U+00AA
+    "Oacute" => "LATIN CAPITAL LETTER O WITH ACUTE",          # Ó U+00D3
+    "Aacute" => "LATIN CAPITAL LETTER A WITH ACUTE",          # Á U+00C1
+    "aacute" => "LATIN SMALL LETTER A WITH ACUTE",            # á U+00E1
+    "Agrave" => "LATIN CAPITAL LETTER A WITH GRAVE",          # À U+00C0
+    "agrave" => "LATIN SMALL LETTER A WITH GRAVE",            # à U+00E0
+     "Acirc" => "LATIN CAPITAL LETTER A WITH CIRCUMFLEX",     # Â U+00C2
+     "acirc" => "LATIN SMALL LETTER A WITH CIRCUMFLEX",       # â U+00E2
+     "Aring" => "LATIN CAPITAL LETTER A WITH RING ABOVE",     # Å U+00C5
+     "aring" => "LATIN SMALL LETTER A WITH RING ABOVE",       # å U+00E5
+      "Auml" => "LATIN CAPITAL LETTER A WITH DIAERESIS",      # Ä U+00C4
+      "auml" => "LATIN SMALL LETTER A WITH DIAERESIS",        # ä U+00E4
+    "Atilde" => "LATIN CAPITAL LETTER A WITH TILDE",          # Ã U+00C3
+    "atilde" => "LATIN SMALL LETTER A WITH TILDE",            # ã U+00E3
+     "AElig" => "LATIN CAPITAL LETTER AE",                    # Æ U+00C6
+     "aelig" => "LATIN SMALL LETTER AE",                      # æ U+00E6
+
+    "Ccedil" => "LATIN CAPITAL LETTER C WITH CEDILLA",        # Ç U+00C7
+    "ccedil" => "LATIN SMALL LETTER C WITH CEDILLA",          # ç U+00E7
+
+       "ETH" => "LATIN CAPITAL LETTER ETH",                   # Ð U+00D0
+       "eth" => "LATIN SMALL LETTER ETH",                     # ð U+00F0
+
+    "Eacute" => "LATIN CAPITAL LETTER E WITH ACUTE",          # É U+00C9
+    "eacute" => "LATIN SMALL LETTER E WITH ACUTE",            # é U+00E9
+    "Egrave" => "LATIN CAPITAL LETTER E WITH GRAVE",          # È U+00C8
+    "egrave" => "LATIN SMALL LETTER E WITH GRAVE",            # è U+00E8
+     "Ecirc" => "LATIN CAPITAL LETTER E WITH CIRCUMFLEX",     # Ê U+00CA
+     "ecirc" => "LATIN SMALL LETTER E WITH CIRCUMFLEX",       # ê U+00EA
+      "Euml" => "LATIN CAPITAL LETTER E WITH DIAERESIS",      # Ë U+00CB
+      "euml" => "LATIN SMALL LETTER E WITH DIAERESIS",        # ë U+00EB
+
+      "fnof" => "LATIN SMALL LETTER F WITH HOOK",             # ƒ U+0192
+
+     "image" => "BLACK-LETTER CAPITAL I",                     # ℑ U+2111
+    "Iacute" => "LATIN CAPITAL LETTER I WITH ACUTE",          # Í U+00CD
+    "iacute" => "LATIN SMALL LETTER I WITH ACUTE",            # í U+00ED
+    "Igrave" => "LATIN CAPITAL LETTER I WITH GRAVE",          # Ì U+00CC
+    "igrave" => "LATIN SMALL LETTER I WITH GRAVE",            # ì U+00EC
+     "Icirc" => "LATIN CAPITAL LETTER I WITH CIRCUMFLEX",     # Î U+00CE
+     "icirc" => "LATIN SMALL LETTER I WITH CIRCUMFLEX",       # î U+00EE
+      "Iuml" => "LATIN CAPITAL LETTER I WITH DIAERESIS",      # Ï U+00CF
+      "iuml" => "LATIN SMALL LETTER I WITH DIAERESIS",        # ï U+00EF
+
+    "Ntilde" => "LATIN CAPITAL LETTER N WITH TILDE",          # Ñ U+00D1
+    "ntilde" => "LATIN SMALL LETTER N WITH TILDE",            # ñ U+00F1
+
+      "ordm" => "MASCULINE ORDINAL INDICATOR",                # º U+00BA
+    "oacute" => "LATIN SMALL LETTER O WITH ACUTE",            # ó U+00F3
+    "Ograve" => "LATIN CAPITAL LETTER O WITH GRAVE",          # Ò U+00D2
+    "ograve" => "LATIN SMALL LETTER O WITH GRAVE",            # ò U+00F2
+     "Ocirc" => "LATIN CAPITAL LETTER O WITH CIRCUMFLEX",     # Ô U+00D4
+     "ocirc" => "LATIN SMALL LETTER O WITH CIRCUMFLEX",       # ô U+00F4
+      "Ouml" => "LATIN CAPITAL LETTER O WITH DIAERESIS",      # Ö U+00D6
+      "ouml" => "LATIN SMALL LETTER O WITH DIAERESIS",        # ö U+00F6
+    "Otilde" => "LATIN CAPITAL LETTER O WITH TILDE",          # Õ U+00D5
+    "otilde" => "LATIN SMALL LETTER O WITH TILDE",            # õ U+00F5
+    "Oslash" => "LATIN CAPITAL LETTER O WITH STROKE",         # Ø U+00D8
+    "oslash" => "LATIN SMALL LETTER O WITH STROKE",           # ø U+00F8
+     "OElig" => "LATIN CAPITAL LIGATURE OE",                  # Œ U+0152
+     "oelig" => "LATIN SMALL LIGATURE OE",                    # œ U+0153
+
+      "real" => "BLACK-LETTER CAPITAL R",                     # ℜ U+211C
+
+    "Scaron" => "LATIN CAPITAL LETTER S WITH CARON",          # Š U+0160
+    "scaron" => "LATIN SMALL LETTER S WITH CARON",            # š U+0161
+     "szlig" => "LATIN SMALL LETTER SHARP S",                 # ß U+00DF
+
+     "trade" => "TRADE MARK SIGN",                            # ™ U+2122
+
+    "Uacute" => "LATIN CAPITAL LETTER U WITH ACUTE",          # Ú U+00DA
+    "uacute" => "LATIN SMALL LETTER U WITH ACUTE",            # ú U+00FA
+    "Ugrave" => "LATIN CAPITAL LETTER U WITH GRAVE",          # Ù U+00D9
+    "ugrave" => "LATIN SMALL LETTER U WITH GRAVE",            # ù U+00F9
+     "Ucirc" => "LATIN CAPITAL LETTER U WITH CIRCUMFLEX",     # Û U+00DB
+     "ucirc" => "LATIN SMALL LETTER U WITH CIRCUMFLEX",       # û U+00FB
+      "Uuml" => "LATIN CAPITAL LETTER U WITH DIAERESIS",      # Ü U+00DC
+      "uuml" => "LATIN SMALL LETTER U WITH DIAERESIS",        # ü U+00FC
+
+    "Yacute" => "LATIN CAPITAL LETTER Y WITH ACUTE",          # Ý U+00DD
+    "yacute" => "LATIN SMALL LETTER Y WITH ACUTE",            # ý U+00FD
+      "Yuml" => "LATIN CAPITAL LETTER Y WITH DIAERESIS",      # Ÿ U+0178
+      "yuml" => "LATIN SMALL LETTER Y WITH DIAERESIS",        # ÿ U+00FF
+
+     "THORN" => "LATIN CAPITAL LETTER THORN",                 # Þ U+00DE
+     "thorn" => "LATIN SMALL LETTER THORN",                   # þ U+00FE
+
+# This is *not* the same as the HEBREW LETTER ALEF (aleph),
+# although it is a \p{Other_Letter} not a \p{Symbol}.
+   "alefsym" => "ALEF SYMBOL",                                # ℵ U+2135
+
+# Greek letter aliases, or things that sort with them
+
+     "Alpha" => "GREEK CAPITAL LETTER ALPHA",                 # Α U+0391
+     "alpha" => "GREEK SMALL LETTER ALPHA",                   # α U+03B1
+      "Beta" => "GREEK CAPITAL LETTER BETA",                  # Β U+0392
+      "beta" => "GREEK SMALL LETTER BETA",                    # β U+03B2
+     "Gamma" => "GREEK CAPITAL LETTER GAMMA",                 # Γ U+0393
+     "gamma" => "GREEK SMALL LETTER GAMMA",                   # γ U+03B3
+     "Delta" => "GREEK CAPITAL LETTER DELTA",                 # Δ U+0394
+     "delta" => "GREEK SMALL LETTER DELTA",                   # δ U+03B4
+   "Epsilon" => "GREEK CAPITAL LETTER EPSILON",               # Ε U+0395
+   "epsilon" => "GREEK SMALL LETTER EPSILON",                 # ε U+03B5
+      "Zeta" => "GREEK CAPITAL LETTER ZETA",                  # Ζ U+0396
+      "zeta" => "GREEK SMALL LETTER ZETA",                    # ζ U+03B6
+       "Eta" => "GREEK CAPITAL LETTER ETA",                   # Η U+0397
+       "eta" => "GREEK SMALL LETTER ETA",                     # η U+03B7
+     "Theta" => "GREEK CAPITAL LETTER THETA",                 # Θ U+0398
+  "thetasym" => "GREEK THETA SYMBOL",                         # ϑ U+03D1
+     "theta" => "GREEK SMALL LETTER THETA",                   # θ U+03B8
+      "Iota" => "GREEK CAPITAL LETTER IOTA",                  # Ι U+0399
+      "iota" => "GREEK SMALL LETTER IOTA",                    # ι U+03B9
+     "Kappa" => "GREEK CAPITAL LETTER KAPPA",                 # Κ U+039A
+     "kappa" => "GREEK SMALL LETTER KAPPA",                   # κ U+03BA
+    "Lambda" => "GREEK CAPITAL LETTER LAMDA",                 # Λ U+039B
+    "lambda" => "GREEK SMALL LETTER LAMDA",                   # λ U+03BB
+        "Mu" => "GREEK CAPITAL LETTER MU",                    # Μ U+039C
+     "micro" => "MICRO SIGN",                                 # µ U+00B5
+        "mu" => "GREEK SMALL LETTER MU",                      # μ U+03BC
+        "Nu" => "GREEK CAPITAL LETTER NU",                    # Ν U+039D
+        "nu" => "GREEK SMALL LETTER NU",                      # ν U+03BD
+        "Xi" => "GREEK CAPITAL LETTER XI",                    # Ξ U+039E
+        "xi" => "GREEK SMALL LETTER XI",                      # ξ U+03BE
+   "Omicron" => "GREEK CAPITAL LETTER OMICRON",               # Ο U+039F
+   "omicron" => "GREEK SMALL LETTER OMICRON",                 # ο U+03BF
+        "Pi" => "GREEK CAPITAL LETTER PI",                    # Π U+03A0
+       "piv" => "GREEK PI SYMBOL",                            # ϖ U+03D6
+        "pi" => "GREEK SMALL LETTER PI",                      # π U+03C0
+       "Rho" => "GREEK CAPITAL LETTER RHO",                   # Ρ U+03A1
+       "rho" => "GREEK SMALL LETTER RHO",                     # ρ U+03C1
+     "sigma" => "GREEK SMALL LETTER SIGMA",                   # σ U+03C3
+    "sigmaf" => "GREEK SMALL LETTER FINAL SIGMA",             # ς U+03C2
+       "Tau" => "GREEK CAPITAL LETTER TAU",                   # Τ U+03A4
+       "tau" => "GREEK SMALL LETTER TAU",                     # τ U+03C4
+     "upsih" => "GREEK UPSILON WITH HOOK SYMBOL",             # ϒ U+03D2
+   "Upsilon" => "GREEK CAPITAL LETTER UPSILON",               # Υ U+03A5
+   "upsilon" => "GREEK SMALL LETTER UPSILON",                 # υ U+03C5
+       "Phi" => "GREEK CAPITAL LETTER PHI",                   # Φ U+03A6
+       "phi" => "GREEK SMALL LETTER PHI",                     # φ U+03C6
+       "Chi" => "GREEK CAPITAL LETTER CHI",                   # Χ U+03A7
+       "chi" => "GREEK SMALL LETTER CHI",                     # χ U+03C7
+       "Psi" => "GREEK CAPITAL LETTER PSI",                   # Ψ U+03A8
+       "psi" => "GREEK SMALL LETTER PSI",                     # ψ U+03C8
+     "Omega" => "GREEK CAPITAL LETTER OMEGA",                 # Ω U+03A9
+     "omega" => "GREEK SMALL LETTER OMEGA",                   # ω U+03C9
+
+# \p{Format} characters
+
+       "zwj" => "ZERO WIDTH JOINER",                          # ‍ U+200D
+      "zwnj" => "ZERO WIDTH NON-JOINER",                      # ‌ U+200C
+       "rlm" => "RIGHT-TO-LEFT MARK",                         # ‏ U+200F
+       "lrm" => "LEFT-TO-RIGHT MARK",                         # ‎ U+200E
+
+# Various punctuation and symbols in UCA order.  
+# None of these is a combining Mark.
+
+     "oline" => "OVERLINE",                                   # ‾ U+203E
+      "ensp" => "EN SPACE",                                   #   U+2002
+      "nbsp" => "NO-BREAK SPACE",                             #   U+00A0
+     "cedil" => "CEDILLA",                                    # ¸ U+00B8
+       "uml" => "DIAERESIS",                                  # ¨ U+00A8
+     "acute" => "ACUTE ACCENT",                               # ´ U+00B4
+     "tilde" => "SMALL TILDE",                                # ˜ U+02DC
+      "emsp" => "EM SPACE",                                   #   U+2003
+      "macr" => "MACRON",                                     # ¯ U+00AF
+    "thinsp" => "THIN SPACE",                                 #   U+2009
+       "shy" => "SOFT HYPHEN",                                # ­ U+00AD
+     "ndash" => "EN DASH",                                    # – U+2013
+     "mdash" => "EM DASH",                                    # — U+2014
+     "iexcl" => "INVERTED EXCLAMATION MARK",                  # ¡ U+00A1
+    "iquest" => "INVERTED QUESTION MARK",                     # ¿ U+00BF
+    "hellip" => "HORIZONTAL ELLIPSIS",                        # … U+2026
+    "middot" => "MIDDLE DOT",                                 # · U+00B7
+      "apos" => "APOSTROPHE",                                 # ' U+0027
+     "lsquo" => "LEFT SINGLE QUOTATION MARK",                 # ‘ U+2018
+     "rsquo" => "RIGHT SINGLE QUOTATION MARK",                # ’ U+2019
+     "sbquo" => "SINGLE LOW-9 QUOTATION MARK",                # ‚ U+201A
+    "lsaquo" => "SINGLE LEFT-POINTING ANGLE QUOTATION MARK",  # ‹ U+2039
+    "rsaquo" => "SINGLE RIGHT-POINTING ANGLE QUOTATION MARK", # › U+203A
+      "quot" => "QUOTATION MARK",                             # " U+0022
+     "ldquo" => "LEFT DOUBLE QUOTATION MARK",                 # “ U+201C
+     "rdquo" => "RIGHT DOUBLE QUOTATION MARK",                # ” U+201D
+     "bdquo" => "DOUBLE LOW-9 QUOTATION MARK",                # „ U+201E
+     "laquo" => "LEFT-POINTING DOUBLE ANGLE QUOTATION MARK",  # « U+00AB
+     "raquo" => "RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK", # » U+00BB
+      "lang" => "LEFT-POINTING ANGLE BRACKET",                # 〈 U+2329
+      "rang" => "RIGHT-POINTING ANGLE BRACKET",               # 〉 U+232A
+      "sect" => "SECTION SIGN",                               # § U+00A7
+      "para" => "PILCROW SIGN",                               # ¶ U+00B6
+      "copy" => "COPYRIGHT SIGN",                             # © U+00A9
+       "reg" => "REGISTERED SIGN",                            # ® U+00AE
+     "frasl" => "FRACTION SLASH",                             # ⁄ U+2044
+       "amp" => "AMPERSAND",                                  # & U+0026
+    "permil" => "PER MILLE SIGN",                             # ‰ U+2030
+    "dagger" => "DAGGER",                                     # † U+2020
+    "Dagger" => "DOUBLE DAGGER",                              # ‡ U+2021
+      "bull" => "BULLET",                                     # • U+2022
+     "prime" => "PRIME",                                      # ′ U+2032
+     "Prime" => "DOUBLE PRIME",                               # ″ U+2033
+      "circ" => "MODIFIER LETTER CIRCUMFLEX ACCENT",          # ˆ U+02C6
+       "deg" => "DEGREE SIGN",                                # ° U+00B0
+    "weierp" => "SCRIPT CAPITAL P",                           # ℘ U+2118
+      "larr" => "LEFTWARDS ARROW",                            # ← U+2190
+      "rarr" => "RIGHTWARDS ARROW",                           # → U+2192
+      "uarr" => "UPWARDS ARROW",                              # ↑ U+2191
+      "darr" => "DOWNWARDS ARROW",                            # ↓ U+2193
+      "harr" => "LEFT RIGHT ARROW",                           # ↔ U+2194
+     "crarr" => "DOWNWARDS ARROW WITH CORNER LEFTWARDS",      # ↵ U+21B5
+      "lArr" => "LEFTWARDS DOUBLE ARROW",                     # ⇐ U+21D0
+      "uArr" => "UPWARDS DOUBLE ARROW",                       # ⇑ U+21D1
+      "rArr" => "RIGHTWARDS DOUBLE ARROW",                    # ⇒ U+21D2
+      "dArr" => "DOWNWARDS DOUBLE ARROW",                     # ⇓ U+21D3
+      "hArr" => "LEFT RIGHT DOUBLE ARROW",                    # ⇔ U+21D4
+    "forall" => "FOR ALL",                                    # ∀ U+2200
+      "part" => "PARTIAL DIFFERENTIAL",                       # ∂ U+2202
+     "exist" => "THERE EXISTS",                               # ∃ U+2203
+     "empty" => "EMPTY SET",                                  # ∅ U+2205
+     "nabla" => "NABLA",                                      # ∇ U+2207
+      "isin" => "ELEMENT OF",                                 # ∈ U+2208
+     "notin" => "NOT AN ELEMENT OF",                          # ∉ U+2209
+        "ni" => "CONTAINS AS MEMBER",                         # ∋ U+220B
+      "prod" => "N-ARY PRODUCT",                              # ∏ U+220F
+       "sum" => "N-ARY SUMMATION",                            # ∑ U+2211
+    "plusmn" => "PLUS-MINUS SIGN",                            # ± U+00B1
+    "divide" => "DIVISION SIGN",                              # ÷ U+00F7
+     "times" => "MULTIPLICATION SIGN",                        # × U+00D7
+        "lt" => "LESS-THAN SIGN",                             # < U+003C
+        "ne" => "NOT EQUAL TO",                               # ≠ U+2260
+        "gt" => "GREATER-THAN SIGN",                          # > U+003E
+       "not" => "NOT SIGN",                                   # ¬ U+00AC
+    "brvbar" => "BROKEN BAR",                                 # ¦ U+00A6
+     "minus" => "MINUS SIGN",                                 # − U+2212
+    "lowast" => "ASTERISK OPERATOR",                          # ∗ U+2217
+     "radic" => "SQUARE ROOT",                                # √ U+221A
+      "prop" => "PROPORTIONAL TO",                            # ∝ U+221D
+     "infin" => "INFINITY",                                   # ∞ U+221E
+       "ang" => "ANGLE",                                      # ∠ U+2220
+       "and" => "LOGICAL AND",                                # ∧ U+2227
+        "or" => "LOGICAL OR",                                 # ∨ U+2228
+       "cap" => "INTERSECTION",                               # ∩ U+2229
+       "cup" => "UNION",                                      # ∪ U+222A
+       "int" => "INTEGRAL",                                   # ∫ U+222B
+    "there4" => "THEREFORE",                                  # ∴ U+2234
+       "sim" => "TILDE OPERATOR",                             # ∼ U+223C
+      "cong" => "APPROXIMATELY EQUAL TO",                     # ≅ U+2245
+     "asymp" => "ALMOST EQUAL TO",                            # ≈ U+2248
+     "equiv" => "IDENTICAL TO",                               # ≡ U+2261
+        "le" => "LESS-THAN OR EQUAL TO",                      # ≤ U+2264
+        "ge" => "GREATER-THAN OR EQUAL TO",                   # ≥ U+2265
+       "sub" => "SUBSET OF",                                  # ⊂ U+2282
+      "nsub" => "NOT A SUBSET OF",                            # ⊄ U+2284
+       "sup" => "SUPERSET OF",                                # ⊃ U+2283
+      "sube" => "SUBSET OF OR EQUAL TO",                      # ⊆ U+2286
+      "supe" => "SUPERSET OF OR EQUAL TO",                    # ⊇ U+2287
+     "oplus" => "CIRCLED PLUS",                               # ⊕ U+2295
+    "otimes" => "CIRCLED TIMES",                              # ⊗ U+2297
+      "perp" => "UP TACK",                                    # ⊥ U+22A5
+      "sdot" => "DOT OPERATOR",                               # ⋅ U+22C5
+     "lceil" => "LEFT CEILING",                               # ⌈ U+2308
+     "rceil" => "RIGHT CEILING",                              # ⌉ U+2309
+    "lfloor" => "LEFT FLOOR",                                 # ⌊ U+230A
+    "rfloor" => "RIGHT FLOOR",                                # ⌋ U+230B
+       "loz" => "LOZENGE",                                    # ◊ U+25CA
+    "spades" => "BLACK SPADE SUIT",                           # ♠ U+2660
+     "clubs" => "BLACK CLUB SUIT",                            # ♣ U+2663
+    "hearts" => "BLACK HEART SUIT",                           # ♥ U+2665
+     "diams" => "BLACK DIAMOND SUIT",                         # ♦ U+2666
+
+    #
+    # override non-combining forms
+    #
+
+        "ACUTE"                 => "COMBINING ACUTE ACCENT",
+        "acute"                 => "COMBINING ACUTE ACCENT",
+
+        "GRAVE"                 => "COMBINING GRAVE ACCENT",
+        "grave"                 => "COMBINING GRAVE ACCENT",
+
+        "CIRCUMFLEX"            => "COMBINING CIRCUMFLEX ACCENT",
+        "CIRCUM"                => "COMBINING CIRCUMFLEX ACCENT",
+        "CIRC"                  => "COMBINING CIRCUMFLEX ACCENT",
+        "circumflex"            => "COMBINING CIRCUMFLEX ACCENT",
+        "circum"                => "COMBINING CIRCUMFLEX ACCENT",
+        "circ"                  => "COMBINING CIRCUMFLEX ACCENT",
+
+                        # typo protection 
+
+        "COMBINING DIERESIS"    => "COMBINING DIAERESIS",
+        "COMBINING DIEARESIS"   => "COMBINING DIAERESIS",
+        "DIERESIS"              => "COMBINING DIAERESIS",
+        "DIEARESIS"             => "COMBINING DIAERESIS",
+        "DIAERESIS"             => "COMBINING DIAERESIS",
+        "dieresis"              => "COMBINING DIAERESIS",
+        "diearesis"             => "COMBINING DIAERESIS",
+        "diaeresis"             => "COMBINING DIAERESIS",
+        "diaer"                 => "COMBINING DIAERESIS",
+        "diear"                 => "COMBINING DIAERESIS",
+        "dier"                  => "COMBINING DIAERESIS",
+
+        "TILDE"                 => "COMBINING TILDE",
+        "tilde"                 => "COMBINING TILDE",
+        "til"                   => "COMBINING TILDE",
+
+        "CEDILLE"               => "COMBINING CEDILLA",
+        "CEDILLA"               => "COMBINING CEDILLA",
+        "CEDIL"                 => "COMBINING CEDILLA",
+        "cedille"               => "COMBINING CEDILLA",
+        "cedilla"               => "COMBINING CEDILLA",
+        "cedil"                 => "COMBINING CEDILLA",
+
+        "MACRON"                => "COMBINING MACRON",
+        "macron"                => "COMBINING MACRON",
+
+	"CARON"			=> "COMBINING CARON",
+	"caron"			=> "COMBINING CARON",
+
+    # 
+    # special glyphs
+    # 
+
+	# Hawaiʻi, aloha ʻoe
+    	"okina"			=> "MODIFIER LETTER TURNED COMMA",
+
+        # * transliteration of Arabic ain (voiced pharyngeal fricative)
+        "ain"                   => "MODIFIER LETTER LEFT HALF RING",
+
+        "stress"                => "MODIFIER LETTER VERTICAL LINE",
+        "stress1"               => "MODIFIER LETTER VERTICAL LINE",
+        "primary_stress"        => "MODIFIER LETTER VERTICAL LINE",
+        "pstress"               => "MODIFIER LETTER VERTICAL LINE",
+        "pstr"                  => "MODIFIER LETTER VERTICAL LINE",
+
+        "secondary_stress"      => "MODIFIER LETTER LOW VERTICAL LINE",
+        "stress2"               => "MODIFIER LETTER LOW VERTICAL LINE",
+        "sstress"               => "MODIFIER LETTER LOW VERTICAL LINE",
+        "sstr"                  => "MODIFIER LETTER LOW VERTICAL LINE",
+
+    # 
+    # classification glyphs
+    # 
+
+        # OBSOLETE
+        "obs"                   => "DAGGER",
+        "obsolete"              => "DAGGER",
+        "dagger"                => "DAGGER",
+
+        # ALIEN
+        "ali"                   => "DOUBLE VERTICAL LINE",
+        "alien"                 => "DOUBLE VERTICAL LINE",
+        "foreign"               => "DOUBLE VERTICAL LINE",
+        "unassimilated"         => "DOUBLE VERTICAL LINE",
+
+        # ERRONEOUS
+        "err"                   => "CURVED STEM PARAGRAPH SIGN ORNAMENT",
+        "erron"                 => "CURVED STEM PARAGRAPH SIGN ORNAMENT",
+        "erroneous"             => "CURVED STEM PARAGRAPH SIGN ORNAMENT",
+
+        # CATACHRESTIC
+        "spu"                   => "PILCROW SIGN",
+        "spurious"              => "PILCROW SIGN",
+        "catachrestic"          => "PILCROW SIGN",
+        "catach"                => "PILCROW SIGN",
+        "cata"                  => "PILCROW SIGN",
+
+        # CROSS REFERENCE
+        "xref"                  => "MULTIPLICATION SIGN",
+
+        # ILLUSTRATIVE
+        "ill"                   => "SINGLE RIGHT-POINTING ANGLE QUOTATION MARK",
+        "illus"                 => "SINGLE RIGHT-POINTING ANGLE QUOTATION MARK",
+        "illustrative"          => "SINGLE RIGHT-POINTING ANGLE QUOTATION MARK",
+
+    },
+
+);  # end use charnames
+
+use constant DATABASE_NAME => "words.utf8";
+
+use subs qw[ dump ];  # like I really want a SIGABORT, not!
+
+#################################################################
+
+use Carp;
+use File::Spec;
+use English qw[ -no_match_vars ];
+use Getopt::Long  qw[ GetOptions ];
+use Pod::Usage;
+# use Search::Dict;
+use Unicode::Normalize;
+
+use Encode qw( encode decode );
+
+#################################################################
+
+sub deQ($);
+
+#################################################################
+
+our %Opt;
+our $DB_Name;
+our $Shown_Count = 0;
+
+#################################################################
+
+main();
+NOT_REACHED();
+
+#################################################################
+
+sub main {
+    init();
+
+    my $count = $Opt{fuzzy}   ? run_agrep()
+	      : $Opt{pattern} ? run_grep()
+	      :                 run_look();
+
+    debug("found $count matches");
+
+    if ($Shown_Count == 0) {
+	exit 1;
+    } else {
+	exit 0;
+    }
+}
+
+#################################################################
+
+sub init {
+
+    eval q{ END { eval { close STDOUT } } };
+
+    $SIG{PIPE} = sub { exit };
+
+    $| = 1;
+
+    binmode(STDOUT, ":utf8");
+    binmode(STDERR, ":utf8");
+
+    @ARGV = map { decode("UTF-8", $_) } @ARGV;
+
+    handle_options();
+
+    validate_database();
+
+}
+
+#################################################################
+
+sub validate_database {
+
+    return if $DB_Name && locate_textfile($DB_Name);
+
+    my $database = $Opt{database} || DATABASE_NAME;
+
+    unless ($DB_Name = locate_textfile($database)) {
+	die "$0: no database $database\n";
+    } 
+
+}
+
+#################################################################
+
+sub handle_options {
+
+    pod2usage("$0: usage error: expected arguments\n") if @ARGV == 0;
+
+    Getopt::Long::Configure qw[ bundling auto_version no_ignore_case ];
+
+    dump("pre getopt options are:", \%Opt);
+
+    GetOptions(\%Opt => qw[
+
+        help|?
+        man|m
+        debug|d
+
+	datafile|D=s
+	pattern|grep|g=s
+
+	nopager
+	sort|s
+
+	verbose|v+
+	showkey|raw|V
+
+	everything|all|a
+	all-verbose|A
+
+	headwords-only|h
+
+	regular|normal|n
+	foreign|alien|f
+	catachrestic|erroneous|e
+	obsolete|old|o
+	crossreference|xref|x
+	illustrations|i
+
+	noregular|nonormal|N
+	noforeign|noalian|F
+	nocatachrestic|noerroneous|E
+	noobsolete|noold|O
+	nocrossreference|noxref|X
+	noillustrations|I
+
+	part-of-speech|partofspeech|speech|pos|p=s
+	nopart-of-speech|nopartofspeech|nospeech|nopos|P=s
+
+	fuzzy|z
+	all-fuzzy|Z
+
+    ]) || pod2usage(2);
+
+    $Opt{verbose} ||= 0;
+
+    if ($Opt{"all-fuzzy"}) {
+	$Opt{"fuzzy"}++;
+	$Opt{"all-verbose"}++;
+	# FALLTHROUGH
+    } 
+
+    if ($Opt{"all-verbose"}) {
+	$Opt{"everything"}++;
+	$Opt{"verbose"} = 2;
+    } 
+
+    my @yes_types = qw{
+	foreign
+	catachrestic
+	obsolete
+	crossreference
+	illustrations
+	regular
+    };
+
+    if ($Opt{"showkey"}) {
+	$Opt{"verbose"} = 3;
+    } 
+
+    my @no_types = map { "no$_" } @yes_types;
+
+    if (@no_types ~~ %Opt && @yes_types ~~ %Opt ) {
+	# can't have both
+	pod2usage("Usage error: incompatible mix of yes and no options");
+    }
+
+    # if (my @no_opts = @no_types ~~ %Opt) {
+    if (my @no_opts = grep { $Opt{$_} } @no_types) {
+	s/^no// for @no_opts;
+	debug("opt set 1");
+	@Opt{ @yes_types } = (1) x @yes_types;
+	@Opt{ @no_opts   } = (0) x @no_opts;
+    }
+    # elsif (@yes_types ~~ %Opt) {
+    elsif (grep { $Opt{$_} } @yes_types) {
+	debug("opt set 2");
+	# then we're fine, use only these
+    } else {
+	debug("opt set 3");
+	# neither yes nor no, so turn all yeses on
+	@Opt{ @yes_types } = (1) x @yes_types;
+	unless ($Opt{everything}) { 
+	    $Opt{"illustrations"}  = 0;
+	    $Opt{"obsolete"}       = 0;
+	    $Opt{"catachrestic"}   = 0;
+	    $Opt{"crossreference"} = 0;
+	}
+    }
+
+    if ($Opt{"headwords-only"}) {
+	$Opt{"illustrations"} = 0;
+	$Opt{"crossreference"} = 0;
+    }
+
+    dump("post getopt options are", \%Opt);
+
+    pod2usage(0)                                 if $Opt{help};
+    pod2usage(-exitstatus => 0, -verbose => 2)   if $Opt{man};
+
+    unless ($Opt{pattern} || @ARGV) {
+	@ARGV = (".");
+        # pod2usage("$0: expected arguments\n");
+    }
+
+    if (!$Opt{pattern} && $ARGV[0] =~ /\PL/) {
+	$Opt{pattern} = shift @ARGV;
+	$Opt{pattern} =~ s#^/## && $Opt{pattern} =~ s#/$##;
+    }
+
+}
+
+
+#################################################################
+
+sub run_look {
+    ARGCOUNT() if @_;
+
+    validate_database();
+
+    my $look_word =  lc NFD "@ARGV";
+       $look_word =~ s/\PL+//g;
+
+    my $look_fh;
+
+    # because otherwise the look program misbehaves;
+    #   	env LC_ALL=C
+    #
+    $ENV{LC_ALL} = "C";
+
+    my $lookpath = locate_program("look");
+    die "no look program" unless $lookpath;
+
+    # can't do this many arguments in old perls
+    if ($] >= 5.013_000) {
+	open($look_fh, "-| :utf8", $lookpath, $look_word,  $DB_Name,   );
+    } else {
+	open($look_fh,            "$lookpath '$look_word' '$DB_Name' |");
+	binmode($look_fh, ":utf8");
+    }
+
+    my $found = 0;
+
+    my $_;
+
+    while (<$look_fh>) {
+	idem_print($_);
+	$found++;
+    }
+
+    eval { close $look_fh };
+
+    # die "look failed: $?" if $?;
+
+    all_done();
+
+    debug("returning $found matched");
+
+    return $found;
+}
+
+
+#################################################################
+
+sub run_grep {
+    validate_database();
+
+    my $search_string = NFD $Opt{pattern};
+
+    die "$0: bad search string $search_string\n"
+	unless length $search_string;
+
+    $search_string =~ tr/`'/\N{lsquo}\N{rsquo}/;
+
+    local $SIG{__WARN__} = sub { die "FATALIZED WARNING: @_" };
+    my $pattern = eval qq{ qr{$search_string} };
+    die if $@;
+
+    open(my $raw_db, "< :utf8", $DB_Name);
+
+    my $found = 0;
+
+    my $_;
+
+    while (<$raw_db>) {
+	next unless /$pattern/ || NFC($_) =~ /$pattern/;
+	$found++;
+	idem_print($_);
+    }
+    close $raw_db;
+
+    all_done();
+
+    return $found;
+}
+
+#################################################################
+
+sub run_agrep { 
+    ARGCOUNT() if @_;
+
+    validate_database();
+
+    my $agrep_word =  lc NFD "@ARGV";
+       $agrep_word =~ s/\PL+//g;
+
+    my $agrep_fh;
+
+    my $agrep_path = locate_program("agrep");
+    die "no agrep program" unless $agrep_path;
+
+    my $yes_path = locate_program("yes");
+    die "no yes program" unless $yes_path;
+
+    my $arg_string = "$yes_path | $agrep_path -B '$agrep_word' '$DB_Name' 2>/dev/null |";
+    debug("running  $arg_string");
+
+    open($agrep_fh, $arg_string);
+    binmode($agrep_fh, ":utf8");
+
+    my $found = 0;
+
+    my $_;
+    while (<$agrep_fh>) {
+	idem_print($_);
+	$found++;
+    }
+
+    eval { close $agrep_fh };
+
+    # die "agrep failed: $?" if $?;
+
+    all_done();
+
+    debug("returning $found matched");
+
+    return $found;
+}
+
+#################################################################
+
+sub idem_print {
+    ARGCOUNT() unless @_ == 1;
+
+    my $entry = NFC shift();
+
+    my $_ = $entry;
+    s/.*\t// || panic("malformed input");
+
+    if (/\N{LEFTWARDS ARROW}/) {
+	debug("filter left arrow");
+	return if     $Opt{"headwords-only"};
+    }
+
+    if (/\N{RIGHTWARDS ARROW}/) {
+	debug("filter left arrow");
+	return if     $Opt{"headwords-only"};
+    }
+
+    if (/^ \N{ill} /) {
+	debug("filter ill");
+	return if     $Opt{"headwords-only"};
+	return unless $Opt{illustrations};
+    }
+    elsif (/^ \N{ali}/) {
+	debug("filter ali");
+	return unless $Opt{"foreign"};
+    }
+    elsif (/^ \N{xref}/) {
+	debug("filter xref");
+	return unless $Opt{"crossreference"};
+    }
+    elsif (/^ [\N{spu}\N{err}]/) {
+	debug("filter spu");
+	return unless $Opt{"catachrestic"};
+    }
+    elsif (/^ \N{obs}/) {
+	debug("filter obs");
+	return unless $Opt{"obsolete"};
+    }
+    else {
+	debug("filter regular");
+	return unless $Opt{"regular"};
+    }
+
+    if ($Opt{"part-of-speech"}) {
+	debug("filter pos yes");
+	return if pos_filtered($_, $Opt{"part-of-speech"});
+    } 
+
+    if ($Opt{"nopart-of-speech"}) {
+	debug("filter pos yes");
+	return unless pos_filtered($_, $Opt{"nopart-of-speech"});
+    }
+
+    debug("FILTER FALLTHRU");
+
+    unless ($Opt{verbose}) {
+	s/\h\[.*//;
+	s/\h\N{LEFTWARDS ARROW}.*//;
+	s/\h\N{RIGHTWARDS ARROW}.*//;
+    } 
+
+    { 
+	next if m{
+	    \b (?:
+
+		     \N{ae}lfe?
+
+                 |   \N{oe}il
+                 |   \N{oe}illade
+                 |   \N{oe}ufs?
+                 |   \N{oe}uvres?
+                 |  b\N{oe}ufs?
+                 |  c\N{oe}urs?
+                 | ch\N{oe}nix
+                 |  m\N{oe}urs
+                 |  v\N{oe}ux?
+
+	    ) \b
+	  |  (?<!man|ped)\N{oe}uvr
+	  | c\N{oe}ur
+	}xi;
+
+	unless ( /\N{ae}\N{acute}|[\N{eth}\N{thorn}]/ ) { 
+	    s{ \N{AE} }{Ae}xg;
+	    s{ \N{ae} }{ae}xg;
+	}
+	s{ \N{OE} }{Oe}xg;
+	s{ \N{oe} }{oe}xg;
+    }
+
+    unless ($Opt{verbose} > 1)  {
+	s/^\h+//;
+	s/[\N{ali}\N{xref}\N{spu}\N{err}\N{obs}\N{ill}]\h*//g;
+	s/[\N{stress1}\N{stress2}]//g;
+	s/[\N{MIDDLE DOT}\N{ONE DOT LEADER}]//g;
+    }
+
+    display($Opt{verbose} < 3 ? $_ : $entry);
+
+}
+
+sub pos_filtered($$) {
+    my ($entry, $pos_list) = @_;
+
+    state $pos_map = {
+        abbreviation    => qr{ \b abbr     \. }x,
+        abbrev          => qr{ \b abbr     \. }x,
+        abbr            => qr{ \b abbr     \. }x,
+        absolute        => qr{ \b absol    \. }x,
+        absol           => qr{ \b absol    \. }x,
+        abs             => qr{ \b absol    \. }x,
+        adjective       => qr{ \b adj      \. }x,
+        adj             => qr{ \b adj      \. }x,
+        a               => qr{ \b adj      \. }x,
+        adverb          => qr{ \b adv      \. }x,
+        adv             => qr{ \b adv      \. }x,
+        adverbial       => qr{ \b advb     \. }x,
+        advb            => qr{ \b advb     \. }x,
+        attributive     => qr{ \b attrib   \. }x,
+        attrib          => qr{ \b attrib   \. }x,
+        attr            => qr{ \b attrib   \. }x,
+        combining       => qr{ \b comb     \. }x,
+        comb            => qr{ \b comb     \. }x,
+        comparitive     => qr{ \b compar   \. }x,
+        compar          => qr{ \b compar   \. }x,
+        compound        => qr{ \b comp     \. }x,
+        comp            => qr{ \b comp     \. }x,
+        conjunction     => qr{ \b conj     \. }x,
+        conj            => qr{ \b conj     \. }x,
+        contraction     => qr{ \b contr    \. }x,
+        contr           => qr{ \b contr    \. }x,
+        cont            => qr{ \b contr    \. }x,
+        demonstrative   => qr{ \b dem      \. }x,
+        demon           => qr{ \b dem      \. }x,
+        dem             => qr{ \b dem      \. }x,
+        feminine        => qr{ \b fem      \. }x,
+        fem             => qr{ \b fem      \. }x,
+        impersonal      => qr{ \b imp      \. }x,
+        impers          => qr{ \b imp      \. }x,
+        imp             => qr{ \b imp      \. }x,
+        indefinite      => qr{ \b indef    \. }x,
+        indef           => qr{ \b indef    \. }x,
+        ind             => qr{ \b indef    \. }x,
+        infinitive      => qr{ \b inf      \. }x,
+        infin           => qr{ \b inf      \. }x,
+        inf             => qr{ \b inf      \. }x,
+        interjection    => qr{ \b int      \. }x,
+        interj          => qr{ \b int      \. }x,
+        int             => qr{ \b int      \. }x,
+        interrogative   => qr{ \b interrog \. }x,
+        interrog        => qr{ \b interrog \. }x,
+        interr          => qr{ \b interrog \. }x,
+        inter           => qr{ \b interrog \. }x,
+        intransitive    => qr{ \b intr     \. }x,
+        intrans         => qr{ \b intr     \. }x,
+        intr            => qr{ \b intr     \. }x,
+        masculine       => qr{ \b masc     \. }x,
+        masc            => qr{ \b masc     \. }x,
+        name            => qr{ \b name     \b }x,
+        noun            => qr{ \b n        \. }x,
+        n               => qr{ \b n        \. }x,
+        numeral         => qr{ \b numeral  \b }x,
+        num             => qr{ \b numeral  \b }x,
+        participial     => qr{ \b pple?    \. }x,
+        part            => qr{ \b pple?    \. }x,
+        pple            => qr{ \b pple?    \. }x,
+        ppl             => qr{ \b pple?    \. }x,
+        participle      => qr{ \b pple?    \. }x,
+        particle        => qr{ \b particle \b }x,
+        past            => qr{ \b pa       \. }x,
+        pa              => qr{ \b pa       \. }x,
+        personal        => qr{ \b pers     \. }x,
+        pers            => qr{ \b pers     \. }x,
+        phrasal         => qr{ \b phr      \. }x,
+        phr             => qr{ \b phr      \. }x,
+        phrase          => qr{ \b phrase   \b }x,
+        plural          => qr{ \b pl       \. }x,
+        pl              => qr{ \b pl       \. }x,
+        possessive      => qr{ \b poss     \. }x,
+        poss            => qr{ \b poss     \. }x,
+        predicate       => qr{ \b pred     \. }x,
+        pred            => qr{ \b pred     \. }x,
+        prefix          => qr{ \b pref     \. }x,
+        pref            => qr{ \b pref     \. }x,
+        preposition     => qr{ \b prep     \. }x,
+        prep            => qr{ \b prep     \. }x,
+        present         => qr{ \b pres     \. }x,
+        pres            => qr{ \b pres     \. }x,
+        pr              => qr{ \b pres     \. }x,
+        pronoun         => qr{ \b (?:pron|pers) \. }x,
+        pron            => qr{ \b (?:pron|pers) \. }x,
+        pro             => qr{ \b (?:pron|pers) \. }x,
+        relative        => qr{ \b rel      \. }x,
+        rel             => qr{ \b rel      \. }x,
+        singular        => qr{ \b sing     \. }x,
+        sing            => qr{ \b sing     \. }x,
+        sg              => qr{ \b sing     \. }x,
+        suffix          => qr{ \b suff     \. }x,
+        suff            => qr{ \b suff     \. }x,
+        superlative     => qr{ \b superl   \. }x,
+        superl          => qr{ \b superl   \. }x,
+        super           => qr{ \b superl   \. }x,
+        transitive      => qr{ \b trans    \. }x,
+        trans           => qr{ \b trans    \. }x,
+        tr              => qr{ \b trans    \. }x,
+        verb            => qr{ \b v        \. }x,
+        v               => qr{ \b v        \. }x,
+        verbal          => qr{ \b vbl      \. }x,
+        vbl             => qr{ \b vbl      \. }x,
+
+	# affix		=> qr{ \b (?: suf | pre ) f     \. }x,
+    };
+
+    my @want_parts = split /[.,\h]+/ => $pos_list;
+    my $have_parts = $entry =~ m{ \[ (.+) \] }x ? $1 : q();
+
+    for my $want (@want_parts) {
+	my $pat = $pos_map->{$want};
+	die "$0: No such part of speech as <$want>.\n" unless defined $pat;
+	return 1 unless $have_parts =~ $pat;
+    } 
+    return 0;
+} 
+
+sub display {
+    ARGCOUNT() unless @_ == 1;
+
+    my $string = $_[0];
+
+    state $seen = {};
+
+    return if $seen->{$string}++;
+
+    state $begun_pager;
+    start_pager() unless $begun_pager++;
+
+    $Shown_Count++;
+
+    if ($Opt{sort}) {
+	treasure_up($string);
+    } else { 
+	print $string;
+    }
+
+}
+
+{   my @saved_lines;
+
+    sub treasure_up {
+	ARGCOUNT() unless @_ == 1;
+	push(@saved_lines, $_[0]);
+    } 
+
+    sub all_done {
+	ARGCOUNT() unless @_ == 0;
+
+	return unless @saved_lines;
+
+	require Unicode::Collate;
+
+	my $sorter = new Unicode::Collate::
+			    upper_before_lower	=> 1,
+			    preprocess		=> \&reduce_for_sorting,
+			    entry		=> deQ<<'END_OF_OVERRIDE'
+             |Q|        005B 006E 002E ; [.0200.0020.0002.0391] # [n.
+             |Q|        005B           ; [.0220.0020.0002.0392] # [
+             |Q|        005D           ; [.0225.0020.0002.0395] # ]
+END_OF_OVERRIDE
+	     ;
+
+	print for $sorter->sort(@saved_lines);
+    } 
+
+}
+
+sub reduce_for_sorting {
+    ARGCOUNT() unless @_ == 1;
+
+    my $_ = $_[0];
+
+    s/[\N{LEFTWARDS ARROW}\N{RIGHTWARDS ARROW}].*//;
+
+    s/(\d+)/sprintf("%020d", $1)/ge;
+
+    s/^.*\t// if $Opt{showkey}; 
+
+    return $_;
+} 
+
+#################################################################
+
+sub am_running_perldb {
+    no warnings "once";
+    return keys(%DB::sub) > 0;
+}
+
+sub start_pager {
+    ARGCOUNT() unless @_ == 0;
+
+    return if am_running_perldb();
+
+    return if $Opt{nopager};
+
+    return unless -t STDOUT;
+
+    my $his_pager  =  locate_program($ENV{PAGER})
+		   || locate_program("less")
+		   || locate_program("more")
+		   || locate_program("type")
+		  ;
+
+    return unless $his_pager;
+    local $ENV{LESSCHARSET} = "utf-8" if $his_pager =~ /\bless\b/i;
+    open(STDOUT, "|- :utf8", $his_pager);
+}
+
+#################################################################
+
+sub locate_textfile {
+    ARGCOUNT() unless @_ == 1;
+
+    my $textfile = $_[0];
+
+    return unless grep { defined && length } $textfile;
+
+    if (File::Spec->file_name_is_absolute($textfile)) {
+	return is_legible($textfile);
+    }
+
+    my @maybe_dirs = qw{
+			   /usr/local/share/dict
+			   /usr/share/dict
+			   /usr/local/etc
+			   /etc
+			   /opt/local/etc
+			   /opt/local/etc/dict
+     };
+
+     push @maybe_dirs, @INC;
+     push @maybe_dirs, File::Spec->path(); 
+     push @maybe_dirs, $ENV{HOME} || $ENV{LOGDIR} || ".";
+
+    for my $dir (@maybe_dirs) {
+	my $pathname = File::Spec->catfile($dir, $textfile);
+	my $dbpath;
+	return $dbpath if $dbpath = is_legible($pathname);
+    }
+
+    return;
+}
+
+sub locate_program {
+    ARGCOUNT() unless @_ == 1;
+
+    my $program = $_[0];
+
+    return unless defined $program
+	       && length  $program;
+
+    if (File::Spec->file_name_is_absolute($program)) {
+	return is_runnable($program);
+    }
+
+    my @path_dirs = File::Spec->path();
+
+    for my $dir (@path_dirs) {
+	my $pathname = File::Spec->catfile($dir, $program);
+	my $runpath;
+	return $runpath if $runpath = is_runnable($pathname);
+    }
+
+    return;
+}
+
+sub is_legible {
+    ARGCOUNT() unless @_ == 1;
+    my $fullpath = $_[0];
+
+    if (-f $fullpath && -r _ && -T $fullpath) {
+	return $fullpath;
+    }
+    elsif (stupid_evil_and_wrong()  &&  $fullpath !~ /\.txt\z/i) {
+	return is_runnable("$fullpath.txt")
+    }
+    else {
+	return ();
+    }
+
+    NOT_REACHED();
+}
+
+sub is_runnable {
+    ARGCOUNT() unless @_ == 1;
+    my $fullpath = $_[0];
+
+    if (-x $fullpath && ! -d _) {
+	return $fullpath;
+    }
+    elsif (stupid_evil_and_wrong()  &&  $fullpath !~ /\.exe\z/i) {
+	return is_runnable("$fullpath.exe")
+    }
+    else {
+	return ();
+    }
+
+    NOT_REACHED();
+}
+
+sub stupid_evil_and_wrong {
+    return lc $OSNAME ~~ [ qw<dos os2 netware symbian mswin32> ];
+}
+
+#################################################################
+
+sub debug {
+    ARGCOUNT() unless @_ > 0;
+    return unless $Opt{debug};
+    print STDERR "@_\n" if @_;
+}
+
+sub dump {
+    ARGCOUNT() unless @_ == 2;
+    state $dumper;
+
+    return unless $Opt{debug};
+
+    require Dumpvalue;
+    unless ($dumper) {
+	$dumper = new Dumpvalue:: ;
+    }
+
+    my($message, $ref) = @_;
+
+    say "$message: ";
+    dumpValue $dumper $ref;
+    say "";
+}
+
+sub panic {
+    confess "$0: INTERNAL ERROR: @_";
+}
+
+sub NOT_REACHED {
+    panic("NOT REACHED");
+}
+
+sub ARGCOUNT {
+    panic("wrong arguments to function");
+}
+
+
+sub dequeue($$) {
+    my($leader, $body) = @_;
+    $body =~ s/^\s*\Q$leader\E ?//gm;
+    return $body;
+}
+
+sub deQ($) {
+    my $text = $_[0];
+    return dequeue q<|Q|>,  $text;
+}
+
+sub deQQ($) {
+    my $text = $_[0];
+    return dequeue qq<|QQ|>, $text;
+}
+
+#################################################################
+#################################################################
+#################################################################
+
+__END__
+
+#################################################################
+
+=head1 NAME
+
+word - display words starting or matching a string or pattern
+
+=head1 SYNOPSIS
+
+word [options] [string | pattern]
+
+Given a string, show all words starting with that string (look mode).
+Given a pattern, show all lines matching that pattern (grep mode).
+
+An argument with non-alphabetic characters is always a pattern.
+Force grep mode with B<--grep=pattern> or by starting the pattern
+with a slash, which will be ignored.
+
+Use B<--man> to get the full manpage.
+
+=head1 DESCRIPTION
+
+Search a large list of words in one of two modes.  In look mode,
+only words starting with the given string are displayed.  This 
+mode runs very quickly.  Only purely alphabetic strings are allowed.
+The system look(1) program is co-opted into helping.
+
+In grep mode, any entries matching the pattern are shown.  This
+takes much longer to run, because the entire 26 megabyte file must
+be grepped through.  The pattern is not a grep(1) pattern, but
+rather a perl(1) pattern.  You may use Unicode named characters,
+plus several custom aliases, in your pattern.
+
+=head1 EXAMPLES
+
+Look up terms starting with "cat":
+
+    % word cat
+
+The same, but bump verbose display level to see parts of speech:
+
+    % word -v cat
+
+Look at only verbs starting with cat:
+
+    % word -pv cat
+
+Look at all "cat" entries, with verbose set high:
+
+    % word -A cat
+
+Look for all (irregular) plurals that start with "ex":
+
+    % word -ppl ex
+
+Look for obsolete prefixes that start with "s":
+
+    % word -o -ppref s
+
+Grep terms with "cat" anywhere at all:
+
+    % word --grep cat
+    % word /cat
+
+Grep terms containing "cat" or "cats" surrounded by 
+word boundaries: 
+
+    % word '\bcats?\b'
+
+Grep terms with the Unicode "Mark" property:
+
+    % word '\pM'
+
+Grep all plurals ending in "-ata":
+
+    % word -A -ppl 'ata\b'
+
+Grep terms with the Unicode "Dash" property:
+
+    % word '\p{Dash}'
+
+Grep for an "e" with an acute accent:
+
+    % word '\N{eacute}'
+
+Grep for any acute accents no matter the letter:
+
+    % word '\N{acute}'
+
+Grep for terms containing an "a", "o", "u" in any case, followed
+by a diaeresis:
+
+    % word '(?i)[oau]\N{dier}'
+
+=head1 OPTIONS
+
+Display options are:
+
+    --verbose / -v	use up to three times for more verbosity
+
+	level 0 is just the word, like look
+	level 1 includes parts of speech
+	level 2 also includes assorted markings
+	level 3 is the entire original entry 
+
+    --nopager		never call the pager
+
+Part of speech filtering options are:
+
+    --pos /   -p POS    only entries matching all POS shown
+    --nopos / -P POS    no   entries matching any POS shown
+
+    POS is a comma-separated list of parts of speech like
+    n/noun, v/verb, a/adjective, adv/adverb, pro/pronoun, 
+    and pl/plural.
+
+Type of entry filtering options are:
+
+    --headwords      -h	 show headwords only
+    --everything     -a	 include all types of entry
+    --all-verbose    -A  all entries, plus sets verbose to 2
+
+Some entries contain markings telling what kind it is.  
+Include or exclude such entries using:
+
+    --normal         -n  normal entries (on by default)
+    --foreign        -f  unassimilated entries (on by default)
+
+    --obsolete       -o  obsolete entries (off by default)
+    --catachrestic   -e  catechrestic entries (off by default)
+    --illustrations  -i  illustrative examples (off by default)
+    --crossref       -x  crossrefs w/old spellings (off by default)
+
+The previous six entry types can be excluded using the corresponding
+B<--noXXX> long option or the capitalized short option; e.g., 
+B<--noforeign> is equivalent to B<-F>.
+
+Other options:
+
+    --version		print version info and exit
+    --help		this help page
+    --man		the full manpage
+    --debug		internal debugging
+
+    --fuzzy          -z use agrep(1) fuzzy matching in "best mode"
+    --all-fuzzy      -Z like -zavv
+
+=head1 PATTERN SHORTCUTS
+
+Besides all normal Perl pattern syntax, an extensive set of 
+named characters is provide for nmemonic convenience so you
+don't have to write numeric code points like C<\x{3b2}> 
+for non-ASCII characters.
+
+=over
+
+=item *
+
+The full Unicode name, like
+C<\N{EN DASH}> or
+C<\N{LATIN SMALL LETTER THORN}>, or
+Latin or Greek letter names, like
+C<\N{thorn}> or
+C<\N{alpha}>.
+
+=item *
+
+HTML abbrevations like
+C<\N{eacute}>,
+C<\N{ccedil}>,
+C<\N{iuml}>.
+
+=item *
+
+Diacritic abbreviations:
+C<\N{macron}>,
+C<\N{acute}>,
+C<\N{grave}>,
+C<\N{diaeresis }>,
+C<\N{dier}>,
+C<\N{circumflex }>,
+C<\N{circ}>,
+and
+C<\N{tilde}>;
+C<\N{stress1}> and
+C<\N{stress2}>.
+
+=item * 
+
+Abbreviations for the type of entry:
+
+C<\N{ali}> (unassimilated),
+C<\N{obs}> (obsolete),
+C<\N{xref}> (crossreference),
+C<\N{ill}> (illustrative),
+C<\N{spu}> (catachrestic), and
+C<\N{err}> (erroneous).
+
+=back
+
+=head1 ERRORS
+
+TO BE WRITTEN: ERRORS
+
+=head1 ENVIRONMENT
+
+PAGER
+
+=head1 FILES
+
+F<words.utf8>
+
+=head1 PROGRAMS
+
+F<look>, F<agrep>
+
+=head1 BUGS
+
+TO BE WRITTEN: BUGS
+
+=head1 SEE ALSO
+
+perlre(1), perlunicode(1)
+
+=head1 AUTHOR
+
+TO BE WRITTEN: AUTHOR
+
+=head1 COPYRIGHT AND LICENCE
+
+TO BE WRITTEN: COPYRIGHT AND LICENCE

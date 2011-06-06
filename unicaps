@@ -1,0 +1,29 @@
+#!/usr/bin/env perl
+
+use 5.10.1;
+
+use utf8;
+use strict;
+use autodie;
+use warnings;
+binmode(STDOUT, ":utf8");
+
+sub smcap(_);
+
+if (@ARGV == 0) {
+    if (-t STDIN) {
+        warn "$0: reading from stdin, type ^C to kill, ^D to end.\n";
+    } 
+    print smcap while <>;
+} else {
+    say smcap "@ARGV";
+} 
+
+sub smcap(_) {
+    my $_ = shift();
+    # tr[A-Z][ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘQʀꜱᴛᴜᴠᴡXʏᴢ];
+      tr[a-z][ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘQʀsᴛᴜᴠᴡxʏᴢ];
+      #tr[A-Z][ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘQʀsᴛᴜᴠᴡxʏᴢ];
+    return $_;
+} 
+

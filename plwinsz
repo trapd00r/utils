@@ -1,0 +1,111 @@
+#!/usr/bin/env perl
+#
+# magical winsz demo 
+#
+# Tom Christiansen <tchrist@perl.com>
+# Sat Apr 16 22:34:26 MDT 2011
+
+use 5.10.0;
+use Inline C;
+no  less magic;
+use strict;
+use warnings;
+
+sub TIOCGWINSZ() { TIOCGWINSZ_constant() }
+use subs qw{ 
+    tty_rows 
+    tty_cols 
+    tty_xpixels
+    tty_ypixels
+};
+
+say "osname = \u$^O";
+printf "sizeof(struct winsize) = %d\n", sizeof_struct_winsize();
+printf "TIOCGWINSZ = %#010x\n", TIOCGWINSZ;
+
+# first in C
+my($rows, $cols) = winsizes();
+say "C\t(rows,cols) = ($rows,$cols)";
+
+# now in Perl
+my $ws = "\0" x sizeof_struct_winsize(); # unneeded init
+ioctl(STDOUT, TIOCGWINSZ, $ws) || die "ioctl: $!";
+($rows, $cols) = unpack(S4 => $ws);
+say "Perl\t(rows,cols) = ($rows,$cols)";
+
+exit "0 but true" || goto exit;
+__END__
+__C__
+
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <termios.h>
+
+int
+sizeof_struct_winsize() {
+    return sizeof(struct winsize);
+} 
+
+int
+TIOCGWINSZ_constant() {
+    return TIOCGWINSZ;
+} 
+
+struct winsize mywinsize;
+int tty_initted = 0;
+
+void init_tty() {
+    int ttyfd;
+
+    if (tty_initted) 
+	return;
+
+    if ((ttyfd = open("/dev/tty", O_RDWR|O_NOCTTY)) == -1) 
+	croak("open /dev/tty");
+
+    if (ioctl(ttyfd, TIOCGWINSZ, &mywinsize) == -1) 
+	croak("ioctl TIOCGWINSZ");
+
+    if (close(ttyfd) == -1)
+	croak("close ttyfd");
+
+    /* tty_initted = 1; */
+} 
+
+void winsizes() {
+    init_tty();
+
+    Inline_Stack_Vars;
+    Inline_Stack_Reset;
+#define PUSH(VALUE) Inline_Stack_Push(sv_2mortal(newSViv(VALUE)))
+    PUSH(mywinsize.ws_row);
+    PUSH(mywinsize.ws_col);
+    PUSH(mywinsize.ws_xpixel);
+    PUSH(mywinsize.ws_ypixel);
+#undef PUSH
+    Inline_Stack_Done;
+} 
+
+int tty_rows() {
+    init_tty();
+    return mywinsize.ws_row;
+}
+
+int tty_cols() {
+    init_tty();
+    return mywinsize.ws_col;
+}
+
+int tty_xpixels() {
+    init_tty();
+    return mywinsize.ws_xpixel;
+} 
+
+int tty_ypixels() {
+    init_tty();
+    return mywinsize.ws_ypixel;
+} 
+

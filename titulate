@@ -1,0 +1,93 @@
+#!/usr/bin/env perl
+
+# titulate: put args into proper "title-case" for headlines
+#           or titles of books, plays, etc.
+
+# tchrist@perl.com Sun May 18 17:15:03 MDT 2008
+
+# Well, at least as well as we can.  English rules are complex.
+
+# This kind of approach can only take you so far, though, because it doesn't
+# distinguish between words that can be several parts of speech.  Some 
+# prepositions on the list might also double as words that should always be
+# capitalized, such as subordinating conjunctions, adverbs, or even
+# adjectives.  For example, it's "Down by the Riverside" but "Getting By on
+# Just $30 a Day", or "A Ringing in My Ears" but "Bringing In the Sheaves".
+# In other words, we have to recognize phrasal verbs -- and this is *not*
+# always easy!  So we don't try.
+
+
+sub main() {
+
+    my $line;
+
+    if (@ARGV == 0 && -t STDIN) {
+	warn "no string args supplied, reading linewise from your keyboard!";
+	while (my $line = <STDIN>) {
+	    chomp $line;
+	    print tc($line), "\n";
+	} 
+	return;
+    }
+
+    $line = join(" " => @ARGV);
+    print tc($line), "\n";
+
+}
+
+main();
+exit(0);
+
+
+# Here's a longer list of propositions if you prefer, which you can modify to
+# your needs, but nobody pays uses all these, esp since they're often 
+# serving as another part of speach.  But where do you draw the line
+# at short?
+
+
+
+INIT {
+    our %nocap;
+
+    our @all_prepositions = qw{
+	about above absent across after against along amid amidst
+	among amongst around as at athwart before behind below
+	beneath beside besides between betwixt beyond but by circa
+	down during ere except for from in into near of off on onto
+	out over past per since than through till to toward towards 
+	under until unto up upon versus via with within without
+    };
+
+    our @few_prepositions = qw{
+	a an the
+	and but or
+	as at but by for from in into of off on onto per to with
+    };
+
+
+    for (@few_prepositions) { 
+	$nocap{$_}++;
+    }
+}
+
+
+
+sub tc {
+    local $_ = shift;
+
+    # put into lowercase if on stop list, else titlecase
+    s/(\pL[\pL']*)/$nocap{$1} ? lc($1) : ucfirst(lc($1))/ge;
+
+    s/^(\pL[\pL']*) /\u\L$1/x;  # last  word guaranteed to cap
+    s/ (\pL[\pL']*)$/\u\L$1/x;  # first word guaranteed to cap
+
+    # treat parenthesized portion as a complete title
+    s/\( (\pL[\pL']*) /(\u\L$1/x;
+    s/(\pL[\pL']*) \) /\u\L$1)/x;
+
+    # capitalize first word following colon or semi-colon
+    s/ ( [:;] \s+ ) (\pL[\pL']* ) /$1\u\L$2/x;
+
+    return $_;
+}
+

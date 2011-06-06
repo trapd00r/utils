@@ -1,0 +1,419 @@
+#!/usr/local/bin/perl
+#
+# ucsort - sort alphabetic text using the Unicode Collation algorithm
+#
+# Tom Christiansen <tchrist@perl.com>
+#
+# Date: Wed Feb 16 17:47:20 MST 2011
+# v0.2: undocumented prototype
+#
+# Date: Tue Apr 19 12:50:37 MDT 2011
+# v0.3: unsupported prototype
+#
+#################################################################
+
+use 5.10.1;
+use strict;
+use autodie; 
+
+use warnings qw[ FATAL all ];
+
+use utf8;
+use open qw[ :std IO :utf8 ];
+
+use Carp;
+use Getopt::Long qw[ GetOptions ];
+use Pod::Usage;
+use Scalar::Util qw[ reftype ];
+use Unicode::Collate;
+
+#################################################################
+
+sub main();
+
+sub compile($);
+sub dequeue($$);
+sub deQ($);
+sub deQQ($);
+sub flip_fields(_);
+sub flip_line(_);
+sub get_input();
+sub load_options();
+sub reorder(@);
+sub usage(;$);
+
+#################################################################
+
+##
+## ** THIS IS AN UNSUPPORTED, PRE-RELEASE VERSION ONLY **
+## 
+our $VERSION = "0.3";
+
+our %Opt;
+
+#################################################################
+
+$SIG{__DIE__} = sub { confess @_ unless $^S };
+
+main();
+exit;
+
+#################################################################
+
+sub main() {
+    load_options();
+
+    my @input  = get_input();
+    my @output = reorder(@input);
+
+    if ($Opt{"reverse-output"}) {
+	print for reverse @output;
+    } else {
+	print for         @output;
+    } 
+
+} 
+
+#################################################################
+
+sub get_input() {
+    confess "expected list context" unless wantarray();
+
+    if (!@ARGV && -t STDIN) {
+	warn "$0: reading from stdin, type ^D to end, ^C to kill...\n";
+    } 
+
+    if (my $incoding = $Opt{"input-encoding"}) {
+	# need postfix :: to insist is classname not builtin function
+	open::->import(IN => $incoding);
+    } 
+
+    local $/ = "" if $Opt{paragraph};
+    return <>;
+} 
+
+#################################################################
+
+sub load_options() {
+
+    Getopt::Long::Configure qw[ bundling auto_version ];
+
+    my @options = (
+
+	# standard options
+	qw[
+	    help|?
+	    man|m
+	    debug|d
+	],
+
+	# collator constructor options
+	qw[
+	    backwards-levels=i
+	    collation-level|level|l=i
+	    katakana-before-hiragana
+	    normalization|n=s
+	    preprocess|P=s
+	    override-CJK=s
+	    override-Hangul=s
+	    upper-before-lower|u
+	    variable=s
+	],
+
+	# program specific options
+	qw[
+	    case-insensitive|insensitive|i
+	    input-encoding|e=s
+	    locale|L=s
+	    paragraph|p
+	    right-to-left|reverse-input
+	    reverse-output|r
+	    reverse-fields|last
+	],
+
+    );
+
+    GetOptions(\%Opt => @options) || pod2usage(2);
+
+    pod2usage(0)                                 if $Opt{help};
+    pod2usage(-exitstatus => 0, -verbose => 2)   if $Opt{man};
+
+    if ($Opt{"case-insensitive"}) {
+	if ($Opt{"level"}) {
+	    usage "you already specified a level of --level=$Opt{level}";
+	} 
+	$Opt{"level"} = 1;
+    } 
+
+    if (my $nf = $Opt{"normalization"}) {
+	unless ($nf ~~ [ qw[NFD NFC NFKD NFKC undef prenormalized] ]) {
+	    usage "unrecognized normalization of --normalization=$Opt{normalization}";
+	} 
+    }
+
+    if (my $var = $Opt{"variable"}) {
+	unless (lc $var ~~ [ qw[ blanked non-ignorable shifted shift-trimmed ] ]) {
+	    usage "bogus value --variable=$var";
+	} 
+    }
+
+    if (my $levels = $Opt{"backwards-levels"} ) { 
+	unless ($levels =~ /^[1-5]+$/) {
+	    usage "bogus value backwards-levels=$levels";
+	} 
+    }
+
+    if (my $code = $Opt{"preprocess"}) {
+	$Opt{"preprocess"} = compile($code)
+	    || usage("error in preprocess code $code: $@");
+    } 
+
+    if (my $code = $Opt{"ignore-CJK"}) {
+	$Opt{"ignore-CJK"} = compile($code)
+	    || usage("error in ignore-CJK code $code: $@");
+    } 
+
+    if (my $code = $Opt{"ignore-Hangul"}) {
+	$Opt{"ignore-Hangul"} = compile($code)
+	    || usage("error in ignore-Hangul code $code: $@");
+    } 
+
+}
+
+#################################################################
+
+sub dequeue($$) {
+    my($leader, $body) = @_;
+    $body =~ s/^\s*\Q$leader\E ?//gm;
+    return $body;
+}
+
+sub deQ($) {
+    my $text = $_[0];
+    return dequeue q<|Q|>,  $text;
+} 
+
+sub deQQ($) {
+    my $text = $_[0];
+    return dequeue qq<|QQ|>, $text;
+} 
+
+#################################################################
+
+sub compile($) {
+    my $CODE = shift();
+    my $wrap = deQQ<<"END_OF_COMPILATION";
+                |QQ|
+                |QQ|    use warnings qw[FATAL all];
+                |QQ|    no  warnings "utf8";
+                |QQ|
+                |QQ|    sub { 
+                |QQ|           my \$_ = shift; 
+                |QQ|           $CODE; 
+                |QQ|           return \$_;
+                |QQ|    }
+                |QQ|
+END_OF_COMPILATION
+
+    return eval $wrap;
+
+} 
+
+#################################################################
+
+sub usage(;$) {
+    my $msg = @_ ? (" ". $_[0]) : "";
+    print STDERR "$0: USAGE ERROR!", $msg, "\n";
+    pod2usage(1);
+    confess "NOT REACHED";
+} 
+
+#################################################################
+
+# this all done the expensive way with lots of copying 
+#
+sub reorder(@) {
+    @_		|| confess "usage error: need arguments";
+
+    my @inputs = @_;
+
+    my $lines_flipped = $Opt{"right-to-left"};
+    if ($lines_flipped) { 
+	@inputs = map { flip_line } @inputs;
+    } 
+
+    my $fields_flipped = $Opt{"reverse-fields"};
+    if ($fields_flipped) {
+	@inputs = map { flip_fields } @inputs;
+    } 
+
+    my $collation_class = Unicode::Collate::;
+    my @tailoring = ();
+
+    if ($Opt{locale}) {
+	require Unicode::Collate::Locale;
+	$collation_class = Unicode::Collate::Locale::;
+	push @tailoring, locale => $Opt{locale};
+    } 
+
+    ## if ($Opt{"case-insensitive"}) { push @tailoring, level => 1; } 
+
+    if ($Opt{"upper-before-lower"}) {
+	push @tailoring, upper_before_lower => 1;
+    } 
+
+    if ($Opt{"collation-level"}) {
+	push @tailoring, collation_level => 1;
+    } 
+
+    if ($Opt{"override-CJK"}) { 
+	push @tailoring, override_CJK => $Opt{"override-CJK"};
+    }
+
+    if ($Opt{"override-Hangul"}) {
+	push @tailoring, override_Hangul => $Opt{"override-Hangul"};
+    }
+
+    if ($Opt{"preprocess"}) {
+	push @tailoring, preprocess => $Opt{"preprocess"};
+    }
+
+    if ($Opt{"katakana-before-hiragana"}) {
+	push @tailoring, katakana_before_hiragana => 1;
+    }
+
+    if ($Opt{"backwards-levels"} ) { 
+	my @backwards_levels = $Opt{"backwards-levels"} =~ /(\d)/g;
+	push @tailoring, backwards => \@backwards_levels;
+    }
+
+    if ($Opt{"variable"}) {
+	push @tailoring, variable => $Opt{"variable"};
+    } 
+
+    my $collator = $collation_class->new(@tailoring);
+    my @output   = $collator->sort(@inputs);
+
+    if ($fields_flipped) { 
+	@output = map { flip_fields } @output;
+    } 
+
+    if ($lines_flipped) { 
+	@output = map { flip_line } @output;
+    } 
+
+    return @output;
+
+} 
+
+sub flip_fields(_) {
+    my $_ = $_[0];
+
+    my $crlf       = s/(\R+)\z// ? $1 : q();
+    my $leading_ws = s/\A(\h+)// ? $1 : q();
+
+    no warnings "utf8";
+
+    my ($IFS,  $OFS) 
+	    = 
+       (" ", "\x{FFFF}");
+
+    ($IFS, $OFS) 
+	 = 
+    ($OFS, $IFS)  if /\x{FFFF}/;  # déjà vu
+
+    my @fields = reverse split $IFS;
+    return $leading_ws . join ($OFS, @fields) . $crlf;
+}
+
+sub flip_line(_) {
+    my $_ = $_[0];
+    s/(\R+)\z//;
+    my $crlf = $1 || q();
+    $_ = join( "" => reverse /(\X)/g ) . $crlf;
+    return $_;
+} 
+
+
+#################################################################
+#################################################################
+
+
+__END__
+
+=head1 NAME
+
+ucsort - sort input records using the UCA
+
+=head1 SYNOPSIS
+
+ucsort [options] [input_files ...]
+
+    # standard options
+    --help|?
+    --man|m
+    --debug|d
+
+    # collator constructor options
+    --backwards-levels=i
+    --collation-level|level|l=i
+    --katakana-before-hiragana
+    --normalization|n=s
+    --override-CJK=s
+    --override-Hangul=s
+    --preprocess|P=s
+    --upper-before-lower|u
+    --variable=s
+
+    # program specific options
+    --case-insensitive|insensitive|i
+    --input-encoding|e=s
+    --locale|L=s
+    --paragraph|p
+    --reverse-fields|last
+    --reverse-output|r
+    --right-to-left|reverse-input
+
+=head1 DESCRIPTION
+
+TO BE WRITTEN: DESCRIPTION
+
+=head1 EXAMPLES
+
+TO BE WRITTEN: EXAMPLES
+
+=head1 ERRORS
+
+TO BE WRITTEN: ERRORS
+
+=head1 ENVIRONMENT
+
+TO BE WRITTEN: ENVIRONMENT
+
+=head1 FILES
+
+TO BE WRITTEN: FILES
+
+=head1 PROGRAMS
+
+TO BE WRITTEN: PROGRAMS
+
+=head1 BUGS
+
+TO BE WRITTEN: BUGS
+
+=head1 SEE ALSO
+
+The L<Unicode::Collate> and 
+L<Unicode::Collate::Locale> Perl modules.
+
+=head1 AUTHOR
+
+Tom Christiansen <tchrist@perl.com>
+
+=head1 COPYRIGHT AND LICENCE
+
+Copyright 2011 Tom Christiansen.
+
+This program is free software; you may redistribute it and/or modify it
+under the same terms as Perl itself.

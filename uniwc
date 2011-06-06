@@ -1,0 +1,228 @@
+#!/usr/bin/env perl
+#
+# unicode wc: XXX redo this to do progressive matching
+#             so that it doesn't slurp in the whole file!!
+
+# use 5.10.0;
+
+
+use strict;
+use warnings FATAL => "all";
+use sigtrap qw[ die untrapped normal-signals ];
+
+use Carp;
+
+$SIG{__WARN__}  = sub {
+    confess("FATALIZED WARNING: @_")  unless $^S;
+};
+
+$SIG{__DIE__}  = sub {
+    confess("UNCAUGHT EXCEPTION: @_")  unless $^S;
+};
+
+
+$| = 1;
+
+my $Errors = 0;
+my $Headers = 0;
+
+sub yuck($) {
+    my $errmsg = $_[0];
+    $errmsg =~ s/(?<=[^\n])\z/\n/;
+    print STDERR "$0: $errmsg";
+}
+
+process_input(\&countem);
+
+sub countem { 
+    my ($_, $file) = @_;
+
+    my (
+	@paras, @lines, @words,
+	$paracount, $linecount, $wordcount, 
+	$grafcount, $charcount, $bytecount,
+    );
+
+
+    if ($charcount = length($_)) {
+	#$wordcount = 0;
+	$wordcount++ while /\P{Space}+/g;
+
+	#$wordcount = eval { @words = split m{ \p{Space}+  }x }; 
+	#yuck "error splitting words: $@" if $@;
+
+	#$linecount = 0;
+	$linecount++ while /\R/g;
+
+	#$linecount = eval { @lines = split m{ \R     }x }; 
+	#yuck "error splitting lines: $@" if $@;
+
+	#$grafcount = 0;
+	$grafcount++ while /\X/g;
+
+	#$grafcount = eval { @lines = split m{ \R     }x }; 
+	#yuck "error splitting lines: $@" if $@;
+
+	$paracount = 0;
+	$paracount++ while /\R{2,}/g;
+
+	yuck "error splitting paras: $@" if $@;
+
+	if ($linecount && !/\R\z/) {
+	    yuck("missing linebreak at end of corrupted textfile $file");
+	    $linecount .= "*";
+	    $paracount .= "*";
+	} 
+
+    }
+
+    $bytecount = tell;
+    if (-e $file) {
+	$bytecount = -s $file;
+	if ($bytecount != -s $file) {
+	    yuck "filesize of $file differs from bytecount\n";
+	    $Errors++;
+	}
+    } 
+    my $mask = "%8s " x 6 . "%s\n";
+    printf  $mask => qw{ Paras Lines Words Graphs Chars Bytes File } unless $Headers++;
+
+    printf $mask => map( { show_undef($_) } 
+				$paracount, $linecount, 
+				$wordcount, $grafcount, 
+				$charcount, $bytecount,
+		       ), $file;
+} 
+
+sub show_undef {
+    my $value = shift;
+    return defined($value)
+	     ? $value
+	     : "undef";
+} 
+
+END { 
+    close(STDOUT) || die "$0: can't close STDOUT: $!";
+    exit($Errors != 0);
+}
+
+sub process_input {
+
+    my $function = shift();
+
+    my $enc;
+
+    if (@ARGV == 0 && -t) {
+	warn "$0: reading from stdin, type ^D to end or ^C to kill.\n";
+    }
+
+    unshift(@ARGV, "-") if @ARGV == 0;
+
+FILE:
+
+    for my $file (@ARGV) {
+        # don't let magic open make an output handle
+
+	next if -e $file && ! -f _;
+
+        my $quasi_filename = fix_extension($file);
+
+        $file = "standard input" if $file eq q(-);
+        $quasi_filename =~ s/^(?=\s*[>|])/< /;
+
+        no strict "refs";
+        my $fh = $file;   # is *so* a lexical filehandle! ☺
+        unless (open($fh, $quasi_filename)) {
+            yuck("couldn't open $quasi_filename: $!");
+            next FILE;
+        }
+        set_encoding($fh, $file) || next FILE;
+
+	my $whole_file = eval {
+	    use warnings "FATAL" => "all";
+	    local $/;
+	    scalar <$fh>;
+	};
+
+	if ($@) {
+	    $@ =~ s/ at \K.*? line \d+.*/$file line $./;
+	    yuck($@);
+	    next FILE;
+	}
+
+	$function->($whole_file, $file);
+
+        unless (close $fh) {
+            yuck("couldn't close $quasi_filename at line $.: $!");
+            next FILE;
+        }
+
+    } # foreach file
+
+}
+
+sub set_encoding(*$) {
+    my ($handle, $path) = @_;
+
+    my $enc_name = "utf8";
+
+    if ($path && $path =~ m{ \. ([^\s.]+) \z }x) {
+        my $ext = $1;
+	die unless defined $ext;
+
+	if ($ext eq "pod") {
+	    my $int_enc = qx{
+		perl -C0 -lan -00 -e 'next unless /^=encoding/; print \$F[1]; exit' $path
+	    };
+	    if ($int_enc) {
+		chomp $int_enc;
+		$ext = $int_enc;
+		# print STDERR "$0: reset encoding to $ext on $path\n";
+	    } 
+	} 
+
+        require Encode;
+        if (my $enc_obj = Encode::find_encoding($ext)) {
+            my $name = $enc_obj->name || $ext;
+            $enc_name = "encoding($name)";
+        }
+    }
+
+    return 1 if eval {
+        use warnings FATAL => "all";
+        no strict "refs";
+        binmode($handle, ":$enc_name");
+        1;
+    };
+
+    for ($@) {
+        s/ at .* line \d+\.//;
+        s/$/ for $path/;
+    }
+
+    yuck("set_encoding: $@");
+
+    return undef;
+}
+
+sub fix_extension {
+    my $path = shift();
+    my %Compress = (
+        Z 	=>  "zcat",
+        z 	=> "gzcat",            # for uncompressing
+        gz	=> "gzcat",
+        bz	=> "bzcat",
+        bz2	=> "bzcat",
+        bzip	=> "bzcat",
+        bzip2	=> "bzcat",
+	lzma	=> "lzcat",
+    );
+
+    if ($path =~ m{ \. ( [^.\s] +) \z }x) {
+	if (my $prog = $Compress{$1}) {
+	    return "$prog $path |";
+	} 
+    } 
+
+    return $path;
+} 

@@ -1,0 +1,41 @@
+#!/usr/bin/env perl
+#
+# nfcheck: report which of the four Unicode normalization forms the
+#          files named in the argument list (or STDIN if none) are
+#          already equivalent to.
+#
+#      	    cf  Unicode Normalization Forms - UAX #15
+#      	   	http://www.unicode.org/reports/tr15/
+#
+#      	   	Canonical Equivalence in Applications - UTN #5
+#      	   	http://www.unicode.org/notes/tn5/
+#
+#      	   	Public Review Issue #29: Normalization Issue
+#      	   	http://www.unicode.org/review/pr-29.html
+#
+# Tom Christiansen <tchrist@perl.com>
+# Tue Nov 23 14:36:11 MST 2010
+
+use strict;
+use autodie;
+use warnings qw< FATAL all >;
+use open   qw< :std IN :utf8 >;
+
+our @NF_NAMES; BEGIN {
+    @NF_NAMES = qw< NFC NFKC NFD NFKD >; # !KFC :)
+} 
+
+use Unicode::Normalize @NF_NAMES;
+
+$| = 1;
+$/ = undef;
+
+while (my $text = <ARGV>) {
+    print "$ARGV: ";
+    for my $nf (@NF_NAMES) { 
+	no strict "refs";
+	printf "%*s ", length($nf),
+	    $text eq $nf->($text) ? $nf : "";
+    }
+    print "\n";
+} 

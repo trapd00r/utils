@@ -1,0 +1,145 @@
+#!/usr/bin/env perl
+#
+# macroman - show mapping between MacRoman and Unicode
+# Tom Christiansen <tchrist@perl.com
+############################################################
+
+use strict;
+use warnings;
+use charnames qw[ :full ];
+
+use Scalar::Util qw[ looks_like_number ];
+
+use Encode (
+    "decode",	# $unicode = decode("scheme", $bytes);
+    "encode",	# $bytes   = encode("scheme", $unicode);
+);
+
+MAIN: {
+    usage()    if @ARGV == 0;
+    show_mappings(@ARGV);
+    exit(0);
+}
+die "NOT REACHED";
+
+############################################################
+
+sub usage {
+
+    die <<END_OF_USAGE_MESSAGE;
+usage: $0 [ 0x## | U+#### | utf8_string ] ...
+    Where: 0x means a MacRoman byte
+	   U+ means a Unicode codepoint
+	   string args must be in UTF-8
+    Output is in UTF-8.
+END_OF_USAGE_MESSAGE
+
+}
+
+BEGIN  {
+    my $enc = ":utf8";
+    binmode(STDOUT, $enc) || die "can't binmode STDOUT to $enc: $!";
+    binmode(STDERR, $enc) || die "can't binmode STDERR to $enc: $!";
+}
+
+END {
+    close(STDOUT) || die "can't close STDOUT: $!";
+}
+
+{   # initialization block 
+
+    my ($LQ, $RQ); INIT {
+	    # MacRoman DC: Left Guillement
+	$LQ = "\N{SINGLE LEFT-POINTING ANGLE QUOTATION MARK}";
+	    # MacRoman DD: Right Guillement
+	$RQ = "\N{SINGLE RIGHT-POINTING ANGLE QUOTATION MARK}";
+    }
+
+    # return arg(s) surrounded with guillemets
+    sub quote {
+	my @retlist = map { $LQ . $_ . $RQ } @_;
+	return wantarray
+	       ? @retlist
+	       : join(" " => @retlist);
+    }
+
+}
+
+sub cp2name($) {
+    my $cp = shift();
+    if (! looks_like_number($cp)) { 
+	die "bad number: " . quote($cp);
+    }
+    return $cp == 0   # missing mapping in older versions
+	   ? "NULL"   
+	   :     charnames::viacode($cp)
+	     ||  sprintf("U+%04X",  $cp);
+}
+
+my($INVALID_CHR, $INVALID_CP); INIT {
+    $INVALID_CHR = "\N{REPLACEMENT CHARACTER}";
+    $INVALID_CP  = ord $INVALID_CHR;
+} 
+
+sub showpairs {
+    my ($sep, $had, $want) = @_;
+    if ($had == $INVALID_CP) {
+	print "MacRoman ", $INVALID_CHR x 2;
+	$sep = " \N{LEFTWARDS DOUBLE ARROW WITH STROKE}";
+    }  else { 
+	printf "MacRoman %02X ", $had;
+	$sep = "\N{LEFT RIGHT DOUBLE ARROW}" if $had == $want;
+    }
+    print  " $sep ";
+    printf " U+%04X  ", $want;
+    print  quote(chr($want)); 
+    printf "  \\N{ %s }\n", cp2name($want);
+}
+
+sub m2u {
+    my($mac, $uni) = @_;
+    showpairs("\N{RIGHTWARDS DOUBLE ARROW}", $mac, $uni);
+}
+
+sub u2m {
+    my($uni, $mac) = @_;
+    showpairs("\N{LEFTWARDS DOUBLE ARROW}", $uni, $mac);
+}
+
+sub hex_arg {
+    my $arg = shift();
+    my $had_chr  = hex $arg;
+    if ($had_chr > 0xFF) {
+	warn "$0: hex arg " . quote($arg) . " too high: MacRoman codepoints < 0x100\n";
+	return;
+    }
+    my $want_chr = ord(decode("MacRoman", chr($had_chr)));
+    m2u($had_chr => $want_chr);
+}
+
+sub string_arg {
+    my $arg      = shift();
+    my $uni_arg = decode("utf-8", $arg);
+    my $mac_arg = encode("MacRoman", $uni_arg);
+    for (my $i = 0; $i < length($uni_arg); $i++) {
+	my $mac_chr = substr($mac_arg, $i, 1);
+	my $uni_chr = substr($uni_arg, $i, 1);
+	if ($mac_chr eq "?" && $uni_chr ne "?") {
+	    ## warn sprintf "$0: character %s U+%04X has no MacRoman representation\n", quote($uni_chr), ord($uni_chr);
+	    $mac_chr = $INVALID_CHR;
+	} 
+	u2m(ord($mac_chr), ord($uni_chr));
+    }
+}
+
+sub show_mappings { 
+    for (@_) {
+	if (/ ^ 0x [a-f0-9]{2,}  $ /xi) {
+	    hex_arg($_);
+	} elsif (/ ^ U \+ ([a-f0-9]{1,} ) $ /xi) {
+	    string_arg(encode("UTF-8", chr hex $1));
+	} else {
+	    string_arg($_);
+	}
+    }
+}

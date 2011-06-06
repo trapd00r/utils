@@ -1,0 +1,20 @@
+#!/usr/bin/env perl
+
+use utf8;
+use strict;
+use warnings;
+
+use open qw(:std :utf8);
+
+while (<>) { 
+
+    s/  / /g if tr
+      <！＂＃＄％＆＇（）＊＋，－．／０１２３４５６７８９：；＜＝＞？＠ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ［＼］＾＿｀ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ｛｜｝～￠￡>
+      <!"#$%&´()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~¢£>
+
+} continue {
+      print;
+
+} 
+
+close(STDOUT) || die "can't close stdout: $!";

@@ -1,0 +1,228 @@
+#!/usr/bin/env perl
+
+use v5.10.1;
+use utf8;
+use strict;
+use autodie;
+use warnings; 
+use open        qw< :std  :utf8   >;
+use charnames   qw< :full >;
+
+# These are core modules:
+use File::Basename 	qw< basename >;
+use Carp 		qw< carp croak confess cluck >;
+use Encode 		qw< encode decode FB_WARN FB_PERLQQ >;
+use Unicode::Normalize 	qw< NFD NFC >;
+
+# This is a CPAN module:
+use MIME::Words 	qw< decode_mimewords >;
+
+$0 = basename($0);  # shorter messages
+$| = 1;
+
+binmode(DATA, ":utf8");
+
+# give a full stack dump on any untrapped exceptions
+local $SIG{__DIE__} = sub {
+    confess "Uncaught exception: $@" unless $^S;
+};
+
+# now promote run-time warnings into stackdumped exceptions
+#   *unless* we're in an try block, in which 
+#   case just generate a clucking stackdump instead
+local $SIG{__WARN__} = sub {
+    if ($^S) { cluck   "Trapped warning: @_" } 
+    else     { confess "Deadly warning: @_"  }
+};
+
+my $Errors = 0;
+
+while (<>) {
+    close ARGV if eof; # to reset line numbers on ARGV
+
+    for (decode_mimewords($_)) {
+	if (@$_ == 1) {
+	    print $_->[0];
+	    next;
+	}
+	my ($word, $enc) = @$_;
+	my $encoding_error = sub {
+	    my $oops = shift; 
+	    $Errors++;
+	    my $bad = sprintf("\\x%02X", $oops);
+	    warn "$0: byte $bad does not map to $enc at line $. of input file $ARGV\n";
+	    return "<$bad>";
+	};
+	local $SIG{__WARN__}; # no clucking way
+	my $fixed = decode($enc, $word, $encoding_error);
+	print NFC($fixed);  # might as well fix any NFD forms
+    } 
+}
+
+exit ($Errors == 0 ? 0 : 1);
+
+__END__
+# crappy test data follows
+=?windows-1253?B?6+vc5OEh?=
+=?windows-1253?B?8f4gOw==?=
+=?windows-1253?B?9OXx5yD06ezeIQ==?=
+=?UTF-8?B?TWFyayBEYXZpcyDimJU=?= <mark@macchiato.com>,
+"=?utf-8?B?Wm9va28gTydXaGllbGFjcm9ueA==?=" <zooko@zooko.com>,
+"=?utf-8?B?Wm9va28ncyBHcmVhdCBHYW1lIERheXM=?=" <zookos-great-game-days@googlegroups.com>
+=?ISO-8859-7?Q?:=20=CD=DD=E1=20=F0=F1=EF=E9=EF=ED=F4=E9=EA=DE?=
+=?ISO-8859-7?Q?=20=D4=E7=EB=E5=FC=F1=E1=F3=E7=20F&U=2026=20=E9?=
+=?ISO-8859-7?Q?=20=DC=EB=EB=E5=F2=20=F0=F1=EF=F3=F6=EF=F1=DD=F2?=
+=?ISO-8859-7?Q?=20=EA=E1=F4=E7=E3=EF=F1=DF=E1=20=C5=F1=E3=E1=EB?=
+=?ISO-8859-7?Q?=21?=
+=?ISO-8859-7?Q?269=20=EA=E1=E9=20=F0=EF=EB=EB=DD=F2=20=E1=EB=EB?=
+=?ISO-8859-7?Q?Dell=20=EF=E9=20=EA=E1=EB=FD=F4=E5=F1=E5=F2=20?=
+=?ISO-8859-7?Q?=DF=F3=EA=EF=ED=F4=E1=E9=20=EC=FC=ED=EF=20=E5=E4?=
+=?ISO-8859-7?Q?=E1=20Sony=2C=20Laptop=20Lenovo=20Core=20i5=2C?=
+=?ISO-8859-7?Q?=E5=DF=F9=ED=21?=
+=?ISO-8859-7?Q?=E5=F2=20=F0=F1=EF=F3=F6=EF=F1=DD=F2=21?=
+=?ISO-8859-7?Q?=EB=F5=EC=E7=F7=DC=ED=E7=EC=E1=20=EA=E1=E9=20=F0?=
+=?ISO-8859-7?Q?=EC=E5=20MS=20Office=202010=20=F3=E5=2024=20=C1?=
+=?ISO-8859-7?Q?=ED=EF=F5=ED=20=F0=EF=F4=DD=21?=
+=?ISO-8859-7?Q?=ED=F4=F3=FE=ED=20=EA=E1=E9=20=F0=EF=EB=EB=DD=F2?=
+=?ISO-8859-7?Q?=EF=EB=EB=DC=20gadgets=20=F3=E5=20=F0=F1=EF=F3?=
+=?ISO-8859-7?Q?e-shopping=202011=21?=
+=?ISO-8859-7?Q?=F0=F1=EF=F3=F6=EF=F1=DD=F2=20=F3=E5=20desktop?=
+=?ISO-8859-7?Q?=F0=F1=EF=F3=F6=EF=F1=DD=F2=20laptops=20=E2=F1?=
+=?ISO-8859-7?Q?=F1=DD=F2=20=EA=E1=E9=20=EC=EF=ED=E1=E4=E9=EA=DD?=
+=?ISO-8859-7?Q?=F1=E9=F3=F4=EF=F5=E3=E5=ED=ED=E9=DC=F4=E9=EA=E5?=
+=?ISO-8859-7?Q?=F1=EF=F2=20=C5=EA=F0=F4=FE=F3=E5=F9=ED=21?=
+=?ISO-8859-7?Q?=F2=20=C5=EA=F0=F4=FE=F3=E5=E9=F2=202011=21?=
+=?ISO-8859-7?Q?=F2=20=D0=F1=EF=F3=F6=EF=F1=DD=F2=21?=
+=?ISO-8859-7?Q?=F2=20=F4=E9=EC=DD=F2=21?=
+=?ISO-8859-7?Q?=F4=EF=EA=E5=F2=20=C4=FC=F3=E5=E9=F2=21?=
+=?ISO-8859-7?Q?=F6=EF=F1=DD=F2=20=E4=E5=ED=20=F4=E5=EB=E5=E9=FE?=
+=?ISO-8859-7?Q?=F6=EF=F1=E1=21?=
+=?ISO-8859-7?Q?=FE=21?=
+=?ISO-8859-7?Q?s=20=EA=E1=E9=20laptops=21?=
+=?utf-8?B?gc6/z4TOrM+DzrXOuc+CLCDOtM61zrrOrM60zrXPgiDOvc6tzrEgz4PPh86t?=
+=?utf-8?B?hc+HzrEgz4TOv8+FIM+HzrXOuc68z47Ovc6xISEh?=
+=?utf-8?B?IFByaXZlbGlmZSEhIQ==?=
+=?utf-8?B?ISEh?=
+=?utf-8?B?js+Bz4nOvSDOs865zrEgz4TOt869IM63zrzOrc+BzrEgz4TOv8+FIM6RzrPO?=
+=?utf-8?B?r86/z4UgzpLOsc67zrXOvc+Ezq/Ovc6/z4Uh?=
+=?utf-8?B?rM+DzrXOuc+CIM6zzrnOsSDPhM6xIM6nz4HOuc+Dz4TOv8+NzrPOtc69zr3O?=
+=?utf-8?B?sSEhIQ==?=
+=?utf-8?B?z4TOrM+DzrXOuc+CIM6zzrnOsSDPhM6/zr0gzpLOsc67zrXOvc+Ezq/Ovc6/?=
+=?utf-8?B?zrTOuc6x?=
+Cc: cpan-workers@perl.org, =?ISO-8859-1?Q?Ask_Bj=F8rn_Hansen?= <ask@perl.org>
+CC: =?ISO-8859-1?Q?Alberto_Sim=F5es?= <albie@alfarrabio.di.uminho.pt>,
+CC: =?ISO-8859-1?Q?Andr=E9_?= Pirard <PIRARD@vm1.ulg.ac.be>
+CC: =?UTF-8?B?VG9yc3RlbiBGw7ZydHNjaA==?= <torsten.foertsch@gmx.net>,
+Cc: =?UTF-8?Q?Renee_B=C3=A4cker?= <perlbug-followup@perl.org>,
+Cc: =?UTF-8?Q?Torsten_F=C3=B6rtsch?= <torsten.foertsch@gmx.net>,
+Comments: In-reply-to =?ISO-8859-1?Q?Zsb=E1n_Ambrus?= <ambrus@math.bme.hu>
+Comments: In-reply-to =?UTF-8?B?TWFyayBEYXZpcyDimJU=?= <mark@macchiato.com>
+Comments: In-reply-to =?UTF-8?B?w4Z2YXIgQXJuZmrDtnLDsCBCamFybWFzb24=?= <avarab@gmail.com>
+From: ilmari@ilmari.org (Dagfinn Ilmari =?utf-8?Q?Manns=C3=A5ker?=)
+From: =?ISO-8859-15?Q?Maximilian_Hantsch-K=F6ller?= <max@mail.at>
+From: =?iso-8859-1?b?U+liYXN0aWVu?= Aperghis-Tramoni <maddingue@free.fr>
+From: =?iso-8859-1?Q?=22Burak_G=FCrsoy=22?= <burakgursoy@gmx.net>
+From: =?iso-8859-1?Q?Ask_Bj=F8rn_Hansen?= <ask@perl.org>
+From: =?ISO-8859-1?Q?L=E9on_Brocard?= <acme@astray.com>
+From: =?iso-8859-1?Q?Marcel_Gr=FCnauer?= <gr@univie.ac.at>
+From: =?ISO-8859-1?Q?S=E9bastien_Aperghis-Tramoni?= <maddingue@free.fr>
+From: =?ISO-8859-1?Q?S=E9bastien_Aperghis-Tramoni?= <saper@cpan.org>
+From: =?ISO-8859-1?Q?Zsb=E1n_Ambrus?= <ambrus@math.bme.hu>
+From: Lars =?utf-8?b?RMmq4bSH4bSE4bSL4bSP4bShIOi/quaLieaWrw==?= <daxim@cpan.org>
+From: Richard =?iso-8859-1?Q?M=F6hn?= <richard.moehn@gmx.de>
+From: Torsten =?iso-8859-1?q?F=F6rtsch?= <torsten.foertsch@gmx.net>
+From: =?US-ASCII?Q?Keith_Moore?= <moore@cs.utk.edu>
+From: "=?utf-8?b?6YCa55So5pW456K8?=" <user@gdcrm.com>
+From: =?utf-8?B?a2tAaGlnaGxhYi5jb20=?= <kk@highlab.com>
+From: =?utf-8?B?S2VycnkgS3J1ZW1wZWxzdGFlZHRlcg==?= <kk@highlab.com>
+From: "=?UTF-8?B?T0JKRVRJVkEgLSBWw61kZW9zIHBhcmEgdHJlaW5hbWVudG8=?=" <mail@midiamail.com.br>
+From: "=?UTF-8?B?V2FsbWFydCAtIFBhcmNlaXJvIE3DrWRpYSBNYWls?=" <mail@midiamail.com.br>
+From: "=?UTF-8?B?V2FsbWFydCAtIFBhcmNlaXJvIE3DrWRpYSBNYWls?=" <walmart@midiamail.com.br>
+From: "=?UTF-8?B?VmlhamVzIEVsIENvcnRlIEluZ2zDqXM=?=" <noticias_chile@vcorteingleschile.cl>
+From: =?UTF-8?B?w4Z2YXIgQXJuZmrDtnLDsCBCamFybWFzb24=?= <avarab@gmail.com>
+From: =?UTF-8?B?w4Z2YXIgQXJuZmrDtnLDsCBCamFybWFzb24=?= <avarab@gmail.com>
+From: "=?utf-8?B?YmliaWwudGhheXNvc2VAZ21haWwuY29t?=" <bibil.thaysose@gmail.com>
+From: =?utf-8?Q?=CE=91=CE=BD=CE=B1=CE=BA=CE=B1=CE=AF=CE=BD=CE=B9=CF=83=CE=B7_=CE=A4=CF=8E=CF=81=CE=B1_!!!__?=
+From: =?UTF-8?q?Richard=20M=C3=B6hn?= <richard.moehn@fu-berlin.de>
+=?ISO-8859-1?Q?Zsb=E1n_Ambrus?= <ambrus@math.bme.hu> wrote
+Mail-Followup-To: =?iso-8859-1?Q?S=E9bastien?= Aperghis-Tramoni <maddingue@free.fr>,
+Replied: =?UTF-8?B?w4Z2YXIgQXJuZmrDtnLDsCBCamFybWFzb24=?= <avarab@gmail.com>
+Resent-From: Richard =?iso-8859-1?Q?M=F6hn?= <richard.moehn@gmx.de>
+Sender: "=?UTF-8?B?VmlhamVzIEVsIENvcnRlIEluZ2zDqXM=?=" <noticias_chile=vcorteingleschile.cl@emkt.cl>
+Subject: =?ISO-8859-1?B?SWYgeW91IGNhbiByZWFkIHRoaXMgeW8=?==?ISO-8859-2?B?dSB1bmRlcnN0YW5kIHRoZSBleGFtcGxlLg==?==?US-ASCII?Q?.._cool!?=
+Subject: =?iso-8859-1?B?TOlv?= =?iso-8859-1?Q?n?= Brocard to release Perl
+Subject: =?ISO-8859-1?Q?Adidas/Nik&#8203;e/Reebok..&#8203;._T=EAnis_para_todo_o_Brasil_com_50%_OFF_no_cupom_frete_gr=E1tis_para_todo_Brasil?=
+Subject: =?ISO-8859-1?Q?CONCURSO_P=DABLICO_-_De_R$298,00_por_apenas_R$29,88_por_seis_meses_de_assinatura_no_JCConcursos/VIP?=
+Subject: =?ISO-8859-1?Q?Picanha=20Gepetto=20com=20Sobremesa=20por=2024,90?=
+Subject: =?ISO-8859-1?Q?Re=3A_L=E9on_Brocard_to_release_Perl_5=2E12=2E4?=
+Subject: =?ISO-8859-7?Q?=D0=F1=F9=F4=EF=F7=F1=EF=ED=E9=DC=F4=E9=EA=EF=20?=
+Subject: =?ISO-8859-7?Q?=D4=EF=20e-shop.gr=20=EC=E5=E3=E1=EB=FE=ED=E5=E9?=
+Subject: =?ISO-8859-7?Q?e-shop.gr:=20=B8=EE=F5=F0=ED=E5=F2=20=E1=E3=EF?=
+Subject: =?ISO-8859-7?Q?e-shop.gr:=20=C1=F3=FD=E3=EA=F1=E9=F4=E5=F2=20?=
+Subject: =?ISO-8859-7?Q?e-shop.gr:=20=C2=E9=ED=F4=E5=EF=EA=DC=EC=E5=F1?=
+Subject: =?ISO-8859-7?Q?e-shop.gr:=20=C4=E5=FD=F4=E5=F1=EF=F2=20=E3=FD?=
+Subject: =?ISO-8859-7?Q?e-shop.gr:=20=C5=E4=FE=20=EF=E9=20=F0=F1=EF=F3?=
+Subject: =?ISO-8859-7?Q?e-shop.gr:=20=C7=EB=E5=EA=F4=F1=EF=ED=E9=EA=DD?=
+Subject: =?ISO-8859-7?Q?e-shop.gr:=20=CC=EF=ED=E1=E4=E9=EA=DD=F2=20=D7?=
+Subject: =?ISO-8859-7?Q?e-shop.gr:=20Fujitsu=20laptops=2C=20HP=20=F0=EF?=
+Subject: =?ISO-8859-7?Q?e-shop.gr:=20HP=20Mini=20Netbook=20=F3=F4=E1=20?=
+Subject: =?ISO-8859-7?Q?e-shop.gr:=20Innovator=20Desktop=20&=20Laptop=20?=
+Subject: =?ISO-8859-7?Q?e-shop.gr:=20Toshiba=2C=20Lenovo=2C=20HP=2C=20?=
+Subject: =?utf-8?B?aSBuZWVkIHlvdXIgYXNzaXN0YW5jZSB0byBoZWxwIGNoaWxkcmVu?=
+Subject: =?UTF-8?B?LCBFRS5VVS4gY29uIExBTiBkZXNkZSBVUyQgNjk5LCBzw7NsbyAxMDAwIGN1cG9zLCBBcMO6cmF0ZS4=?=
+Subject: =?utf-8?b?MTEvMjPjgIExMS8yNOOAgTExLzI144CM6JC95a+m5a6i5oi254K65bCK77yM5Ym16YCg566h55CG5YSq5YyW5paw5aKD55WM44CN56CU6KiO5pyD4oCn5bqn5L2N5pyJ6ZmQ77yM6KuL6YCf5aCx5ZCN?=
+Subject: =?UTF-8?B?Q29tbyBsaWRlcmFyIGUgbW90aXZhciBzZXVzIGNvbGFib3JhZG9yZXMgLSBDb2xlw6fDo28gZW0gRFZE?=
+Subject: =?UTF-8?B?Q29uaGXDp2EgTyBFbnRlcnJvIGRhcyBEZXNjdWxwYXMgLSBTdXBlciBDb2xlw6fDo28gZW0gRFZE?=
+Subject: =?utf-8?B?QWRhbSAmIEV2ZSAtIM6RzrnPg864zrfPg865zrHOus6tz4Igz4DPgc6/z4TO?=
+Subject: =?UTF-8?B?RmxvcmVzIGEgcGFydGlyIGRlIFIkIDE5LDkwLiBFbnRyZWdhIFLDoXBpZGEgcGFyYSB0b2RvIG8gQnJhc2lsIQ==?=
+Subject: =?UTF-8?B?SG9qZSDDqSBXYWxtYXJ0IERheTogQ2FtZXJhIERpZ2l0YWwgMTIuMSBNUCBzbyAxOTkgcmVhaXMuIFRWIExDRCBMRyA0MiBjLyBDb252ZXJzb3Igc28gMTg5OC4gQ29uZmlyYSE=?=
+Subject: =?UTF-8?B?T2ZlcnRhcyBDb25maWRlbmNpYWlzOlRWIExDRCAzMiBjLyBDb252ZXJzb3IsRm9nYW8gNEIgZSBtYWlzIGMvIHByZWNvcyBudW5jYSB2aXN0b3MuQ29uZmlyYSBvIGRvc3Npw6ogICA=?=
+Subject: =?utf-8?B?TGFzdCBtaW51dGUgZ2FtZXMh?=
+Subject: =?utf-8?B?TGVzZmVtbWVzLCDOpM6xIM+AzrnOvyDOts61z4PPhM6sIM61z4PPjs+Bzr/P?=
+Subject: =?utf-8?B?UHJpdmUtTGlmZSBTaG9wLCDOkc69zr/Ouc6+zrnOrM+EzrnOus61z4Igz4DP?=
+Subject: =?utf-8?B?UmU6IEdhbWUgRGF5IGF0IHRoZSBXaWxjb3gtTydIZWFybidzIQ==?=
+Subject: =?utf-8?B?UmU6IEdhbWUgZGF5IGF0IHRoZSBXaWxjb3gtTydIZWFybidz?=
+Subject: =?utf-8?B?UmU6IGJvYXJkIGdhbWUgcmVjb21tZW5kYXRpb25z?=
+Subject: =?utf-8?B?zpHOuc+DzrjOt8+DzrnOsc66zq3PgiDPgM+Bzr/PhM6sz4POtc65z4IgzrTP?=
+Subject: =?utf-8?B?zprOsc+Fz4TOrc+CLCDOus6xz4TOsc66z4zOus66zrnOvc61z4Igz4DPgc6/?=
+Subject: =?utf-8?B?zprOsc+Fz4TOrCDOp8+BzrnPg8+Ezr/Pjc6zzrXOvc69zrEgzrzOtSDPhM6/?=
+Subject: =?utf-8?Q?=CE=91=CE=BD=CE=B1=CE=BA=CE=B1=CE=AF=CE=BD=CE=B9=CF=83=CE=B7_=CE=A4=CF=8E=CF=81=CE=B1_!!!?=
+Subject: =?utf-8?Q?epiplonet_=CE=9A=CE=B1=CE=BB=CF=8C_=CE=A0=CE=AC=CF=83=CF=87=CE=B1?=
+Subject: =?windows-1252?Q?Drummer_&__DJ_live_performance_this_Sat?=
+Subject: =?windows-1252?Q?Gest=E3o_de_compras_-_Aperfei=E7oamento?=
+Subject: =?windows-1253?B?0PHv8/bv8d3yIEFsaXRhbGlhIQ==?=
+Subject: =?windows-1253?B?NDkuMDAwIOjd8+Xp8iDl8/n05fHp6u/9IOHw/CAzNSDl9fH+IQ==?=
+Subject: =?windows-1253?B?NDUuMDAwIO3d5fIg6N3z5enyIOHw/CAzNiDl9fH+IQ==?=
+Subject: =?windows-1253?B?NTAuMDAwIOjd8+Xp8iDl8/n05fHp6u/9IOHw/CAzNyDl9fH+IQ==?=
+Subject: =?windows-1253?B?ODAuMDAwIOjd8+Xp8iDl8/n05fHp6u/9IOHw/CAzNyDl9fH+IQ==?=
+Subject: =?windows-1253?B?uPfl6fIgaVBob25lPyC49+Xp8iBhaXJ0aWNrZXRzIQ==?=
+Subject: =?windows-1253?B?wfDv6uvl6fP06er8ICEgxeT+IO7d8eXp8iDw3O304SD05+0g6uHr/Q==?=
+Subject: =?windows-1253?B?wvHl8iDw7+nhIOzd8eEg8/Xs9t3x5ekg7eEg8OX03O7l6fIh?=
+Subject: =?windows-1253?B?yN3r5enyIOXp8+n03vHp7yDj6eEgy+/t5N/t7yDs3ffx6SA5OSDl9Q==?=
+Subject: =?windows-1253?B?zO/t4eTp6t3yIPXw5/Hl89/l8iwg4+nhIPDx/vTnIPbv8dwg8/Tn7SDF?=
+Thread-Topic: =?windows-1253?B?0PHv8/bv8d3yIEFsaXRhbGlhIQ==?=
+Thread-Topic: =?windows-1253?B?NDkuMDAwIOjd8+Xp8iDl8/n05fHp6u/9IOHw/CAzNSDl9fH+IQ==?=
+Thread-Topic: =?windows-1253?B?NDUuMDAwIO3d5fIg6N3z5enyIOHw/CAzNiDl9fH+IQ==?=
+Thread-Topic: =?windows-1253?B?NTAuMDAwIOjd8+Xp8iDl8/n05fHp6u/9IOHw/CAzNyDl9fH+IQ==?=
+Thread-Topic: =?windows-1253?B?ODAuMDAwIOjd8+Xp8iDl8/n05fHp6u/9IOHw/CAzNyDl9fH+IQ==?=
+Thread-Topic: =?windows-1253?B?uPfl6fIgaVBob25lPyC49+Xp8iBhaXJ0aWNrZXRzIQ==?=
+Thread-Topic: =?windows-1253?B?wfDv6uvl6fP06er8ICEgxeT+IO7d8eXp8iDw3O304SD05+0g6uHr/Q==?=
+Thread-Topic: =?windows-1253?B?wvHl8iDw7+nhIOzd8eEg8/Xs9t3x5ekg7eEg8OX03O7l6fIh?=
+Thread-Topic: =?windows-1253?B?yN3r5enyIOXp8+n03vHp7yDj6eEgy+/t5N/t7yDs3ffx6SA5OSDl9Q==?=
+Thread-Topic: =?windows-1253?B?zO/t4eTp6t3yIPXw5/Hl89/l8iwg4+nhIPDx/vTnIPbv8dwg8/Tn7SDF?=
+To: =?ISO-8859-1?Q?Keld_J=F8rn_Simonsen?= <keld@dkuug.dk>
+To: =?iso-8859-1?Q?S=E9bastien?= Aperghis-Tramoni <maddingue@free.fr>
+To: =?iso-8859-1?Q?S=E9bastien?= Aperghis-Tramoni <saper@cpan.org>
+To: =?ISO-8859-1?Q?S=E9bastien_Aperghis=2DTramoni?= <saper@cpan.org>
+To: =?iso-8859-1?Q?Torsten_F=F6rtsch?= <torsten.foertsch@gmx.net>,
+To: =?iso-8859-1?Q?Zsb=E1n?= Ambrus <ambrus@math.bme.hu>
+To: "=?utf-8?B?a2tAaGlnaGxhYi5jb20=?=" <kk@highlab.com>,
+To: =?utf-8?B?gc6/z4TOrM+DzrXOuc+CLCDOtM61zrrOrM60zrXPgiDOvc6tzrEgz4PPh86t?=
+To: =?UTF-8?B?QnVyYWsgR8O8cnNveQ==?= <burakgursoy@gmx.net>
+To: =?UTF-8?B?TGFycyBEyarhtIfhtIThtIvhtI/htKEg6L+q5ouJ5pav?= <daxim@cpan.org>
+To: =?UTF-8?B?TWFyayBEYXZpcyDimJU=?= <mark@macchiato.com>
+To: =?UTF-8?B?w4Z2YXIgQXJuZmrDtnLDsCBCamFybWFzb24=?= <avarab@gmail.com>
+To: =?UTF-8?B?w4Z2YXIgQXJuZmrDtnLDsCBCamFybWFzb24=?= <avarab@gmail.com>
+To: "=?utf-8?B?Wm9va28gTydXaGllbGFjcm9ueA==?=" <zooko@zooko.com>,
+To: =?UTF-8?Q?Ask_Bj=C3=B8rn_Hansen?= <ask@perl.org>
+To: =?UTF-8?Q?Richard_M=C3=B6hn?= <richard.moehn@gmx.de>

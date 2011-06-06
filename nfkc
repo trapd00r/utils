@@ -1,0 +1,12 @@
+#!/usr/bin/env perl
+
+use strict;
+use 5.10.1;
+use autodie;
+use warnings qw[ FATAL all ];
+use open     qw[ :std IO :utf8 ];
+
+END { close STDOUT }
+
+use Unicode::Normalize;
+print NFKC($_) while <>;

@@ -1,0 +1,265 @@
+#!/usr/bin/env perl
+# pathedit/rename/relink -- rename or relink files 
+# original rename and relink were by Larry Wall
+# this version by Tom Christiansen
+
+use strict;
+use warnings;
+
+our(
+    $errcnt,    # how many didn't work
+    $verbose,   # trace actions
+    $nonono,    # but don't do them (implies verbose)
+    $careful,   # ask if target *appears* to exist 
+    $inspect,   # ask about everything
+    $quiet,     # don't carp if target skipped 
+    $force,     # overwrite existing target without prompting
+    $nullpaths, # stdin paths are null terminated, not \n
+    @flist,     # list of magic filenames containing paths to edit
+    $renaming,  # rename paths (disimplies reslinker)
+    $reslinking,# reslink paths (disimplies renamer)
+);
+
+$errcnt = 0;
+
+opter();
+compiler();
+fixer();
+exit($errcnt != 0);
+
+sub usage {
+    warn "@_\n" if @_;
+    die <<EOF;
+usage: $0 [-ifqI0vnml] [-F file] perlexpr [files]
+    -i          ask about clobbering existent files
+    -f          force clobbers without inquiring
+    -q          quietly skip clobbers without inquiring
+    -I          ask about all changes
+    -0          read null-terminated filenames
+    -v          verbosely says what its doing 
+    -V          verbosely says what its doing but with newlines between old and new filenames
+    -n          don't really do it
+    -m          to always rename
+    -l          to always symlink
+    -F path     read filelist to change from magic path(s)
+EOF
+} 
+
+sub accesstty {
+    return 1 if defined fileno(TTYIN)  &&
+                defined fileno(TTYOUT);
+
+    unless (open(TTYIN, "</dev/tty") && open(TTYOUT,">/dev/tty")) {
+        return 0;
+    } 
+
+    select((select(TTYOUT),$|=1)[0]);
+    return 1;
+}
+
+sub compiler {
+    my $op    = shift @ARGV || usage();
+    *pathedit = eval qq{
+        sub () { 
+            use warnings qw/FATAL all/;  # XXX: does not work
+            local \$SIG{__WARN__} = sub { 
+                local \$_ = "\@_";
+                s/at \\(eval.*//;
+                die "FATAL WARNING: \$_";
+            };
+            $op;
+        }   
+    } || do {
+        local $_ = $@;
+        s/at \(eval.*//s;
+        die "$0: can't compile perlexpr $op: $_\n";
+    } 
+} 
+
+sub get_targets {
+    if (@ARGV) { 
+        usage "-L list exclusive of command line paths" if @flist;
+        return @ARGV;
+    } 
+    @ARGV = @flist ? @flist : '-';
+    local $/ = "\0" if $nullpaths;
+    my @paths = <>;
+    chomp @paths;
+    return @paths;
+} 
+
+sub fixer {
+
+    my $oldslink;
+
+PATHNAME:
+    for my $oldname (get_targets()) {
+
+        if ($oldname =~ /\0/) {
+            warn "$0: null found in $oldname; did you forget -0?\n";
+            $errcnt++;
+            next PATHNAME;
+        } 
+        if ($renaming && !-e $oldname) {
+            warn "$0: $oldname doesn't exist\n";
+            $errcnt++;
+            next PATHNAME;
+        } 
+
+        if ($reslinking) {
+            unless (-l $oldname) {
+                warn "$0: $oldname ", (-e _) 
+                            ? "not a symbolic link\n"
+                            : "doesn't exist\n"
+                    unless $quiet;
+                $errcnt++;
+                next PATHNAME;
+            } 
+            $oldname = readlink($oldslink = $oldname);
+        } 
+        my $newname = do {
+            local $_ = $oldname;
+            pathedit();
+            $_;
+        };
+        next if $newname eq $oldname;
+
+        local *confirm = sub () { 
+            next PATHNAME unless accesstty();
+            print TTYOUT $renaming 
+                    ? "rename $oldname to $newname? "
+                    : "symlink $oldslink to point to $newname? ";
+            my $answer = <TTYIN>;
+            no warnings 'exiting';  
+            last PATHNAME  unless defined $answer;  # exit?
+            chomp $answer;
+            last PATHNAME  if     "QUIT" =~ /^\Q$answer/i;
+            next PATHNAME  unless "YES"  =~ /^\Q$answer/i;
+        };
+
+        confirm() if $inspect;
+
+        #  "I'd like to teach 
+        #       The world to race 
+        #           In perfect hackery!"
+        my $was_there = do { 
+            no warnings 'newline';
+            -e $newname;
+        };
+
+        if ($renaming) {
+
+            if ($was_there && !$inspect && $careful) {
+                confirm() unless $force || $quiet;
+                next PATHNAME if $quiet;  
+            } 
+
+            unless (vrename($oldname, $newname)) {
+                warn "$0: can't rename $oldname to $newname: $!\n";
+                $errcnt++;
+                next PATHNAME;
+            } 
+
+        } 
+        elsif ($reslinking) {
+            unless ($was_there) {
+                warn "$0: symlinking $oldslink to nonexistent $newname\n" 
+                    unless $quiet;
+            }
+            unless (vunlink($oldslink)) {
+                warn "$0: can't unlink $oldslink: $!\n";
+                $errcnt++;
+                next PATHNAME;
+            }
+            if (!vsymlink($newname, $oldslink)) { 
+                warn "$0: can't symlink $newname to $oldslink: $!\n";
+                $errcnt++;
+                next PATHNAME;
+            }
+        } 
+        else {
+            die "Not reached";
+        } 
+
+    } 
+
+} 
+
+sub vunlink {
+    my $goner = shift;
+    if ($verbose) {
+        print "unlink $goner\n";
+        return 1 if $nonono;
+    } 
+    unlink $goner;
+} 
+
+sub vrename {
+    my ($old,$new) = @_;
+    if ($verbose) {
+	if ($verbose > 1) {
+	    print "renaming $old\n      to $new\n";
+	} else {
+	    print "rename $old $new\n";
+	} 
+        return 1 if $nonono;
+    } 
+    rename($old,$new);
+} 
+
+sub vsymlink {
+    my ($new,$old) = @_;
+    if ($verbose) {
+	if ($verbose > 1) {
+	    print "symlinking $old\n        to $new\n";
+	} else { 
+	    print "symlink $old $new\n";
+	} 
+	return 1 if $nonono;
+    }
+    symlink($new,$old);
+} 
+
+sub opter {
+
+ARG: while (@ARGV && $ARGV[0] =~ s/^-(?=.)//) {
+OPT:    for (shift @ARGV) {
+
+            m/^$/        && do {                                 next ARG; };
+            m/^-$/       && do {                                 last ARG; };
+
+            s/^0//       && do { $nullpaths++;                   redo OPT; };
+            s/^f//       && do { $force++;                       redo OPT; };
+            s/^l//       && do { $reslinking++;                  redo OPT; };
+            s/^I//       && do { $inspect++;                     redo OPT; };
+            s/^i//       && do { $careful++;                     redo OPT; };
+            s/^v//       && do { $verbose++;                     redo OPT; };
+            s/^V//       && do { $verbose += 2;                  redo OPT; };  # like two -v's
+            s/^m//       && do { $renaming++;                    redo OPT; };
+            s/^n//       && do { $nonono++;                      redo OPT; };
+            s/^N//       && do { $nonono += 2;                   redo OPT; };  # like two -n's
+            s/^q//       && do { $quiet++;                       redo OPT; };
+
+            s/^F(.*)//s  && do { push @flist, $1 || shift @ARGV; redo OPT; };
+
+            usage("Unknown option: $_");
+        }
+    }
+    unless ($renaming || $reslinking) {
+        $renaming   = $0 =~ /name/; 
+        $reslinking = $0 =~ /link/; 
+    } 
+    if ($renaming && $reslinking) {
+        usage "Can't both rename (-r) and relink (-h)";
+    } 
+    unless ($renaming || $reslinking) {
+        warn "$0: assuming renaming behavior requested\n";
+        $renaming++;
+    } 
+    $verbose += $nonono if $nonono;
+
+    if ($inspect) { 
+        accesstty() || usage "can't inspect without /dev/tty: $!";
+    }
+
+} 

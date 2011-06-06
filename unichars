@@ -1,0 +1,804 @@
+#!/usr/local/bin/perl
+#!/usr/bin/env   perl
+#!/bin/sh
+
+######################################################################
+# unichars - list characters for one or more properties
+#
+# Tom Christiansen <tchrist@perl.com>
+#  v1.0: Fri Oct 22 23:05:16 MDT 2010
+#  v1.2: Tue Oct 26 08:28:25 MDT 2010
+#   better 5.10 support and simpler evals
+#
+################################################################
+#
+#   This is an sh wrapper to run the script under
+#   whichever perl occurs first in your path.  See
+#   CHOICEs 1 and 2 below for alternate strategies.
+#   The -x will throw off your line numbers otherwise.
+#
+######################################################################
+#
+#   The next line is legal in both shell and perl,
+#   but perl sees the if 0 so doesn't execute it.
+#
+
+eval 'exec perl -x -S $0 ${1+"$@"}'
+      if 0;
+
+### CHOICE 1:
+######################################################################
+### MAKE FOLLOWING #! line THE TOP LINE, REPLACING /usr/local/bin  ###
+###   with wherever you have a late enough version of Perl is      ###
+###   installed.  Will run under 5.10, but prefers 5.12 or better. ###
+######################################################################
+#!/usr/local/bin/perl 
+# ^^^^^^^^^^^^^^  <=== CHANGE ME                                   ###
+######################################################################
+
+### CHOICE 2:
+######################################################################
+### ALTERNATELY, the following #! line does the same thing as      ###
+###   the tricksy sh eval exec line:  it finds whichever Perl is   ###
+###   first in your path.  However, it works only on BSD systems   ###
+###   (including MacOS), but breaks under Solaris and Linux.       ###
+######################################################################
+#!/usr/bin/env perl -CLA
+######################################################################
+
+use strict;
+use warnings;     # qw[ FATAL all ];
+use charnames qw[ :full :short latin greek ];
+
+use 5.10.1;
+
+use File::Basename  qw[ basename    ];
+use Getopt::Long    qw[ GetOptions  ];
+use File::Spec;
+use Carp;
+
+use Pod::Usage      qw[ pod2usage   ];
+use Encode          qw[ decode      ];
+
+use Unicode::UCD qw(charinfo casefold);
+
+use if $^V >= v5.11.3, qw[ feature unicode_strings ];
+
+# don't need to import this
+sub utf::is_utf8($);
+
+################################################################
+
+sub ARGCOUNT;
+sub CF();
+sub IT();
+sub NAME();
+sub NOT_REACHED;
+sub NUM();
+
+sub am_running_perldb;
+sub check_options();
+sub compile_filter();
+sub deQ($);
+sub deQQ($);
+sub debug($);
+sub dequeue($$);
+sub display;
+sub fork_pager;
+sub genfuncs;
+sub is_runnable;
+sub locate_program;
+sub main();
+sub panic;
+sub run_filter();
+sub start_pager;
+sub stupid_evil_and_wrong;
+sub titlecase;
+sub underscore;
+
+################################################################
+
+our $VERSION = "1.4 (2011-04-11)";
+
+$| = 1;             # command buffering quick-feeds piped stdout
+$0 = basename($0);  # shorten up warnings/errors
+
+our %Opt;
+our $CF;
+our $CI;
+our $Shown_Count = 0;
+
+main();
+exit;
+
+################################################################
+
+sub   IT() { $_ }
+sub NAME() { charnames::viacode(ord $_) || "" }
+
+sub genfuncs  { 
+
+    for my $nf ( qw< NFD NFC NFKD NFKC FCD FCC > ) {
+	no strict "refs";
+	*$nf = sub(_) {
+	    require Unicode::Normalize;
+	    "Unicode::Normalize::$nf"->($_);
+	};
+    } 
+
+    for my $check ( qw< checkNFD checkNFC checkNFKD checkNFKC checkFCD checkFCC > ) {
+	no strict "refs";
+	*$check = sub(_) {
+	    require Unicode::Normalize;
+	    my $stat = "Unicode::Normalize::$check"->($_);
+	    if (defined $stat) {
+		return $stat || "0 but true";
+	    } else {
+		# trick to quiet zero-conversion under -w
+		return 0 == 1;
+	    }
+	}
+    } 
+
+    for my $nf ( qw< Singleton Exclusion NonStDecomp Comp_Ex 
+		     NFD_NO  NFC_NO  NFC_MAYBE 
+		    NFKD_NO NFKC_NO NFKC_MAYBE > 
+		) 
+    {
+	no strict "refs";
+	*$nf = sub() {
+	    require Unicode::Normalize;
+	    "Unicode::Normalize::is$nf"->(ord);
+	};
+    } 
+
+
+    for my $nl ( 1 .. 4 ) {
+	no strict "refs";
+	*{ "UCA$nl" } = sub(_) {
+	    require Unicode::Collate;
+	    my $class = Unicode::Collate:: ;
+	    my @args = (level => $nl, variable => "Non-Ignorable");
+	    if ($Opt{locale}) {
+		require Unicode::Collate::Locale;
+		$class = Unicode::Collate::Locale:: ;
+		push @args, locale => $Opt{locale};
+	    } 
+	    state $coll = $class->new(@args);
+	    return $coll->getSortKey($_[0]);
+	};
+    } 
+
+    no warnings "once";
+    *UCA = \&UCA1;
+
+}
+
+sub CF() {
+    $CF = casefold(ord);
+    return ($CF && $CF->{status}) || "";
+} 
+
+sub NUM() {
+    require Unicode::UCD;
+    Unicode::UCD->VERSION(0.32);
+    my $n = Unicode::UCD::num($_);
+    if (defined $n) {
+	return $n || "0 but true";
+    } else {
+	# trick to quiet zero-conversion under -w
+	return 0 == 1;
+    } 
+} 
+
+################################################################
+
+sub main() {
+
+    for my $fh ( qw[STDOUT STDERR] ) {
+        binmode($fh, ":utf8")
+            || die "can't binmode($fh) to :utf8 encoding: $!";
+    }
+
+    check_options();
+    genfuncs();
+    compile_filter();
+
+    $SIG{PIPE} = sub {exit 0};
+
+    run_filter();
+
+    if ($Opt{verbose}) {
+	print STDERR "$0: $Shown_Count code points matched.\n";
+    } 
+
+    close(STDOUT) || warn "$0: close stdout failed: $!\n";
+
+    if ($Shown_Count) {
+	exit 0;
+    } else {
+	exit 1;
+    } 
+}
+
+################################################################
+
+sub debug($) {
+    return unless $Opt{debug};
+    my $msg = shift();
+    print STDERR "$msg\n";
+}
+
+sub check_options() {
+
+    Getopt::Long::Configure qw[ bundling auto_version ];
+
+    if (@ARGV == 0) {
+	@ARGV = qw{
+		    --all
+		    --category
+		    --script
+		};
+    } 
+
+    GetOptions(\%Opt, qw[
+
+        help|h|?
+        man|m
+        debug|d
+
+	unnamed|u
+        bmp
+        smp
+        astral|all|a
+
+	casefold|f
+
+	decimal|d
+
+	category|general|c|g
+	combining|C
+	script|s
+	block|b
+	bidi|B
+	numeric|n
+
+	locale|l=s
+
+	nopager
+	verbose
+
+    ]) || pod2usage(2);
+
+    pod2usage(0)                                if $Opt{help};
+    pod2usage(-exitstatus => 0, -verbose => 2)  if $Opt{man};
+
+    @ARGV = (1) unless @ARGV;
+
+    #$Opt{smp}++;
+    #$Opt{bmp}++;
+
+    pod2usage("$0: missing arguments")          if @ARGV == 0;
+
+    if (grep /\P{ASCII}/ => @ARGV) {
+        @ARGV = map { decode("UTF-8", $_) } @ARGV;
+    }
+
+}
+
+sub compile_filter() {
+
+    my @criteria;
+
+    for my $i ( 0 .. $#ARGV ) {
+        my $snippet = $ARGV[$i];
+        $snippet =~ s/^\s+//;
+
+        # args starting with a backslash or which are a bracketed
+        # espression are interpreted as pattern matches
+        if ($snippet =~ m{ ^ \\ | ^ \[ .* \] $ }x) {
+            $snippet = "/$snippet/";
+        }
+
+        my $test_compile  = deQ <<'START_TEST';
+            |Q|    use warnings qw[FATAL all];
+            |Q|    my $ignore  =
+START_TEST
+           $test_compile .= deQQ(<<"END_TEST");
+            |QQ|                  sub { $snippet };
+            |QQ|
+            |QQ|    # so eval returns true
+            |QQ|    1;
+            |QQ|
+END_TEST
+
+        # debug("test compile:\n$test_compile");
+
+        eval($test_compile) ||
+            die "$0: invalid criterion in '$snippet': $@\n";
+
+        $criteria[$i] = "do { $snippet }";
+    }
+
+    my $real_code  = deQ(<<'START_CODE') . "\t";
+            |Q|    use warnings;
+            |Q|    #use warnings qw[FATAL all];
+            |Q|    #no warnings qw[deprecated];
+            |Q|
+            |Q|    sub filter {
+            |Q|
+            |Q|	        debug(sprintf("testing code point %X", ord()));
+            |Q|
+            |Q|		my $result = 
+            |Q|
+START_CODE
+
+       $real_code .= join("\n     &&\n\t" => @criteria)
+                  .  deQ(<<'END_CODE');
+            |Q|
+            |Q|	    ;
+            |Q|
+            |Q|	        debug("result of " . join(" && ",@criteria) . " is $result");
+            |Q|	        return $result;
+            |Q|    }
+            |Q|
+            |Q|    # so eval returns true
+            |Q|    1;
+END_CODE
+
+    debug("CRITERIA are\n$real_code");
+    eval($real_code) || die;
+}
+
+sub run_filter() {
+
+    my $first_codepoint = 0x00_0000;
+    my $last_codepoint  = 0x10_FFFF;
+
+    unless ($Opt{astral} || $Opt{smp}) {
+        $last_codepoint = 0x00_FFFF;
+    }
+
+    if ($Opt{bmp}) {
+        $first_codepoint = 0x00_0000;
+        $last_codepoint  = 0x00_FFFF;
+    }
+
+    if ($Opt{smp}) {
+        $first_codepoint = 0x01_0000 unless $Opt{bmp};
+        $last_codepoint  = 0x01_FFFF;
+    }
+
+    if ($Opt{astral}) {
+        $last_codepoint  = 0x10_FFFF;
+    }
+
+    my $hex_width = length(sprintf("%x", $last_codepoint));
+    my $dec_width = length(sprintf("%d", $last_codepoint));
+
+    --$hex_width if $last_codepoint == 0x10_FFFF;
+
+    debug(sprintf("checking codepoints %0${hex_width}X .. %0${hex_width}X",
+                    $first_codepoint, $last_codepoint));
+
+CODEPOINT:
+    for my $codepoint ( $first_codepoint .. $last_codepoint ) {
+
+        # gaggy UTF-16 surrogates are invalid UTF-8 code points
+        next if $codepoint >= 0xD800 && $codepoint <= 0xDFFF;
+
+        # from utf8.c in perl src; must avoid fatals in 5.10
+        next if $codepoint >= 0xFDD0 && $codepoint <= 0xFDEF;
+
+        next if 0xFFFE == ($codepoint & 0xFFFE); # both FFFE and FFFF
+
+        # debug("testing codepoint $codepoint");
+
+        # see "Unicode non-character %s is illegal for interchange" in perldiag(1)
+        $_ = do { no warnings "utf8"; chr($codepoint) };
+
+        # fixes "the Unicode bug"
+        unless (utf8::is_utf8($_)) {
+            $_ = decode("iso-8859-1", $_);
+        }
+
+	unless ($Opt{unnamed}) {
+	    # won't find string names for any of these, so don't bother printing
+	    next if m{ \p{Unassigned}           }x;
+	    next if m{ \p{PrivateUse}           }x;
+	    next if m{ \p{Han}                  }x;
+	    next if m{ \p{InHangulSyllables}    }x;
+	}
+
+        next unless &filter;
+
+	$Shown_Count++;
+
+	$CI = charinfo(ord);
+
+        if (/[\pC\pZ]/) {
+            display " ---- ";
+        } else {
+	    # display "\N{LEFT-TO-RIGHT OVERRIDE}" ;# if /[\p{BC=R}\p{BC=AL}\p{BC=AN}\p{BC=ON}]/;
+	    # display " " if /[\p{BC=R}\p{BC=AL}\p{BC=AN}]/;
+	    display " ";
+	    display "\N{DOTTED CIRCLE}" if /\p{BC=NSM}/;
+            # display " \N{LEFT-TO-RIGHT MARK}$_\N{LEFT-TO-RIGHT MARK} ";
+            display "$_ ";
+	    # display " " unless /[\p{BC=R}\p{BC=AL}\p{BC=AN}]/;
+	    display " " unless /[\p{EA=F}\p{EA=W}]/;
+        }
+
+
+        display sprintf "%${dec_width}d %0${hex_width}X ", ($codepoint) x 2
+	    if $Opt{decimal};
+
+        display sprintf "U+%0${hex_width}X ", $codepoint;
+
+	if ($Opt{category}) {
+	    display sprintf("GC=%2s ", $CI->{category});
+	} 
+
+	if ($Opt{casefold}) {
+	    display sprintf("CF=%1s ", CF());
+	} 
+
+	if ($Opt{bidi}) {
+	    display sprintf("BC=%-3s ", $CI->{bidi});
+	} 
+
+	if ($Opt{numeric}) {
+	    display sprintf("NV=%-4s ", $CI->{numeric});
+	} 
+
+	if ($Opt{block}) {
+	    display sprintf("BLK=%-22s ", underscore($CI->{block}));
+	} 
+
+	if ($Opt{script}) {
+	    display sprintf("SC=%-12s ", titlecase($CI->{script}));
+	} 
+
+	if ($Opt{combining}) {
+	    display sprintf("CC=%-3s ", $CI->{combining});
+	} 
+
+        display sprintf "%s\n", charnames::viacode($codepoint) || "<unnamed codepoint>";
+    }
+
+}
+
+sub underscore {
+    local $_ = shift();
+    y/ /_/;
+    return $_;
+} 
+
+sub titlecase {
+    local $_ = shift();
+    s/[-_]\K(\p{Ll})/\u$1/g;
+    return $_;
+} 
+
+
+sub display {
+    ARGCOUNT() unless @_ == 1;
+
+    my $string = $_[0];
+
+    state $begun_pager;
+    start_pager() unless $begun_pager++;
+
+    print $string;
+
+}
+
+sub am_running_perldb {
+    no warnings "once";
+    return keys(%DB::sub) > 0;
+}
+
+sub locate_program {
+    ARGCOUNT() unless @_ == 1;
+
+    my $program = $_[0];
+
+    return unless defined $program
+               && length  $program;
+
+    if (File::Spec->file_name_is_absolute($program)) {
+        return is_runnable($program);
+    }
+
+    my @path_dirs = File::Spec->path();
+
+    for my $dir (@path_dirs) {
+        my $pathname = File::Spec->catfile($dir, $program);
+        my $runpath;
+        return $runpath if $runpath = is_runnable($pathname);
+    }
+
+    return;
+}
+
+
+sub is_runnable {
+    ARGCOUNT() unless @_ == 1;
+    my $fullpath = $_[0];
+
+    if (-x $fullpath && ! -d _) {
+        return $fullpath;
+    }
+    elsif (stupid_evil_and_wrong()  &&  $fullpath !~ /\.exe\z/i) {
+        return is_runnable("$fullpath.exe")
+    }
+    else {
+        return ();
+    }
+
+    NOT_REACHED();
+}
+
+sub stupid_evil_and_wrong {
+    return lc $^O ~~ [ qw<dos os2 netware symbian mswin32> ];
+}
+
+sub panic {
+    confess "$0: INTERNAL ERROR: @_";
+}
+
+sub NOT_REACHED {
+    panic("NOT REACHED");
+}
+
+sub ARGCOUNT {
+    panic("wrong arguments to function");
+}
+
+sub dequeue($$) {
+    my($leader, $body) = @_;
+    $body =~ s/^\s*\Q$leader\E ?//gm;
+    return $body;
+}
+
+sub deQ($) {
+    my $text = $_[0];
+    return dequeue q<|Q|>,  $text;
+}
+
+sub deQQ($) {
+    my $text = $_[0];
+    return dequeue qq<|QQ|>, $text;
+}
+
+
+sub start_pager {
+    ARGCOUNT() unless @_ == 0;
+
+    return if am_running_perldb();
+
+    return if $Opt{nopager};
+
+    return unless -t STDOUT;
+
+    my $his_pager  =  locate_program($ENV{PAGER})
+                   || locate_program("less")
+                   || locate_program("more")
+                   || locate_program("type")
+                  ;
+
+    return unless $his_pager;
+
+    my $am_less = ($his_pager =~ /\bless\b/i);
+
+    local $ENV{LESSCHARSET} = "utf-8" if $am_less;
+
+    my @pager_args = ();
+    push (@pager_args, "-r") if $am_less;
+    open(STDOUT, "|- :utf8", $his_pager, @pager_args);
+}
+
+sub fork_pager {
+    if (-t STDOUT) {
+
+    } 
+} 
+
+
+################################################################
+################################################################
+################################################################
+
+__END__
+
+=encoding utf8
+
+=head1 NAME
+
+unichars - list characters for one or more properties
+
+=head1 SYNOPSIS
+
+B<unichars> [I<options>] I<criterion> ...
+
+Each criterion is either a square-bracketed character class, a regex
+starting with a backslash, or an arbitrary Perl expression.  See the
+EXAMPLES section below.
+
+OPTIONS:
+
+ Selection Options:
+
+    --bmp           include the Basic Multilingual Plane (plane 0) [DEFAULT]
+    --smp           include the Supplementary Multilingual Plane (plane 1)
+    --astral    -a  include planes above the BMP (planes 1-15)
+    --unnamed   -u  include various unnamed characters (see DESCRIPTION)
+    --locale    -l  specify the locale used for UCA functions
+
+ Display Options:
+
+    --category  -c  include the general category (GC=) 
+    --script    -s  include the script name (SC=) 
+    --block     -b  include the block name (BLK=) 
+    --bidi      -B  include the bidi class (BC=) 
+    --combining -C  include the canonical combining class (CCC=)
+    --numeric   -n  include the numeric value (NV=) 
+    --casefold  -f  include the casefold status
+    --decimal   -d  include the decimal representation of the code point
+
+ Miscellaneous Options:
+
+    --version   -v  print version information and exit
+    --help      -h  this message
+    --man       -m  full manpage
+    --debug     -d  show debugging of criteria and examined code point span
+
+ Special Functions:
+
+     $_    is the current code point
+     ord   is the current code point's ordinal
+
+     NAME is charname::viacode(ord)
+     NUM is Unicode::UCD::num(ord), not code point number
+     CF is casefold->{status}
+     NFD, NFC, NFKD, NFKC, FCD, FCC  (normalization)
+     UCA, UCA1, UCA2, UCA3, UCA4 (binary sort keys)
+
+     Singleton, Exclusion, NonStDecomp, Comp_Ex 
+     checkNFD, checkNFC, checkNFKD, checkNFKC, checkFCD, checkFCC 
+     NFD_NO, NFC_NO, NFC_MAYBE, NFKD_NO, NFKC_NO, NFKC_MAYBE 
+
+=head1 DESCRIPTION
+
+The I<unichars> program reports which characters match all selection criteria
+I<and>ed together.
+
+A criterion beginning with a square bracket or a backslash is assumed to be
+a regular expression.  Anything else is a Perl expression such as you might
+pass to the Perl C<grep> function.  The C<$_> variable is set to each
+successive Unicode character, and if all criteria match, that character is
+displayed.
+
+The numeric code point is therefore accessible as C<ord>.
+
+The special token C<NAME> is set to the full name of the current code point.
+Also, the tokens C<NFD>, C<NFKD>, C<NFC>, and C<NFKC> are set to the
+corresponding normalization form.
+
+By default only plane 0, the Basic Multilingual Plane, is examined.
+For plane 1, the Supplementary Multilingual Plane, use B<--smp>.
+To examine either, specify both B<--bmp> and B<--smp> options, or B<-bs>.
+To include I<all> valid code points, use the B<-a> or B<--astral> option.
+
+Unless the B<--unnamed> option is given, characters with any of the
+properties Unassigned, PrivateUse, Han, or InHangulSyllables will be
+excluded.
+
+=head1 EXAMPLES
+
+Could all non-ASCII digits:
+
+     $ unichars -a '\d' '\P{ASCII}' | wc -l
+     401
+
+Find all line terminators:
+
+    $ unichars '\R'
+     --       10  0000A  LINE FEED (LF)
+     --       11  0000B  LINE TABULATION
+     --       12  0000C  FORM FEED (FF)
+     --       13  0000D  CARRIAGE RETURN (CR)
+     --      133  00085  NEXT LINE (NEL)
+     --     8232  02028  LINE SEPARATOR
+     --     8233  02029  PARAGRAPH SEPARATOR
+
+Find what is not C<\s> but is C<[\h\v]>:
+
+    $ unichars '\S' '[\h\v]'
+     --       11  0000B  LINE TABULATION
+
+Count how many code points in the Basic Multilingual Plane
+are I<not> marks but I<are> diacritics:
+
+    $ unichars '\PM' '\p{Diacritic}' | wc -l
+         209
+
+Count how many code points in the Basic Multilingual Plane
+I<are> marks but are I<not> diacritics:
+
+    $ unichars '\pM' '\P{Diacritic}' | wc -l
+         750
+
+Find all code points that are Letters, are in the Greek script,
+have differing canonical and compatibility decompositions, and
+whose name contains "SYMBOL":
+
+    $ unichars -a '\pL' '\p{Greek}' 'NFD ne NFKD' 'NAME =~ /SYMBOL/'
+     ϐ       976  003D0  GREEK BETA SYMBOL
+     ϑ       977  003D1  GREEK THETA SYMBOL
+     ϒ       978  003D2  GREEK UPSILON WITH HOOK SYMBOL
+     ϓ       979  003D3  GREEK UPSILON WITH ACUTE AND HOOK SYMBOL
+     ϔ       980  003D4  GREEK UPSILON WITH DIAERESIS AND HOOK SYMBOL
+     ϕ       981  003D5  GREEK PHI SYMBOL
+     ϖ       982  003D6  GREEK PI SYMBOL
+     ϰ      1008  003F0  GREEK KAPPA SYMBOL
+     ϱ      1009  003F1  GREEK RHO SYMBOL
+     ϲ      1010  003F2  GREEK LUNATE SIGMA SYMBOL
+     ϴ      1012  003F4  GREEK CAPITAL THETA SYMBOL
+     ϵ      1013  003F5  GREEK LUNATE EPSILON SYMBOL
+     Ϲ      1017  003F9  GREEK CAPITAL LUNATE SIGMA SYMBOL
+
+Find all numeric nondigits in the Latin script (within the BMP):
+
+    $ unichars '\pN' '\D' '\p{Latin}'
+     Ⅰ      8544  02160  ROMAN NUMERAL ONE
+     Ⅱ      8545  02161  ROMAN NUMERAL TWO
+     Ⅲ      8546  02162  ROMAN NUMERAL THREE
+     Ⅳ      8547  02163  ROMAN NUMERAL FOUR
+     Ⅴ      8548  02164  ROMAN NUMERAL FIVE
+     Ⅵ      8549  02165  ROMAN NUMERAL SIX
+     Ⅶ      8550  02166  ROMAN NUMERAL SEVEN
+     Ⅷ      8551  02167  ROMAN NUMERAL EIGHT
+     (etc)
+
+Find the first three alphanumunderish code points with no assigned name:
+
+    $ unichars -au '\w' '!length NAME' | head -3
+     㐀   13312 003400 <unnamed codepoint>
+     㐁   13313 003401 <unnamed codepoint>
+     㐂   13314 003402 <unnamed codepoint>
+
+Count the combining characters in the Suuplemental Multilingual Plane:
+
+    $ unichars -s '\pM' | wc -l
+	  61
+
+=head1 ENVIRONMENT
+
+If your environment smells like it's in a Unicode encoding,
+program arguments will be in UTF-8.
+
+=head1 BUGS
+
+The B<--man> option does not correctly process the page for UTF-8, because
+it does not pass the necessary B<--utf8> option to L<pod2man>.
+
+=head1 SEE ALSO
+
+L<uniprops>,
+L<uninames>,
+L<perluniprops>,
+L<perlunicode>,
+L<perlrecharclass>,
+L<perlre>
+
+=head1 AUTHOR
+
+Tom Christiansen <I<tchrist@perl.com>>
+
+=head1 COPYRIGHT AND LICENCE
+
+Copyright 2010 Tom Christiansen.
+
+This program is free software; you may redistribute it and/or modify it
+under the same terms as Perl itself.
