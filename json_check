@@ -1,0 +1,27 @@
+#!/usr/bin/env perl
+# PODNAME: check_json.pl
+use 5.010;
+
+use JSON::XS;
+use Data::Dumper;
+
+{
+  package Data::Dumper;
+  no strict 'vars';
+  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
+  $Quotekeys = 0;
+}
+
+my $json = JSON::XS->new->utf8;
+
+foreach my $file ( @ARGV ) {
+    say "Processing $file";
+    eval {
+        my $hash = $json->decode(
+            do { local ( @ARGV, $/ ) = $file; <> }
+        );
+        print Dumper( $hash );
+    };
+
+    if ( $@ ) { say "\terror in $file: $@" }
+}
