@@ -1,0 +1,9 @@
+#!/bin/sh
+
+ in="$1"
+out=$( echo "$in" | perl -pe 's{[.](?:mp4|flv)$}{.flac}' )
+
+printf "Original file is \e[1m%s\e[m\n"  $in
+printf "FLAC     file is \e[33m%s\e[m\n" $out
+
+ffmpeg -i "$in" -f flac "$out" && printf "\e[34;1mDone!\e[m\n"
