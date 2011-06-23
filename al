@@ -5,7 +5,7 @@ my $links_file = "$ENV{HOME}/usr/share/doc/links";
 die( &usage ) if @ARGV <= 1;
 
 my($link, $tag) = @ARGV;
-if($link !~ m{^http:}) {
+if($link !~ m{^https?:}) {
   die( &usage );
 }
 
@@ -17,4 +17,3 @@ close $fh;
 sub usage {
   return "Usage: $0 link [description]\n";
 }
-
