@@ -1,0 +1,57 @@
+#!/usr/bin/perl
+# mpd_playlist_fix
+# remove invalid entries from m3u playlists
+
+use Audio::MPD;
+use Tie::File;
+use File::LsColor qw(ls_color);
+use Term::ExtendedColor qw(:attributes);
+
+my $mpd = Audio::MPD->new(
+  host => $ENV{MPD_HOST},
+  port => $ENV{MPD_PORT},
+);
+
+my $base_dir     = "/mnt/Music_1";
+my $playlist_dir = "$base_dir/Playlists";
+
+my @playlists = map {
+  $_ = "$playlist_dir/$_.m3u"
+} $mpd->collection->all_playlists;
+
+edit_playlist( @playlists );
+
+sub edit_playlist {
+  my @list = @_;
+
+  for my $l(@list) {
+
+    tie(@content, 'Tie::File', $l) or die("Cant tie: $!\n");
+
+    for my $file(@content) {
+
+      if(!-f "$base_dir/$file") {
+        printf("%25s:%s %s\n",
+          basename($l),
+          fg(40, bold(sprintf("%02d", $.))),
+          ls_color(basename($file))
+        );
+        print "Remove? [y/N] ";
+        chomp(my $answer = <STDIN>);
+        if(lc($answer) ne 'y') {
+          next;
+        }
+        else {
+          # XXX
+          delete($content[$.]);
+        }
+      }
+    }
+  }
+}
+
+sub basename {
+  my $file = shift;
+  $file =~ s{.*/(.+)$}{$1};
+  return $file;
+}
