@@ -27,7 +27,7 @@ sub osd {
   my ($msg) = @_;
   my $color = '\#a8ff00';
   # yeah, yeah. I'll fix
-  system("echo '$msg' | osd_cat -A right -p bottom -c $color -s 3 ");
+  system("echo '$msg' | osd_cat -A right -p bottom -c $color -s 5 -d 0 ");
 }
 
 
