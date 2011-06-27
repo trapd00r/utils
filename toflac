@@ -1,7 +1,37 @@
 #!/usr/bin/perl
 
-my $dir = shift // '.';
-for(glob("$dir/*.mp4")) {
-  (my $fname = $_) =~ s/mp4/flac/;
-  system('ffmpeg', '-i', $_, $fname);
+my $dir = shift;;
+
+if( (!-d $dir) && (-f $dir) ) {
+  flac_it( $dir );
+}
+else {
+  $dir = '.';
+  print "Searching for *.{mp4,flv}\n";
+  flac_it( (glob("$dir/*.mp4"), glob("$dir/*.flv")) );
+}
+
+sub flac_it {
+  my @files = @_;
+  die("No files!\n") if !@files;
+
+  for my $original(@files) {
+    my $file_name = $original;
+
+    my $i = 0;
+    my @chars = split(//, $file_name);
+    for my $c(@chars) {
+      if($chars[$i] =~ m/[A-ZÅÄÖ]/) {
+        $chars[$i] = "_$chars[$i]" unless $i == 2;
+      }
+      $i++;
+    }
+    $file_name = join('', @chars);
+
+    $file_name =~ s/[.](?:mp4|flv)$//i;
+    $file_name .= '.flac';
+
+    print "Original: $original\nNew: $file_name\n";
+    system('ffmpeg', '-i', $original, $file_name);
+  }
 }
