@@ -1,0 +1,22 @@
+#!/usr/bin/perl
+use strict;
+use Cwd qw(abs_path);
+
+my $mounted = { };
+
+open(my $popen, '-|', 'mount') or die($!);
+
+while(<$popen>) {
+  my($dev, $mp) = m{^(.+) on ([\w+/]+)};
+
+  $mounted->{ $mp } = $dev;
+}
+
+my $file = shift or die("File?\n");
+
+for my $m(keys(%{ $mounted })) {
+  if( abs_path($file) =~ m{($m)} and $m ne '/') { # FIXME
+    print "$file is on $m ( $mounted->{$m} )\n";
+    last;
+  }
+}
