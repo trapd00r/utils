@@ -1,0 +1,54 @@
+#!/usr/bin/perl
+# given a root directory, remove empty directories or directories one level deep
+# with only empty files in them
+#
+# rmpty /mnt/Music_1/.new/
+
+use strict;
+use warnings FATAL => 'all';
+use File::Find::Rule;
+use Cwd;
+use File::Path qw(remove_tree);
+use File::LsColor qw(ls_color);
+
+
+my $dir = shift // './';
+
+my @subdirs = grep{! /\A[.][.]?\z/ } File::Find::Rule->directory->in( $dir );
+
+printf("Found \e[33m%d\e[m subdirs in %s\n",
+  scalar(@subdirs), ls_color($dir),
+);
+
+
+my %empty = ();
+for my $d(@subdirs) {
+  if(!chdir($d)) {
+    warn("skipping $d\n");
+    next;
+  }
+  my $sum = 0;
+  for my $file(File::Find::Rule->file->in($d)) {
+    $sum += -s $file;
+  }
+
+  $empty{$d} = $sum if $sum < 2048;
+}
+
+for my $path(sort { $empty{$b} <=> $empty{$a} } keys(%empty)) {
+  printf("Remove %s [y/N] ", ls_color($path));
+  chomp(my $choice = <>);
+  if( lc($choice) ne 'y' ) {
+    next;
+  }
+  else {
+    remove_tree($path, {
+        result => \my $progress,
+      },
+    );
+    for(@{ $progress }) {
+      printf("\e[1m>\e[m %s\n", ls_color( $_ ));
+    }
+    print "-\n";
+  }
+}
