@@ -1,0 +1,40 @@
+#!/usr/bin/perl
+# scp files to the phone and place it where I want it
+use strict;
+
+my %target = (
+  '(?:mp3|flac|ogg)' => "MyDocs/.sounds",
+  '(?:png|jpe?g)'    => "MyDocs/.images",
+  '(?:p[lm])'        => "MyDocs/Devel",
+);
+
+# default target if no rule applies
+my $remote_target = '.';
+
+my $port = 19216;
+
+if(!@ARGV) {
+  while(my $file = <>) {
+    chomp $file;
+    get_target($file);
+    scp($file);
+  }
+}
+else {
+  get_target($_), scp($_) for @ARGV;
+}
+
+sub scp {
+  my $file = shift;
+  system('scp', '-r',  '-P', $port, $file, "user\@192.168.1.112:$remote_target");
+}
+
+sub get_target {
+  my $file = shift;
+
+  for my $rule(keys(%target)) {
+    if($file =~ m/$rule/i) {
+      $remote_target = $target{$rule};
+    }
+  }
+}
