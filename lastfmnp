@@ -1,0 +1,26 @@
+#!/usr/bin/perl
+use strict;
+use XML::Simple;
+use LWP::Simple;
+use utf8;
+use encoding 'utf8';
+use open qw(:std :utf8);
+
+
+my $user = shift // 'betbot';
+
+my $url = "http://ws.audioscrobbler.com/1.0/user/$user/recenttracks.rss";
+
+lfm();
+
+sub lfm {
+  my $xml = XML::Simple->new;
+  my $content = get($url);
+
+  my $rss = $xml->XMLin($content);
+  my $title = $rss->{channel}->{item}[0]->{title};
+
+  my $break = hex 'e2';
+  my @trackinfo = split($break,$title);
+  print "lastfm: $trackinfo[0] $trackinfo[1]\n";
+}
