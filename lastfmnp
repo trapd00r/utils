@@ -3,13 +3,11 @@ use strict;
 use XML::Simple;
 use LWP::Simple;
 use utf8;
-use encoding 'utf8';
 use open qw(:std :utf8);
 
 
 my $user = shift // 'betbot';
-
-my $url = "http://ws.audioscrobbler.com/1.0/user/$user/recenttracks.rss";
+my $url  = "http://ws.audioscrobbler.com/1.0/user/$user/recenttracks.rss";
 
 lfm();
 
@@ -18,9 +16,11 @@ sub lfm {
   my $content = get($url);
 
   my $rss = $xml->XMLin($content);
-  my $title = $rss->{channel}->{item}[0]->{title};
 
-  my $break = hex 'e2';
-  my @trackinfo = split($break,$title);
-  print "lastfm: $trackinfo[0] $trackinfo[1]\n";
+  my $html_title = $rss->{channel}->{item}[0]->{title};
+
+  my($artist, $song) = ('unknown') x 2;
+  ($artist, $song) = split(/\x{2013}/, $html_title);
+
+  printf("lastfm: $artist %s\n", ( $song) ? "- $song" : "no record for $user");
 }
