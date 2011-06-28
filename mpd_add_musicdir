@@ -1,0 +1,11 @@
+#!/usr/bin/perl
+
+my $where = $ENV{MPD_MUSIC_DIR} // '/mnt/Music_1';
+
+$where =~ s{/+\z}{};
+
+while(my $f = <>) {
+  chomp $f;
+  $f =~ s{^}{$where/};
+  print "$f\n";
+}
