@@ -1,0 +1,4 @@
+#!/bin/sh
+
+mpc --format "[[%artist% [%album%] %title%]]|%file%" | head -1
+
