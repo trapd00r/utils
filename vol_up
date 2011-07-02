@@ -1,0 +1,3 @@
+#!/bin/sh
+
+ossmix vmix0.pcm8 -- +2
