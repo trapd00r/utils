@@ -1,4 +1,7 @@
 #!/bin/sh
 
-mpc --format "[[%artist% [%album%] %title%]]|%file%" | head -1
-
+stumpish echo $(
+  mpc --host $MPD_HOST \
+      --format "%file%" |
+      head -1
+)
