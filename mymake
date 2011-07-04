@@ -11,10 +11,10 @@ use File::LsColor qw(ls_color);
 use File::Find::Rule;
 
 
-my $remote_host   = '192.168.1.100';
+my $remote_host   = '192.168.1.128';
 my $remote_port   = '19216';
 my $remote_user   = 'scp1';
-my $remote_dest   = 'http/japh.se/perl/devel';
+my $remote_dest   = 'http/japh.se/devel';
 
 my @pm = File::Find::Rule->file()
                          ->name('*.PL')
@@ -63,7 +63,7 @@ sub pass_on {
     system("/usr/bin/make", 'dist');
     for(glob('*.tar.gz')) {
       print "\n>> " . fg('orange3', fg('bold', $_)) . " <<\n\n";
-      system("ssh -p $remote_port $remote_user\@$remote_host 'mkdir -p http/japh.se/perl/devel/$project'")
+      system("ssh -p $remote_port $remote_user\@$remote_host 'mkdir -p http/japh.se/devel/$project'")
         == 0 or die($!);
       $remote_dest .= "/$project";
 
@@ -74,10 +74,10 @@ sub pass_on {
       scp($remote_host, $remote_port, $remote_dest, $_);
       print "\n\nContent in @{[fg('blue4', bold($remote_dest))]}:\n\n";
 
-      system("ssh -p $remote_port $remote_user\@$remote_host '/bin/ls -1 http/japh.se/perl/devel/$project'");
+      system("ssh -p $remote_port $remote_user\@$remote_host '/bin/ls -1 http/japh.se/devel/$project'");
 
       print "\n\n";
-      print "http://perl.japh.se/devel/$project\n";
+      print "http://devel.japh.se/$project\n";
       make_path("$ENV{HOME}/dev/Distributions");
       move($_, "$ENV{HOME}/dev/Distributions")  or die("move $_: $!");
     }
