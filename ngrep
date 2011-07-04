@@ -1,0 +1,28 @@
+#!/usr/bin/perl
+# negative grep
+use strict;
+use warnings FATAL => 'all';
+
+use utf8;
+use open qw(:utf8 :std);
+
+my ($pattern, $file) = @ARGV;
+
+if(!defined($pattern)) {
+  warn "Usage: ngrep PATTERN [FILE]...\n";
+  exit;
+}
+
+my $fh;
+if(!defined($file) or ($file eq '-')) {
+  $fh = *STDIN;
+}
+else {
+  open($fh, '<', $file) or die("Cant open $file: $!\n");
+}
+
+while(my $line = <$fh>) {
+  if($line !~ /$pattern/) {
+    print $line;
+  }
+}
