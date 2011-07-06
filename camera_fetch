@@ -1,0 +1,22 @@
+#!/bin/sh
+
+camera=$(                   \
+  ls -Al /dev/disk/by-label |
+    grep CANON_DC           |
+    awk '{print $11}'       \
+)
+camera="/dev/$( echo $camera | perl -pe 's/[^a-z0-9]//g')"
+target="/tmp/scp1/_camera-$(date +%Y%m%d)"
+mount_point="/tmp/scp1/camera"
+
+mkdir -p $mount_point
+mkdir -p $target
+
+umount $camera &>/dev/null;
+mount $camera $mount_point
+
+cp -v $mount_point/DCIM/100CANON/*.JPG -t $target
+
+cd $target 
+exifdel *.JPG
+rm *_original
