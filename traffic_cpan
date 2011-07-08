@@ -1,2 +1,2 @@
 #!/bin/sh
-ssh -p 19216 scp1@192.168.1.100 'tail -f /var/log/lighttpd/cpan.japh.se/access.log' |\logstalgia -1680x1050 - 
+ssh -p 19216 scp1@192.168.1.128 'tail -f /var/log/lighttpd/japh.se/access.log' |\logstalgia -1680x1050 - 

@@ -7,7 +7,7 @@ use Getopt::Long;
 use Pod::Usage;
 
 my $base     = 'http://i.japh.se';
-my $ssh_host = '192.168.1.100';
+my $ssh_host = '192.168.1.128';
 my $ssh_user = 'scp1';
 my $ssh_port = 19216;
 
@@ -32,7 +32,7 @@ sub shot {
 
   system(
     'ssh', '-p', $ssh_port,
-    "$ssh_user\@$ssh_host", "mkdir -p http/japh.se/$dname"
+    "$ssh_user\@$ssh_host", "mkdir -p http/japh.se/scrots/$dname"
   ) == 0 or(die("ssh failed: $!"));
 
   # dupe STDOUT so we can reopen it when we wanna be loud
@@ -41,8 +41,11 @@ sub shot {
 
   system(
     'scp', '-P', $ssh_port,
-    "$fname.png", "$fname-thumb.png", "$ssh_user\@$ssh_host:http/japh.se/$dname"
+    "$fname.png",
+    "$fname-thumb.png",
+    "$ssh_user\@$ssh_host:http/japh.se/scrots/$dname",
   ) == 0 or(die("scp failed: $!"));
+
   unlink("$fname.png") or print "$fname.png: $!" and exit(-1);
   unlink("$fname-thumb.png") or print "$fname-thumb.png: $!" and exit(-1);
 

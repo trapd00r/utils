@@ -3,8 +3,8 @@
 use strict;
 use File::Copy;
 
-my $int_host = '192.168.1.100';
-my $ext_host = 'http://p.japh.se/raw';
+my $int_host = '192.168.1.128';
+my $ext_host = 'http://p.japh.se/';
 
 
 my %ft = (
@@ -34,7 +34,7 @@ for(@ARGV) {
 sub _scp {
   my ($what, $dest) = @_;
   system('scp',
-    ('-P', 19216, $what, "scp1\@192.168.1.100:http/japh.se/p/raw/$dest")
+    ('-P', 19216, $what, "scp1\@192.168.1.100:http/japh.se/p/$dest")
   );
 }
 

@@ -1,5 +1,5 @@
 #!/bin/sh
 FNAME=$(fxr shot|awk '{print $3}')
-scp -P 19216 "$FNAME" scp1@192.168.1.100:http/japh.se/scrots/fxr
+scp -P 19216 "$FNAME" scp1@laleh:http/japh.se/scrots/fxr
 echo "http://i.japh.se/fxr/$FNAME"
 echo "http://i.japh.se/fxr/$FNAME"|xclip

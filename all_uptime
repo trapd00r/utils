@@ -1,7 +1,7 @@
 printf "   \e[1mshiva\e[0m: "
 uptime
 printf "    \e[1mdvdc\e[0m: "
-ssh scp1@192.168.1.100 -p 19216 uptime
+ssh scp1@192.168.1.128 -p 19216 uptime
 printf "   \e[1mindia\e[0m: "
 ssh scp1@192.168.1.102 -p 19216 uptime
 printf "    \e[1mn900\e[0m: "

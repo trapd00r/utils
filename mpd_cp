@@ -8,9 +8,9 @@ use Pod::Usage;
 
 #FIXME throw this crap in a config file
 my $base       = '/mnt/Music_1';
-my $target     = "$ENV{HOME}/ToTransfer";
+my $target     = "$ENV{HOME}/toburn";
 my $user       = 'scp1';
-my $host       = '192.168.1.100';
+my $host       = '192.168.1.128';
 my $port       = 19216;
 my $scp        = '/usr/bin/scp';
 

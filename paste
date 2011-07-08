@@ -2,7 +2,7 @@
 use strict;
 use File::Copy;
 
-my $int_host = '192.168.1.100';
+my $int_host = '192.168.1.128';
 my $ext_host = 'http://p.japh.se';
 
 my @html;
@@ -13,7 +13,7 @@ for(@ARGV) {
 }
 
 for(@html) {
-  system("scp -P 19216 $_ $int_host:/home/scp1/http/japh.se/p/");
+  system("scp -P 19216 $_ $int_host:/home/scp1/http/japh.se/paste/");
   my $abs_url = "$ext_host/$_";
   print "$abs_url\n";
   system("echo $abs_url|xclip && rm -v $_");
@@ -22,6 +22,5 @@ for(@html) {
 sub vimpaste {
   for(@_) {
     system("vim \"$_\" -c 'set nonumber' -c TOhtml -c :w :q! -c :q!");
-    #system("vim \"$_\" -c TOhtml -c :w :q! -c :q!");
   }
 }

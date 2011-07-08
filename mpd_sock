@@ -1,2 +1,2 @@
 #!/bin/sh
-socat - tcp-connect:192.168.1.100:6600
+socat - tcp-connect:192.168.1.128:6600

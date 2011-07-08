@@ -11,6 +11,6 @@ my $file = "$basedir/$current";
 my ($basename) = $current =~ m;.+/(.+)$;;
 
 
-system("scp -P 19216 '$file' scp1\@192.168.1.100:http/psy/dump");
-system("echo http://psy.trapd00r.se/dump/$basename");
-system("echo http://psy.trapd00r.se/dump/$basename|xclip");
+system("scp -P 19216 '$file' scp1\@192.168.1.128:http/japh.se/pub/");
+system("echo http://l.japh.se/$basename");
+system("echo http://l.japh.se/$basename|xclip");
