@@ -1,3 +1,31 @@
-printf "\e]710;-jmk-neep-medium-r-normal--11-100-75-75-c-60-iso8859-1\007\e]11;#202020\007\e]10;#404040\007" \
-  && /usr/local/bin/ncmpcpp;
-printf "\e]710;-windows-montecarlo-medium-r-normal--11-110-72-72-c-60-microsoft-cp1252\007\e]11;#121212\007\e]10;#e5e5e5\007"
+#!/bin/sh
+
+
+_tmux_it() {
+  tmux -f $HOME/etc/tmux.conf                        \
+    new-session  -d  '/usr/local/bin/ncmpcpp'     \; \
+    split-window -d  -p 1 -l 20 'pimpd2 -sh; zsh' \; \
+  attach
+}
+
+_pre() {
+  pickyfont set '-jmk-neep-medium-r-normal--11-100-75-75-c-60-iso8859-1'        normal
+  pickyfont set '-jmk-neep-bold-r-normal--11-100-75-75-c-60-iso8859-1'          bold
+  pickyfont set '-jmk-neep-medium-r-semicondensed--11-100-75-75-c-50-iso8859-1' italic
+  setty foreground c1dae4
+  setty background 202020
+  setty wrap
+}
+
+_restore() {
+  pickyfont set '-windows-montecarlo-medium-r-normal--11-110-72-72-c-60-microsoft-cp1252' normal
+  pickyfont set '-windows-montecarlo-bold-r-normal--11-110-72-72-c-60-microsoft-cp1252'   bold
+  pickyfont set '-nil-profont-medium-r-normal--10-100-72-72-c-50-iso8859-1'               italic
+  setty foreground e5e5e5
+  setty background 121212
+  setty wrap
+}
+
+_pre && _tmux_it && _restore
+
+# vim: set ft=sh tw=100:
