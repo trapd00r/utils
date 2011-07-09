@@ -5,6 +5,7 @@ _tmux_it() {
   tmux -f $HOME/etc/tmux.conf                        \
     new-session  -d  '/usr/local/bin/ncmpcpp'     \; \
     split-window -d  -p 1 -l 20 'pimpd2 -sh; zsh' \; \
+    selectp -t 1                                  \; \
   attach
 }
 
