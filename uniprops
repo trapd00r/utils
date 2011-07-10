@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl 
+#!/usr/bin/perl 
 
 ######################################################################
 # uniprops - list regex properties of one or more characters
