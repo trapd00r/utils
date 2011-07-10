@@ -9,7 +9,7 @@ use WWW::Mechanize;
 map { $_ = "http://" . $_ unless $_ =~ /http:/ } @ARGV;
 
 my $mpd = Audio::MPD->new(
-  host => '192.168.1.100',
+  host => '192.168.1.128',
   port => 6600,
 );
 

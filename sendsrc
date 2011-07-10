@@ -34,7 +34,7 @@ for(@ARGV) {
 sub _scp {
   my ($what, $dest) = @_;
   system('scp',
-    ('-P', 19216, $what, "scp1\@192.168.1.100:http/japh.se/p/$dest")
+    ('-P', 19216, $what, "scp1\@192.168.1.128:http/japh.se/paste/$dest")
   );
 }
 

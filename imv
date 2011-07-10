@@ -38,7 +38,7 @@ sub watch {
       sleep 2;
       if($event->{name} =~ m/\.torrent$/) {
         print localtime(time) . "\tIN_CREATE\t$event->{name} => $dest\n";
-        system("scp -P 19216 $what/$event->{name} scp1\@192.168.1.100:$dest");
+        system("scp -P 19216 $what/$event->{name} scp1\@192.168.1.128:$dest");
       }
     }
   }

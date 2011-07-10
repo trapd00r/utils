@@ -35,5 +35,5 @@ if(-f $tgz) {
 }
 
 system('tar', 'cvfz', $tgz, $cwd); #== 0 or die($!);
-system('scp', '-P 19216', $tgz, "scp1\@192.168.1.100:http/hacks") == 0 or die($!);
-system("echo http://hacks.trapd00r.se/$tgz && echo http://hacks.trapd00r.se/$tgz|xclip");
+system('scp', '-P 19216', $tgz, "scp1\@192.168.1.128:http/japh.se/devel/") == 0 or die($!);
+system("echo http://devel.japh.se/$tgz && echo http://devel.japh.se/$tgz|xclip");
