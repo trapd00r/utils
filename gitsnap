@@ -1,0 +1,2 @@
+#!/bin/sh
+git cat-file -p $(cat ".git/$(cat .git/HEAD|perl -pe 's{[\S\s]{5}}{}')")
