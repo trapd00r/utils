@@ -1,14 +1,5 @@
 #!/bin/sh
 
-
-_tmux_it() {
-  tmux -f $HOME/etc/tmux.conf                        \
-    new-session  -d  '/usr/local/bin/ncmpcpp'     \; \
-    split-window -d  -p 1 -l 20 'pimpd2 -sh; zsh' \; \
-    selectp -t 1                                  \; \
-  attach
-}
-
 _pre() {
   pickyfont set '-jmk-neep-medium-r-normal--11-100-75-75-c-60-iso8859-1'        normal
   pickyfont set '-jmk-neep-bold-r-normal--11-100-75-75-c-60-iso8859-1'          bold
@@ -27,6 +18,16 @@ _restore() {
   setty wrap
 }
 
-_pre && _tmux_it && _restore
+_tmux_it() {
+  tmux -f $HOME/etc/tmux.conf                        \
+    new-session  -d  '/usr/local/bin/ncmpcpp'     \; \
+    split-window -d  -p 1 -l 20 'pimpd2 -sh; zsh' \; \
+    selectp -t 1                                  \; \
+    split-window -d -h 'zsh'                      \; \
+    attach
+}
+
+_pre && _tmux_it
+_restore
 
 # vim: set ft=sh tw=100:
