@@ -1,6 +1,6 @@
 #!/bin/sh
 
-tmux new-session -d 'iotop -o -d2 -k' \; \
+tmux -f $HOME/etc/tmux.conf new-session -d 'iotop -o -d2 -k' \; \
   split-window -d 'htop'              \; \
   split-window -h -p 20 -d 'atop'     \; \
   attach
