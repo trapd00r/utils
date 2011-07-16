@@ -19,7 +19,7 @@ GetOptions(
   man     => sub { pod2usage(verbose => 3) && exit(0); },
 );
 
-my $dname = 'scrots';
+my $dname = '';
 if(@ARGV) {
   $dname .= "/" . shift(@ARGV);
 }
@@ -32,7 +32,7 @@ sub shot {
 
   system(
     'ssh', '-p', $ssh_port,
-    "$ssh_user\@$ssh_host", "mkdir -p http/japh.se/scrots/$dname"
+    "$ssh_user\@$ssh_host", "mkdir -p http/japh.se/scrots/_full/$dname"
   ) == 0 or(die("ssh failed: $!"));
 
   # dupe STDOUT so we can reopen it when we wanna be loud
@@ -43,7 +43,7 @@ sub shot {
     'scp', '-P', $ssh_port,
     "$fname.png",
     "$fname-thumb.png",
-    "$ssh_user\@$ssh_host:http/japh.se/scrots/$dname",
+    "$ssh_user\@$ssh_host:http/japh.se/scrots/_full/$dname",
   ) == 0 or(die("scp failed: $!"));
 
   unlink("$fname.png") or print "$fname.png: $!" and exit(-1);
