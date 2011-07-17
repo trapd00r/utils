@@ -28,7 +28,9 @@ sub edit_playlist {
 
     tie(@content, 'Tie::File', $l) or die("Cant tie: $!\n");
 
+    my $i = 0;
     for my $file(@content) {
+      next if $file !~ /[\w]/;
 
       if(!-f "$base_dir/$file") {
         printf("%25s:%s %s\n",
@@ -42,12 +44,14 @@ sub edit_playlist {
           next;
         }
         else {
-          # XXX
-          delete($content[$.]);
+          undef $content[$i];
         }
       }
+      $i++;
     }
   }
+  @content = map { s/^\s+$//g } @content;
+  untie(@content);
 }
 
 sub basename {
