@@ -1,0 +1,6 @@
+#!/bin/sh
+
+for f in *.flac; do
+  ffmpeg -i "$f" "$f.mp3"
+  prename 's/[.]flac([.]mp3)$/$1/' *.mp3
+done
