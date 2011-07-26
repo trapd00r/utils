@@ -7,8 +7,8 @@ if( (!-d $dir) && (-f $dir) ) {
 }
 else {
   $dir = '.';
-  print "Searching for *.{mp4,flv}\n";
-  flac_it( (glob("$dir/*.mp4"), glob("$dir/*.flv")) );
+  print "Searching for *.{mp4,flv,webm}\n";
+  flac_it( (glob("$dir/*.mp4"), glob("$dir/*.flv"), glob("$dir/*.webm")) );
 }
 
 sub flac_it {
@@ -28,7 +28,7 @@ sub flac_it {
     }
     $file_name = join('', @chars);
 
-    $file_name =~ s/[.](?:mp4|flv)$//i;
+    $file_name =~ s/[.](?:mp4|flv|webm)$//i;
     $file_name .= '.flac';
 
     print "Original: $original\nNew: $file_name\n";
