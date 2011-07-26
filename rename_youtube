@@ -5,17 +5,17 @@ use strict;
 my $where;
 if(!@ARGV) {
   $where = '.';
-  warn "Operating on ./*.{flv,mp4}\n";
+  warn "Operating on ./*.{flv,mp4,webm}\n";
 }
 else {
   if(! -d ($where = $ARGV[0])) {
-    ($where) = $ARGV[0] =~ m{(/.+)/.*[.](flv|mp4)$}i
+    ($where) = $ARGV[0] =~ m{(/.+)/.*[.](flv|mp4|webm)$}i
   }
 }
-@ARGV = (glob("$where/*.flv"), glob("$where/*.mp4"));
+@ARGV = (glob("$where/*.flv"), glob("$where/*.mp4"), glob("$where/*.webm"));
 die("No files found\n") if !@ARGV;
 
-printf("Do you want to operate on %d files matching *.{flv,mp4} in %s [y/N] ",
+printf("Operate on %d files matching *.{flv,mp4,webm} in %s [y/N] ",
   scalar(@ARGV), $where,
 );
 chomp(my $yes = <STDIN>);
@@ -28,7 +28,7 @@ for my $f(@ARGV) {
   (my $n = $f) =~ s{([A-Z][a-zåäö0-9]*)}{$1_}g;
   $n =~ s/_{2,}/_/g;
   $n =~ s{_+/}{/}g;
-  $n =~ s{_+([.](?:flv|mp4))$}{$1};
+  $n =~ s{_+([.](?:flv|mp4|webm))$}{$1};
   if(!rename($f, $n)) {
     warn("Could not rename($f, $n) - $!\n");
   }
