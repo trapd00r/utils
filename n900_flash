@@ -13,4 +13,4 @@
 rmmod cdc_phonet
 flasher-3.5 -F /mnt/Docs/n900/RX-51_2009SE_10.2010.13-2.VANILLA_PR_EMMC_MR0_ARM.bin  -f
 
-printf "Now run:\n\t%s\n" "rmmod cdc_phonet; flasher-3.5 -F /mnt/Docs/n900/RX-51_2009SE_3.2010.02-8_PR_COMBINED_MR0_ARM.bin -f"
+printf "Remove battery for a moment. Then run:\n\t%s\n" "rmmod cdc_phonet; flasher-3.5 -F /mnt/Docs/n900/RX-51_2009SE_3.2010.02-8_PR_COMBINED_MR0_ARM.bin -f"
