@@ -14,7 +14,7 @@ $books_db ||= "$ENV{HOME}/.oreilly_books.db";
 my %oreilly;
 
 if(
-  !(-f $books_db)
+  !(-e $books_db)
     or
      (("--generate-db") ~~ @ARGV)
       or ("-g"~~@ARGV)
