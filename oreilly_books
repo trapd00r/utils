@@ -4,18 +4,24 @@ use Storable;
 
 use WWW::OReillyMedia::Store;
 
-my $books_db = "$ENV{HOME}/doc/oreilly_books.db";
+my $pattern = shift // '.*';
+
+die("USAGE: $0 [PATTERN] [-?-g(enerate-db)?]\n") if $pattern =~ m/-?-h$/;
+
+my $books_db = $ENV{OREILLY_BOOKS_DATABASE};
+$books_db ||= "$ENV{HOME}/.oreilly_books.db";
 
 my %oreilly;
-if(-f $books_db and !@ARGV) {
-  %oreilly = %{ retrieve($books_db) };
-  for my $p(sort(keys(%oreilly))) {
-    printf("%20.20s  %s\n", $oreilly{$p}, $p);
-  }
-  exit;
-}
 
-else {
+if(
+  !(-f $books_db)
+    or
+     (("--generate-db") ~~ @ARGV)
+      or ("-g"~~@ARGV)
+      or $pattern =~ m/-?-g(enerate-db)?$/
+) {
+  warn "Generating database...\n";
+
   my $store = WWW::OReillyMedia::Store->new;
   my $books = $store->get_all_books;
 
@@ -23,7 +29,16 @@ else {
     $oreilly{ $book->{desc} } = $book->{released};
     printf("%20.20s  %s\n", $book->{released}, $book->{desc});
   }
-  store(\%oreilly, "$ENV{HOME}/doc/oreilly_books.db");
+  my $fh;
+  open($fh, '>', $books_db) and close $fh or die($!);
+  store(\%oreilly, $books_db);
+}
+else {
+  %oreilly = %{ retrieve($books_db) };
+  for my $p(sort(keys(%oreilly))) {
+    printf("%20.20s  %s\n", $oreilly{$p}, $p) if $p =~ m/$pattern/i;
+  }
+  exit;
 }
 
 __END__
