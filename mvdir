@@ -1,0 +1,9 @@
+#!/usr/bin/perl
+
+use strict;
+use File::Copy;
+
+my($what, $where) = @ARGV;
+
+die "not a dir: $what\n" if !-d $what;
+move($what, $where);
