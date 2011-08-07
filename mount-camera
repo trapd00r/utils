@@ -1,0 +1,8 @@
+#!/bin/sh
+
+umount /mnt/camera &> /dev/null
+mount $(
+  file /dev/disk/by-label/CANON_DC                          \
+    | awk '{ sub(/`[.]+\/[.]+\//, "/dev/", $5); print $5 }' \
+    | sed "s/'//"                                           \
+) /mnt/camera && printf "Mounted.\n"
