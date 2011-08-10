@@ -1,32 +1,25 @@
 #!/bin/sh
 
 mkdir -p $HOME/http
-sshfs -p 19216 scp1@laleh:http              $HOME/http
-sshfs -p 19216 scp1@laleh:irclogs           /mnt/irclogs
-sshfs -p 19216 scp1@laleh:/var/log/lighttpd /mnt/httpd
-
-sshfs -p 19216 scp1@laleh:/mnt/Books        /mnt/Books
-
-sshfs -p 19216 scp1@laleh:/mnt/Music_1      /mnt/Music_1
-sshfs -p 19216 scp1@laleh:/mnt/Music_2      /mnt/Music_2
-sshfs -p 19216 scp1@laleh:/mnt/Music_3      /mnt/Music_3
-sshfs -p 19216 scp1@laleh:/mnt/Music_4      /mnt/Music_4
-sshfs -p 19216 scp1@laleh:/mnt/Music_5      /mnt/Music_5
-sshfs -p 19216 scp1@laleh:/mnt/Music_6      /mnt/Music_6
-sshfs -p 19216 scp1@laleh:/mnt/Music_7      /mnt/Music_7
-
-
-sshfs -p 19216 scp1@rambo:/mnt/TV_1         /mnt/TV_1
-sshfs -p 19216 scp1@rambo:/mnt/TV_2         /mnt/TV_1
-sshfs -p 19216 scp1@rambo:/mnt/TV_3         /mnt/TV_1
-sshfs -p 19216 scp1@rambo:/mnt/TV_4         /mnt/TV_1
-
-sshfs -p 19216 scp1@rambo:/mnt/Movies_1     /mnt/Movies_1
-sshfs -p 19216 scp1@rambo:/mnt/Movies_2     /mnt/Movies_2
-sshfs -p 19216 scp1@rambo:/mnt/Movies_3     /mnt/Movies_3
-sshfs -p 19216 scp1@rambo:/mnt/Movies_4     /mnt/Movies_4
-
-sshfs -p 19216 scp1@rambo:/mnt/Mvids        /mnt/Mvids
-
-sshfs -p 19216 scp1@rambo:/mnt/Games_1      /mnt/Games_1
-sshfs -p 19216 scp1@rambo:/mnt/Games_2      /mnt/Games_2
+sshfs -p 19216 -o allow_other scp1@laleh:http              $HOME/http
+sshfs -p 19216 -o allow_other scp1@laleh:irclogs           /mnt/irclogs
+sshfs -p 19216 -o allow_other scp1@laleh:/var/log/lighttpd /mnt/httpd
+sshfs -p 19216 -o allow_other scp1@laleh:/mnt/Books        /mnt/Books
+sshfs -p 19216 -o allow_other scp1@laleh:/mnt/Music_1      /mnt/Music_1
+sshfs -p 19216 -o allow_other scp1@laleh:/mnt/Music_2      /mnt/Music_2
+sshfs -p 19216 -o allow_other scp1@laleh:/mnt/Music_3      /mnt/Music_3
+sshfs -p 19216 -o allow_other scp1@laleh:/mnt/Music_4      /mnt/Music_4
+sshfs -p 19216 -o allow_other scp1@laleh:/mnt/Music_5      /mnt/Music_5
+sshfs -p 19216 -o allow_other scp1@laleh:/mnt/Music_6      /mnt/Music_6
+sshfs -p 19216 -o allow_other scp1@laleh:/mnt/Music_7      /mnt/Music_7
+sshfs -p 19216 -o allow_other scp1@rambo:/mnt/TV_1         /mnt/TV_1
+sshfs -p 19216 -o allow_other scp1@rambo:/mnt/TV_2         /mnt/TV_2
+sshfs -p 19216 -o allow_other scp1@rambo:/mnt/TV_3         /mnt/TV_3
+sshfs -p 19216 -o allow_other scp1@rambo:/mnt/TV_4         /mnt/TV_4
+sshfs -p 19216 -o allow_other scp1@rambo:/mnt/Movies_1     /mnt/Movies_1
+sshfs -p 19216 -o allow_other scp1@rambo:/mnt/Movies_2     /mnt/Movies_2
+sshfs -p 19216 -o allow_other scp1@rambo:/mnt/Movies_3     /mnt/Movies_3
+sshfs -p 19216 -o allow_other scp1@rambo:/mnt/Movies_4     /mnt/Movies_4
+sshfs -p 19216 -o allow_other scp1@rambo:/mnt/Mvids        /mnt/Mvids
+sshfs -p 19216 -o allow_other scp1@rambo:/mnt/Games_1      /mnt/Games_1
+sshfs -p 19216 -o allow_other scp1@rambo:/mnt/Games_2      /mnt/Games_2
