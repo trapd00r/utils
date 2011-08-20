@@ -1,0 +1,1 @@
+mpc --format "%artist% - %title%" | head -1
