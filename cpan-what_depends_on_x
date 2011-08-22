@@ -1,0 +1,18 @@
+#!/bin/sh
+
+curl -s -XPOST api.metacpan.org/v0/release/_search -d '{
+  "query": {
+    "match_all": {}
+  },
+  "filter": {
+    "term": {
+      "release.dependency.module": "Term::ExtendedColor"
+    }
+  }
+}'                                  \
+  | json_deparse                    \
+  | grep distribution               \
+  | perl -pe 's/^\s+//, s/[",]+//g' \
+  | awk '{print $3}'                \
+  | sort -u                         \
+  | uniq
