@@ -1,0 +1,15 @@
+#!/bin/sh
+
+curl -s -XPOST api.metacpan.org/v0/file/_search -d '{
+  "query": { "filtered":{"query":{"match_all":{}},"filter":{"term":{"level":0}}}
+   },
+  "facets": { 
+    "license": {
+      "terms": {
+        "size":100,
+        "field":"file.name"
+  } } },
+  "size":0
+}' \
+  | grep -A1 count  \
+  | perl -pe 's/^[-]+|^.+"(.+)"\s*:\s*(.+)/$1 $2/g; s/^term\s+"(.+)"/ file $1/'
