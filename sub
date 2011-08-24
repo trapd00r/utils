@@ -1,0 +1,21 @@
+#!/usr/bin/perl
+# sub
+# do what perl -pi -e does, but faster
+use strict;
+
+use File::Slurp;
+
+my $opt;
+
+my $pattern = shift or usage() and exit;
+
+for( grep{ -f $_ } @ARGV ) {
+  File::Slurp::edit_file {
+    eval "$pattern";
+    warn "$@\n" if $@;
+  } $_
+}
+
+sub usage {
+  printf("sub [PATTERN] [FILE..]\n");
+}
