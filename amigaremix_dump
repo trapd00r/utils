@@ -1,0 +1,48 @@
+#!/usr/bin/perl
+# dump all songs from amigaremix.com
+
+use strict;
+use vars qw($VERSION);
+$VERSION = '0.001';
+
+use WWW::Mechanize;
+use Parallel::ForkManager;
+
+my $m = WWW::Mechanize->new(
+  agent_alias => 'Linux Mozilla',
+);
+
+# nasty :-)                                                                  {{{
+$m->get('http://www.amigaremix.com/remixes/9999');
+$m->follow_link(url_regex => qr{remixes/\d+});
+my($last_page) = ($m->uri =~ m{/(\d+)$});
+$last_page++;
+#}}}
+
+my @files;
+for my $u(1 .. $last_page) {
+  $m->get("http://amigaremix.com/remixes/$u");
+  push(@files,  grep{ m/[.]mp3$/ } map{ $_->url_abs } $m->find_all_links);
+}
+
+printf("Found %d files.\n", scalar @files);
+my $PROCESS_MAX = scalar @files / 2;
+printf("Will spawn %d processes, is that ok? [y/N] ", $PROCESS_MAX);
+chomp(my $answer = <>);
+
+die "Aborting...\n" unless lc($answer) eq 'y';
+
+
+my $pm = Parallel::ForkManager->new( $PROCESS_MAX );
+
+printf "\e[?7t";
+for my $f(@files) {
+  $pm->start and next;
+  $m->get($f);
+
+  my($dest) = $f =~ m{.+/(.+[.]mp3)$};
+  $dest =~ s/%20/_/g, s/_+/_/g;
+  print "$f => $dest\n" if $m->save_content($dest) == 0;
+  $pm->finish;
+}
+printf "\e[?7t";
