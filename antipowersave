@@ -1,0 +1,7 @@
+#!/bin/sh
+# I don't want to save any power when I am watching the tv damnit
+
+while true; do
+  xdotool mousemove 1 1
+  sleep 10m
+done
