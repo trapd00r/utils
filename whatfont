@@ -1,0 +1,5 @@
+#!/bin/sh
+# This will query the terminal for the current font in use. It will only work
+# in xterm compatible terminals.
+
+printf "\e]50;?\a"; xxd
