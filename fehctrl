@@ -1,0 +1,2 @@
+#!/usr/bin/perl
+kill('USR' . (pop =~ m/^n/ ? 1 : 2), qx(pgrep feh));
