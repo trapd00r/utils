@@ -1,0 +1,16 @@
+#!/usr/bin/perl
+use strict;
+use warnings FATAL => 'all';
+use X11::GUITest qw(
+  StartApp
+  WaitWindowViewable
+  SendKeys
+  QuoteStringForSendKeys
+);
+
+StartApp('xterm -T foobar');
+if(! WaitWindowViewable('foobar') ) {
+  die("Couldn't find window\n");
+}
+
+SendKeys("perl $0\n");
