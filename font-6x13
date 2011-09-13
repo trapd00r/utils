@@ -1,0 +1,4 @@
+#!/bin/sh
+pickyfont set 6x13  normal
+pickyfont set 6x13b bold
+pickyfont set pro1  italic
