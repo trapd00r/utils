@@ -1,1 +1,1 @@
-mpc --format "%artist% - %title%" | head -1
+mpc --format "%artist% - %title%" | head -1 | perl -pe 's/[åä]/a/gi; s/[ö]/o/gi'
