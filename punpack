@@ -4,7 +4,7 @@ use strict;
 use Cwd;
 use File::Find;
 
-my $mp = 'mplayer -msgcolor';
+my $mp = 'mplayer -fs -msgcolor';
 my $pwd = shift // getcwd();
 
 #my $permdir  = 01742; # -rwxr---wT
