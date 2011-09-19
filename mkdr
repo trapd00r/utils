@@ -1,21 +1,30 @@
 #!/usr/bin/perl
 use strict;
-use File::Path qw(make_path);
-use Term::ExtendedColor qw(fg);
+use warnings FATAL => 'all';
+use File::Copy;
+use File::LsColor       qw(ls_color);
+use File::Path          qw(make_path);
+use Term::ExtendedColor qw(:attributes);
 
 _mkdir(@ARGV);
 
 sub _mkdir {
-  my $dir = shift;
-  if(-f $dir) {
-    if($dir =~ m|(.+)\..+$|) { # I know, works for me for now.
-      warn "$dir is a file. Will mkdir $1\n";
-      $dir = $1;
+  for my $file(@_) {
+    if(-f $file) {
+      if($file =~ m|(.+)[.].+$|) { # I know, works for me for now.
+        my $new_dir = $1;
+        if(make_path($new_dir)) {
+          if(File::Copy::move($file, $new_dir)) {
+            printf("%50.50s => %s\n", $file, $new_dir);
+          }
+          else {
+            die fg(196, bold('ERROR')) . ": $@\n";
+          }
+        }
+        else {
+          die fg(124, 'WARNING') . ": $@\n";
+        }
+      }
     }
-  }
-  if(make_path($dir)) {
-    printf("mkdir: created directory '%s'\n", fg('red1', fg('bold', $dir)));
-  }
-  else {
   }
 }
