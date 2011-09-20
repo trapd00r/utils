@@ -1,0 +1,154 @@
+#!/bin/sh
+
+# Copyright (C) 2007 Jonathan Moore Liles
+#
+# Maintainer: Jonathan Moore Liles
+#
+# stumpish is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+#
+# stumpish is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software; see the file COPYING.  If not, write to
+# the Free Software Foundation, Inc., 59 Temple Place, Suite 330,
+# Boston, MA 02111-1307 USA
+
+### STUMPwm Interactive SHell.
+
+if sleep --version 2>/dev/null | grep -q GNU
+then
+    DELAY=0.1
+else
+    DELAY=1
+fi
+
+wait_result ()
+{
+    while true
+    do
+	RESULT=`xprop -root -f STUMPWM_COMMAND_RESULT 8s STUMPWM_COMMAND_RESULT 2>/dev/null`
+
+	if echo "$RESULT" | grep -v -q 'not found.$'
+	then
+	    break
+	fi
+
+	sleep $DELAY
+    done
+
+    xprop -root -remove STUMPWM_COMMAND_RESULT
+
+    if echo "$RESULT" | grep -q '= $'
+    then
+	return 1
+    fi
+
+    echo $RESULT | sed 's/[^"]*"//;s/"$//;s/\\n/\n/g;s/\\"/"/g;s/\n\+$//;
+			s/\^[*[:digit:]]\{2\}//g;s/\^[Bbn]//g;'
+}
+
+send_cmd ()
+{
+    local cmd="$1"
+
+    if [ "$cmd" = "stumpwm-quit" ]
+    then
+	cmd=quit
+    elif [ "$cmd" = "quit" ]
+    then
+	exit
+    fi
+
+    xprop -root -f STUMPWM_COMMAND 8s -set STUMPWM_COMMAND "$cmd"
+
+    wait_result
+}
+
+usage ()
+{
+    cat <<EOF
+Usage: "$0" [[-e] command [args...]]
+
+StumpIsh is the StumpWM shell. Use it to interact a running StumpWM
+instance.  When run from a terminal with no arguments, stumpish
+accepts commands interactively and prints each result.  If standard
+input is a pipe, stumpish executes any number of commands and prints
+the concatenated results. If the '-e' option and one argument are
+given on the command line, stumpish reads any number of lines from
+standard input and uses them as the argument to the named command.
+Otherwise, if one or more arguments are provided on the command line,
+the first is considered the name of the command to execute and the
+remainder is concatenated to form the argument.
+
+Example:
+	echo '(group-windows (current-group))' | "$0" eval
+EOF
+    exit 0;
+}
+
+READLINE=yes
+
+if [ "x$1" = "x-r" ]
+then
+    READLINE=no
+    shift 1
+fi
+
+if [ $# -gt 0 ]
+then
+    [ "$1" = "--help" ] && usage
+    if [ "$1" = "-e" ]
+    then
+	if [ $# -ne 2 ]
+	then
+	    echo "'-e' requires exactly one argument!"
+	    exit
+	fi
+	shift 1
+	IFS=''
+	ARGS=`cat /dev/stdin`
+	send_cmd "$1 $ARGS"
+    else
+	IFS=' '
+	send_cmd "$*"
+    fi
+else
+    if [ -t 0 ]
+    then
+	if [ $READLINE = yes ] && type rlwrap >/dev/null 2>&1
+	then
+	    # Note: $TEMP is not conventional; it is left here purely
+	    # for backwards compatibility.
+	    COMMANDS="${TEMP:-${TEMPDIR:-/var/tmp}}/stumpish.commands.$$"
+	    echo `send_cmd "commands"` | sed 's/[[:space:]]\+/\n/g' | sort > "$COMMANDS"
+	    rlwrap -f "$COMMANDS" "$0" -r
+	    rm -f "$COMMANDS"
+	    exit
+	fi
+
+	tput setaf 5
+        IFS='
+'
+	echo -n "> "
+	while read REPLY
+	do
+	    tput bold
+	    tput setaf 2
+	    send_cmd "$REPLY"
+	    tput sgr0
+
+	    echo -n ">"
+	done
+    else
+	while read REPLY
+	do
+	    send_cmd "$REPLY"
+	done
+    fi
+fi
