@@ -1,0 +1,266 @@
+#!/bin/bash
+
+
+true=":"
+false="/bin/false"
+success=0
+failure=1
+
+
+
+# TODO
+# - Write help
+
+
+usage() {
+    local progname=`basename $0`
+
+    cat <<EOM
+    Usage
+        $progname [{options}] [--] [{script} [{file}]]
+
+    Options
+        -h
+            Show help.
+EOM
+
+    exit 1
+}
+
+die() {
+    echo "$@" >&2
+    exit 1
+}
+
+decho() {
+    $VERBOSE && echo "debug:" "$@" >&2
+}
+
+ALL_TEMPFILES=()
+add_tempfiles() {
+    [ $# = 0 ] && return
+    register_remove_all_tempfiles
+    for f in "$@"; do
+        ALL_TEMPFILES=($ALL_TEMPFILES "$f")
+    done
+}
+
+IS_REGISTERED_REMOVE_ALL_TEMPFILES="$false"
+register_remove_all_tempfiles() {
+    $IS_REGISTERED_REMOVE_ALL_TEMPFILES || {
+        trap 'remove_all_tempfiles' HUP INT QUIT TERM EXIT
+        IS_REGISTERED_REMOVE_ALL_TEMPFILES="$true"
+    }
+}
+
+remove_all_tempfiles() {
+    local x=$?
+    $IS_REGISTERED_REMOVE_ALL_TEMPFILES && {
+        for t in "${ALL_TEMPFILES[@]}"; do
+            decho "cleaning up $t..."
+            rm -f "$t"
+        done
+    }
+    exit $x
+}
+
+get_clone_tempfile() {
+    local tempfile=`tempfile`
+    decho "tempfile: [$tempfile]"
+    add_tempfiles "$tempfile"
+
+    [ $# != 0 ] && cat "$@" >"$tempfile" || exit $?
+    echo "$tempfile"
+}
+
+get_tempfile() {
+    local tempfile=`tempfile`
+    decho "tempfile: [$tempfile]"
+    add_tempfiles "$tempfile"
+
+    if [ $# != 0 ]; then
+        echo "$@" >"$tempfile"
+    fi
+
+    echo "$tempfile"
+}
+
+vim_write() {
+    echo "write"
+}
+
+vim_quit() {
+    echo "qall!"
+}
+
+get_script() {
+    cat "$@" || exit $?
+    $AUTO_WRITE && vim_write
+    $AUTO_QUIT  && vim_quit
+}
+
+run_file() {
+    [ $# -ge 2 ] || die "invalid args"
+
+    local script="$1"
+    shift
+    decho "script: [$script]"
+
+    local call_args=()
+    if $IS_SCRIPT_MODE; then
+        call_args=("$@")
+    else
+        local f
+        for f in "$@"; do
+            local t=`get_clone_tempfile "$f"`
+            add_tempfiles "$t"
+            decho "run_file:"${ALL_TEMPFILES[@]}
+            call_args=("${call_args[@]}" "$t")
+        done
+    fi
+
+    call_ex "$script" "${call_args[@]}"
+}
+
+call_ex() {
+    local script="$1"
+    shift
+    decho "\$script = $script"
+    if $IS_SCRIPT_MODE; then
+        local a args
+        args="['$script',"
+        for a in "$@"; do
+            args="$args'$a',"
+        done
+        args="$args]"
+
+        local result_file=`get_tempfile`
+
+        decho "g:ARGS = $args"
+        decho "\$result_file = $result_file"
+        {
+            echo "let g:ARGS = $args"
+            echo "so $script"
+            echo "write! $result_file"
+            $AUTO_QUIT && vim_quit
+        } | $EX
+        cat "$result_file"
+    else
+        decho "ex arguments: [$@] [$#]"
+        cat "$script" | $EX "$@"
+        cat "$@"
+    fi
+}
+
+eval_code() {
+    local files=()
+    local f
+    for f in "$@"; do
+        files=($files "$f")
+    done
+    ! $IS_SCRIPT_MODE && [ ${#files[@]} = 0 ] && {
+        files=($(get_tempfile $(cat)))
+    }
+    local script=`get_tempfile`
+    add_tempfiles "$script"
+    decho "eval_code:"${ALL_TEMPFILES[@]}
+    {
+        for l in "${EVAL_SOURCES[@]}"; do
+            echo "$l"
+        done
+        ! $IS_SCRIPT_MODE && {
+            $AUTO_WRITE && vim_write
+            $AUTO_QUIT && vim_quit
+        }
+    } >"$script"
+    run_file "$script" "${files[@]}"
+}
+
+build_ex_command() {
+    EX="ex"
+    if $EX_COMPATIBLE; then
+        EX="$EX -N"
+    fi
+    if [ ! -z "$EX_IEXRC" ]; then
+        EX="$EX -u $EX_IEXRC"
+    fi
+    if [ ! -z "$EX_VIMINFO" ]; then
+        EX="$EX -i $EX_VIMINFO"
+    fi
+    if $EX_NOPLUGIN; then
+        EX="$EX --noplugin"
+    fi
+    if $EX_QUIET; then
+        EX="$EX -"
+    fi
+    decho 'build_ex_command:' "$EX"
+}
+
+main() {
+    $IS_SCRIPT_MODE && decho "-s supplied: enabled script mode"
+    build_ex_command
+    if [ ${#EVAL_SOURCES[@]} != 0 ]; then
+        decho "-e switch supplied:" "${EVAL_SOURCES[@]}"
+        eval_code "$@"
+        return 0
+    fi
+    case $# in
+        0)
+            EX_QUIET="$false"
+            build_ex_command
+            exec $EX
+            ;;
+        1) usage ;;
+        *)
+            local script="$1"
+            shift
+            if $IS_SCRIPT_MODE; then
+                run_file "$script" "$@"
+            else
+                local s=`get_tempfile`
+                get_script "$script" >"$s"
+                run_file "$s" "$@"
+            fi
+            ;;
+    esac
+}
+
+
+VERBOSE="$false"
+AUTO_WRITE="$true"
+AUTO_QUIT="$true"
+
+if [ -f "$HOME/.iexrc" ]; then
+    EX_IEXRC="$HOME/.iexrc"
+else
+    EX_IEXRC="NONE"
+fi
+EX_COMPATIBLE="$true"
+EX_NOPLUGIN="$true"
+EX_VIMINFO=NONE
+EX_QUIET="$false"
+
+EVAL_SOURCES=()
+IS_SCRIPT_MODE="$false"
+
+
+while getopts hvWQCpu:i:qe:s opt; do
+    case $opt in
+        v) VERBOSE="$true" ;;
+        W) AUTO_WRITE="$false" ;;
+        Q) AUTO_QUIT="$false" ;;
+        C) EX_COMPATIBLE="$false" ;;
+        p) EX_NOPLUGIN="$false" ;;
+        u) EX_IEXRC="$OPTARG" ;;
+        i) EX_VIMINFO="$OPTARG" ;;
+        q) EX_QUIET="$true" ;;
+        e) EVAL_SOURCES=("${EVAL_SOURCES[@]}" "$OPTARG") ;;
+        s) IS_SCRIPT_MODE="$true" ;;
+        h) usage ;;
+        ?) usage ;;
+    esac
+done
+shift `expr $OPTIND - 1`
+
+
+main "$@"
