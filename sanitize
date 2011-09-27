@@ -5,4 +5,4 @@ prename 's{[åä]}{a}g'      * && prename 's{[åä]}{a}g'      */*
 prename "s{['#\]\[]}{_}g"  * && prename "s{['#\]\[]}{_}g"  */*
 prename "s{_+}{_}g"        * && prename "s{_+}{_}g"        */*
 prename "s{,+}{.}g"        * && prename "s{,+}{.}g"        */*
-
+prename "s{[.]+}{.}g"      * && prename "s{,+}{.}g"        */*
