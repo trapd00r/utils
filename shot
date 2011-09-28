@@ -1,7 +1,7 @@
 #!/bin/sh
 if [ $@ ]; then
   DNAME="$1"
-  ssh -p 19216 scp1@laleh "mkdir -p http/japh.se/scrots/$DNAME"
+  ssh -p 19217 scp1@laleh "mkdir -p http/japh.se/scrots/$DNAME"
   echo "http/i.japh.se/$DNAME"
 else
   DNAME=""
@@ -11,7 +11,7 @@ fi
 shot() {
   FNAME=$(date +%s.png)
   scrot $FNAME;
-  scp -P 19216 $FNAME scp1@laleh:http/japh.se/scrots/$DNAME &&
+  scp -P 19217 $FNAME scp1@laleh:http/japh.se/scrots/$DNAME &&
     rm $FNAME &&
     echo http://i.japh.se/$DNAME/$FNAME|xclip
 }
