@@ -1,7 +1,4 @@
 #!/usr/bin/perl
-use strict;
-
-print << 'EOF'
 use Data::Dumper;
 
 {
@@ -11,4 +8,5 @@ use Data::Dumper;
   $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
   $Quotekeys = 0;
 }
-EOF
+
+1;
