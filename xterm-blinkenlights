@@ -1,0 +1,8 @@
+#!/bin/sh
+# This requires an xterm compatible terminal (like... xterm)
+
+while true; do
+  xset led
+  printf "\e[1;q"
+  perl -e 'select(undef, undef, undef, rand(1))'
+done
