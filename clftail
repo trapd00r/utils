@@ -3,15 +3,22 @@ use strict;
 use File::Tail;
 use Term::ExtendedColor qw(fg bg);
 
-my $log   = shift;
-my $line  = "";
-my $tail  = File::Tail->new(name=>$log,
-                            maxinterval=>3,
-                            adjustafter=>3,
-                            interval=>0,
-                            tail=>100
-                            );
-while(defined($line=$tail->read)) {
+my $log   = shift // '/var/log/lighttpd/japh.se/access.log';
+
+my $tail = File::Tail->new(
+  name        => $log,
+  maxinterval => 3,
+  adjustafter => 3,
+  interval    => 0,
+  tail        => 100,
+);
+
+my @keywords = qw(
+  devel
+  colorcoke
+);
+
+while(defined( my $line = $tail->read )) {
   my $e = "(.+?)";
   $line =~ /^$e $e $e \[$e:$e $e\] "$e $e $e" $e $e/;
 
@@ -49,6 +56,6 @@ while(defined($line=$tail->read)) {
   }
 
   $size = fg(160, $size) if $size > 5;
-  printf("%s %7s %s \e[38;5;215m%s\e[0m \t%-60.40s\n",
+  printf("%s %7s %s \e[38;5;215m%s\e[0m \t%-60s\n",
     $code, $request, $size, $ip, $file) unless $file =~ m/.+\.(?:css|ico)$/
 }
