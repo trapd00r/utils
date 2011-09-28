@@ -5,6 +5,8 @@ use LWP::Simple;
 use Data::Dumper;
 use Getopt::Long;
 
+# FIXME This really, really needs a rewrite
+
 our ($optList,$optChan);
 $optChan = 2576;  # 1606 => P3 Street
                   # 2576 => Din Gata
@@ -33,7 +35,7 @@ USAGE
 }
 
 sub listOld {
-  my $url = "http://api.sr.se/api/playlist/playlist.aspx?programid=$optChan";
+  my $url = qq{http://api.sr.se/api/playlist/playlist.aspx?programid=$optChan};
   my $oldInfoC = get($url) or die;
   my $x2 = XML::Simple->new;
   my $oldXML = $x2->XMLin($oldInfoC);
@@ -64,7 +66,11 @@ sub printAll {
     return $output;
   }
   $output = sprintf("np: %s - %s | Next: %s (%s)",
-                    $artist, $title, $next, $chan);
+    ref($artist) ? Dumper $artist : $artist,
+    ref($title)  ? Dumper $title  : $title,
+    ref($next)   ? Dumper $next   : $next,
+    ref($chan)   ? Dumper $chan   : $chan,
+  );
   return $output;
   exit 0;
 }
