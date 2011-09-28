@@ -1,0 +1,2 @@
+#!/bin/sh
+ssh -X scp1@rambo 'clive --exec "mplayer -vo x11 -fs %f" "$@"'
