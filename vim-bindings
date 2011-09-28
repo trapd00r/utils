@@ -11,7 +11,7 @@ use Data::Dumper;
 }
 
 
-my $map = "$ENV{XDG_CONFIG_HOME}/vim/mappings.vim";
+my $map = "$ENV{XDG_CONFIG_HOME}/vim/_mappings.vim";
 
 open(my $fh, '<', $map) or die($!);
 
