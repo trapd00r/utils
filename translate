@@ -6,6 +6,9 @@ use HTML::Entities qw(decode_entities);
 use Getopt::Long;
 use strict;
 
+use utf8;
+use open qw(:std :utf8);
+
 my $base     = 'https://www.googleapis.com/language/translate/v2?';
 my $key      = 'key=AIzaSyACJybEm6lyelnYHZzXfydtk-V6-Uz48bQ&';
 my $from     = 'sv';
