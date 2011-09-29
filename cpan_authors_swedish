@@ -1,0 +1,24 @@
+#!/usr/bin/perl
+use strict;
+use warnings FATAL => 'all';
+use vars qw($VERSION);
+
+$VERSION = '0.01';
+
+use lib 'lib';
+use Acme::CPANAuthors;
+use Acme::CPANAuthors::Swedish;
+
+my $authors = Acme::CPANAuthors->new('Swedish');
+
+printf("There are %d swedish CPAN authors:\n", $authors->count);
+
+for my $id($authors->id) {
+  printf("  \e[1m%s\e[m\n", $id);
+  my @dists = $authors->distributions($id);
+  printf("    %s\n",
+    @dists
+      ? join('    ', map { local $_ = $_->name . "\n" } @dists)
+      : '[No distributions]'
+    );
+}
