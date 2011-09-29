@@ -31,6 +31,11 @@ sub flac_it {
     $file_name =~ s/[.](?:mp4|flv|webm)$//i;
     $file_name .= '.flac';
 
+    if(-f $filename) {
+      warn "\e[33;1mexists\e[m: $filename\n";
+      next;
+    }
+
     print "Original: $original\nNew: $file_name\n";
     system('ffmpeg', '-i', $original, $file_name);
   }
