@@ -2,7 +2,6 @@
 # <3 dunz0r
 use strict;
 use LWP::Simple;
-use Data::Dumper;
 
 
 sub fav {
@@ -21,18 +20,12 @@ sub play {
       unless($n == 0);
 
   }
-  print "\e[1m Top100 sid tracks, descending\e[0m\n";
-  print "Pick a song kkthx: \e[1m";
   chomp(my $choice = <STDIN>);
-  print "\e[0m\n";
-  my $song = get("http://www.c64.org/HVSC/$sids->{$choice}");
+  # yeah, I know
+  system('wget', "http://www.c64.org/HVSC/$sids->{$choice}", '-O', "$$.sid");;
+  system('sidplay2', "$$.sid");
+  unlink("$$.sid");
 
-  open(my $fh, '>', "/tmp/$$.sid") or die($!);
-  print $fh $song;
-  close($fh);
-
-  system("sidplay2", "/tmp/$$.sid");
-  unlink("/tmp/$$.sid");
 }
 
 play();
