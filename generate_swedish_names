@@ -1,0 +1,14 @@
+#!/usr/bin/perl
+use strict;
+use warnings FATAL => 'all';
+
+use Mock::Person;
+
+my $sex = shift // 'female';
+
+for(0 .. 9) {
+  print Mock::Person::name(
+    sex     => $sex,
+    country => 'sv',
+  ), "\n";
+}
