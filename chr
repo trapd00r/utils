@@ -1,2 +1,8 @@
 #!/usr/bin/perl
-print join(", ", map { chr($_) } @ARGV), "\n" if @ARGV;
+
+for(@ARGV) {
+  if($_ =~ m/\A0x/) {
+    $_ = hex($_);
+  }
+  printf("[0x%x, %d]: %s\n", $_, $_, chr($_));
+}
