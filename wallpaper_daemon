@@ -1,0 +1,38 @@
+#!/usr/bin/perl
+# changes background on htpc connected tv every $sleep seconds
+use strict;
+use warnings FATAL => 'all';
+use vars qw($VERSION);
+use List::Util ();
+
+my $sleep = 1200;
+my @walls = List::Util::shuffle( glob("$ENV{HOME}/wallpapers/*") );
+
+daemonize();
+
+while(1) {
+  system('feh', '--bg-center', $walls[ int(rand(scalar @walls ))]);
+  sleep $sleep;
+}
+
+sub daemonize {
+  my $daemon_log = shift // q{/dev/null};
+  use POSIX q{setsid};
+  my $PID = fork();
+  exit(0) if($PID); #parent
+  exit(1) if(!defined($PID)); # out of resources
+
+  setsid();
+  $PID = fork();
+  exit(1) if(!defined($PID));
+
+  if($PID) { # parent
+    waitpid($PID, 0);
+    exit(0);
+  }
+  elsif($PID == 0) { # child
+    open(STDOUT, q{>}, $daemon_log);
+    open(STDERR, q{>}, q{/dev/null});
+    open(STDIN,  q{<}, q{/dev/null});
+  }
+}
