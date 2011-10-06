@@ -1,3 +1,4 @@
+#!/usr/bin/perl
 use strict;
 use LWP::Simple ();
 
@@ -11,11 +12,11 @@ for my $domain(sort{ $d->{$b} cmp $d->{$a} } keys( %{ $d } )) {
 
 sub max_len_domain {
   my $len = shift || 3;
-  $len += 3;
+  $len += 3; # .se
   my $s   = shift or return;
   my %h;
 
-  map { (length($_) <= $len) && ($h{$_} = $s->{$_}) } keys %$s;
+  map { (length($_) == $len) && ($h{$_} = $s->{$_}) } keys %$s;
   return \%h;
 
 }
