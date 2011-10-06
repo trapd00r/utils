@@ -1,7 +1,11 @@
 #!/usr/bin/perl
 use strict;
 
-open(my $fh, '<', '/usr/share/dict/cracklib-small') or die($!);
+use utf8;
+use open qw(:std :utf8);
+
+open(my $fh, '<', "$ENV{HOME}/usr/share/doc/wordlists/wordlist_swedish.txt");
+#open(my $fh, '<', '/usr/share/dict/cracklib-small') or die($!);
 #open(my $fh, '<', "$ENV{HOME}/usr/share/doc/wordlists/big.txt");
 #open(my $fh, '<', "$ENV{HOME}/usr/share/doc/wordlists/big") or die($!);
 my @words = grep{ (length($_) > 4) && lc(chomp($_)) } (<$fh>);
