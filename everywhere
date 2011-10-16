@@ -7,13 +7,13 @@ my $command = shift;
 open(my $fh, '<', "$ENV{HOME}/.ssh/config") or die $!;
 my @hosts;
 while(my $l = <$fh>) {
-  next if $l =~ /^#/ or $l =~ /india/;
+  next if $l =~ /^#/;
   push(@hosts, $1) if $l =~ m/^Host\s+(\w+)/;
 }
 
-my $i = 22;
+my $i = 35;
 for my $h(@hosts) {
   printf("\e[48;5;%d;1;38;5;232m%s\e[m:\n", $i, $h);
   system('ssh', $h, $command);
-  $i += 20;
+  $i += 30;
 }
