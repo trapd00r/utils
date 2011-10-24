@@ -1,4 +1,17 @@
 #!/bin/sh
-setsid urxvt -name URxvt.shiva -e zsh -c \
-  "xmodmap -e 'clear Lock' -e 'keycode 0x42 = Escape'; \
-   exec zsh"
+
+if [ $(ps aux | grep -c zsh) -lt 5 ]; then
+  setsid urxvt -name URxvt.$HOSTNAME -e zsh -c \
+    "xmodmap -e 'clear Lock' \
+             -e 'keycode 0x42 = Escape' \
+             -e 'keycode  0x30 = apostrophe' \
+             -e 'keycode 0x2f  = asterisk'; \
+             -e 'keycode 0xe5  = slash; \
+     exec zsh"
+else
+  xmodmap -verbose -e 'clear Lock'
+  xmodmap -verbose -e 'keycode 0x42 = Escape'
+  xmodmap -verbose -e 'keycode 0x30 = apostrophe'
+  xmodmap -verbose -e 'keycode 0x2f = asterisk'
+  xmodmap -verbose -e 'keycode 0x22 = slash'
+fi
