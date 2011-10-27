@@ -1,0 +1,9 @@
+#!/bin/bash
+
+target=/mnt/Backup
+
+mkdir -p /mnt/Backup/{bin,dev,etc,http/japh.se,var}
+
+cp -r /home/scp1/{dev,etc} -t $target
+cp -r /home/scp1/http/japh.se/{blog,devel,doc,paste,scrots} \
+  -t "$target/http/japh.se/"
