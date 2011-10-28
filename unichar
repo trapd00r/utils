@@ -56,7 +56,7 @@ foreach ( @ARGV ) {
 	
 	my $hex  = sprintf 'U+%04X', $code;
 	my $char = chr( $code );
-	$char = '<unprintable>' if $char =~ /\p{Print}/;
+	$char = '<unprintable>' if $char !~ /\p{Print}/;
 	$char = '<whitespace>'  if $char =~ /\p{Space}/;
 	$char = '<control>'  if $char =~ /\p{Control}/;
 
