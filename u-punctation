@@ -19,7 +19,7 @@ use charnames qw(:full);
 
 for my $ord ( 0 .. 0x10ffff ) {
   next unless chr($ord) =~ /[[:punct:]]/;
-  printf("%s %s %s\n", $ord, chr($ord), charnames::viacode($ord));
+  printf("%6d, %6x: %s %s\n", $ord, $ord, chr($ord), charnames::viacode($ord));
 }
 
 
