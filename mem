@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python2.7
 import sys, os, string
 
 if os.geteuid() != 0:
@@ -10,10 +10,11 @@ our_pid=os.getpid()
 
 #(major,minor,release)
 def kernel_ver():
-    kv=open("/proc/sys/kernel/osrelease").readline().split(".")[:3]
-    for char in "-_":
-        kv[2]=kv[2].split(char)[0]
-    return (int(kv[0]), int(kv[1]), int(kv[2]))
+    return '2.6.37'
+    #kv=open("/proc/sys/kernel/osrelease").readline().split(".")[:2]
+    #for char in "-_":
+    #    kv[2]=kv[2].split(char)[0]
+    #return (int(kv[0]), int(kv[1]), int(kv[2]))
 
 kv=kernel_ver()
 
