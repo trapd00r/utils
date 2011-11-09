@@ -1,0 +1,73 @@
+#!/usr/bin/perl
+use strict;
+use vars qw($VERSION);
+
+my $APP  = 'dircolors2vim';
+$VERSION = '0.001';
+
+use Devel::Comments;
+use Data::Dumper;
+
+{
+  package Data::Dumper;
+  no strict 'vars';
+  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
+  $Quotekeys = 0;
+}
+
+my @ignores = qw(bd ca cd do ex pi fi ln mh no or ow sg su so st tw);
+
+my $ls = { };
+for my $record(split(/:/, $ENV{LS_COLORS})) {
+  $ls->{$1} = $2 if $record =~ m/([\w]+)=(.+)/ and !($1 ~~ @ignores);
+}
+
+### $ls;
+
+if(exists($ls->{di})) {
+  my($dir_fg, $dir_bg, $dir_attr) = ('none') x 3;
+  if($ls->{di} =~ m/38;5;(\d+)/) {
+    $dir_fg = $1;
+    printf("syn match ls_DI display %s\n", q{'\v.+[/]\zs.+[/]$'});
+    printf("hi ls_DI ctermfg=$dir_fg ctermbg=$dir_bg cterm=$dir_attr\n");
+  }
+}
+
+
+for my $extension(keys(%{ $ls })) {
+  printf("syn match ls_$extension display '%s'\n",
+    '\v/\zs.+[.]' . $extension . '$',
+  );
+
+  my($fg, $bg, $attr) = ('none') x 3;
+  if($ls->{ $extension } =~ m/([34])8;5;(\d+);?(\d+)?/) {
+    my $index = $2;
+    $attr  = defined $3 ? get_attr($3) : 'none';
+    my $fg_or_bg = $1;
+    if($fg_or_bg == 4) {
+      $bg = $index;
+    }
+    else {
+      $fg = $index;
+    }
+  printf("hi ls_$extension ctermfg=$fg ctermbg=$bg cterm=$attr\n");
+  }
+  else {
+    print "Warning: $ls->{$extension}\n";
+  }
+  #printf("hi ls_$extension ctermfg=$fg ctermbg=$bg cterm=$attr\n");
+}
+
+
+sub get_attr {
+  my $attr = shift;
+
+  return 'bold'      if $attr == 1;
+  return 'italic'    if $attr == 3;
+  return 'underline' if $attr == 4;
+
+
+  return 'none';
+}
+
+__END__
