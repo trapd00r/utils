@@ -1,0 +1,15 @@
+#!/usr/bin/perl
+
+#use strict;
+#use warnings FATAL => 'all';
+use Data::Dumper;
+use Eval::WithLexicals;
+
+my $expr = shift or die usage();
+my $eval = Eval::WithLexicals->new;
+
+print "$_\n" for map { $eval->eval( $expr ); $_ } @ARGV;
+
+sub usage {
+  "Usage: $0 <expr> [FILE...]\n"
+}
