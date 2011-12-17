@@ -6,17 +6,6 @@ use HTML::FormatText::Lynx;
 use XML::Simple;
 use Text::Autoformat qw(autoformat);
 
-use Data::Dumper;
-
-{
-  package Data::Dumper;
-  no strict "vars";
-
-  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
-  $Quotekeys = 0;
-}
-
-
 my $chop_event = 'http://www.choppevent.se/categories/kalendarium.htm';
 my $lucky_you  = 'http://www.luckyyou.se/rss_calendar.php';
 
@@ -39,7 +28,6 @@ sub _lucky_you {
 
     my $desc = join(' ', split(/\n/, $tag->{description}));
     s/Ã¤/ä/g, s/Ã¶/ö/g, s/Ã¥/å/g for $desc; # *grin*
-
 
     print autoformat($desc,
       {
