@@ -11,7 +11,7 @@ my $base       = '/mnt/Music_1';
 my $target     = "$ENV{HOME}/toburn";
 my $user       = 'scp1';
 my $host       = '192.168.1.128';
-my $port       = 19216;
+my $port       = 19217;
 my $scp        = '/usr/bin/scp';
 
 chomp(my $file = `mpc -h $host --format %file%|head -1`);
