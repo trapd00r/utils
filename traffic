@@ -1,2 +1,4 @@
 #!/bin/sh
-ssh -p 19216 scp1@192.168.1.128 'tail -f /var/log/lighttpd/japh.se/access.log /var/log/lighttpd/access.log /var/log/lighttpd/cpan.japh.se/access.log' |\logstalgia -1680x1050 -x --paddle-mode vhost -
+
+tail -fq $(find /mnt/httpd -type f -iname '*access.log') \
+  | logstalgia -1680x1050 -x --paddle-mode vhost -
