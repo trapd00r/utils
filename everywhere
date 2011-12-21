@@ -8,7 +8,7 @@ open(my $fh, '<', "$ENV{HOME}/.ssh/config") or die $!;
 my @hosts;
 while(my $l = <$fh>) {
   next if $l =~ /^#/;
-  push(@hosts, $1) if $l =~ m/^Host\s+(\w+)/;
+  push(@hosts, $1) if $l =~ m/^[Hh]ost\s+(\w+)/;
 }
 
 my $i = 35;
