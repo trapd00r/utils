@@ -16,7 +16,10 @@ GetOptions(
 output();
 
 sub output {
-  my $c = get_xterm_color( [0 .. 255] );
+  my $c = get_xterm_color({
+    index => [0 .. 255],
+    type  => 'hex',
+  });
 
   my $end = int(256/16);
 
