@@ -1,6 +1,11 @@
 #!/usr/bin/perl
 use strict;
-use warnings FATAL => 'all';
 use Text::Markdown qw(markdown);
+use File::Temp     qw(tempfile);
 
-print markdown(do { local $/; <> });
+my($fh, $file) = tempfile('markdown_previewXXXX', SUFFIX => '.html');
+print $fh markdown(do { local $/; <> });
+close $fh;
+
+system( ($ENV{DISPLAY}) ? 'x-www-browser' : $ENV{BROWSER}, $file);
+unlink $file;
