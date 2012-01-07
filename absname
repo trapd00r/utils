@@ -1,0 +1,6 @@
+#!/usr/bin/perl
+# absname
+# you can't trust $PWD in linux
+use Cwd;
+
+printf("%s/%s\n", getcwd(), $_) for @ARGV;
