@@ -1,2 +1,9 @@
 #!/bin/sh
-rm /mnt/mp3/MUSIC/*; mv /home/scp1/ToTransfer/* /mnt/mp3/MUSIC/
+umount /mnt/mp3
+mount /dev/sdi1 /mnt/mp3   && \
+  cd /mnt/mp3/MUSIC        && \
+  rmfile *                 && \
+  mv /home/scp1/toburn/* . && \
+  cd /mnt                  && \
+  umount mp3               && \
+  printf '\e[38;5;34;1mFinished.\e[m\n'
