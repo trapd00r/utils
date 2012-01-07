@@ -1,0 +1,6 @@
+#!/usr/bin/perl
+# there's rmdir but no rmfile...
+
+for(grep{ -f $_ and $_ } @ARGV) {
+  unlink $_ and printf("removed '%s'\n", $_)
+}
