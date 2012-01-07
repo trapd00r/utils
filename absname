@@ -3,4 +3,4 @@
 # you can't trust $PWD in linux
 use Cwd;
 
-printf("%s/%s\n", getcwd(), $_) for @ARGV;
+print map { my $cwd = getcwd(); -e "$cwd/$_" ? "$cwd/$_\n" : "$_\n" } @ARGV;
