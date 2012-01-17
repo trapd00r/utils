@@ -1,8 +1,12 @@
 #!/usr/bin/perl
-use strict;
 my $APP      = 'prename';
 our $VERSION = '0.160';
 use strict;
+use warnings;
+
+use utf8;
+use open qw(:std :utf8);
+use encoding 'utf8';
 
 use Getopt::Long;
 use Pod::Usage;
