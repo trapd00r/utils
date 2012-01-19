@@ -1,4 +1,7 @@
 #!/bin/sh
-pickyfont set clean9 normal
-pickyfont set clean1 bold
-pickyfont set pro1   italic
+printf '\e]710;%s\a' \
+  -schumacher-clean-medium-r-normal--10-100-75-75-c-50-iso646.1991-irv
+printf '\e]711;%s\a' \
+  -fontforge-proggytinysz-bold-r-normal--10-80-96-96-c-60-iso8859-1
+printf '\e]712;%s\a' \
+  -nil-profont-medium-r-normal--10-100-72-72-c-50-iso8859-1
