@@ -1,0 +1,5 @@
+#!/bin/sh
+#pmv - move files matching pattern $1 to $2
+
+find . -type f -regextype awk -iregex ".*$1.*" -print0 \
+  | xargs -0 mv -v -t "$2"
