@@ -1,0 +1,9 @@
+#!/usr/bin/perl
+use vars qw($VERSION);
+use strict;
+use encoding 'utf8';
+use charnames qw(:full);
+
+for my $ord ( 0x1d100 .. 0x1d1ff ) {
+  printf("%6d, %6x: %s %s\n", $ord, $ord, chr($ord), charnames::viacode($ord));
+}
