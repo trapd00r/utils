@@ -1,0 +1,4 @@
+#!/bin/sh
+
+tmpfile=$(mktemp --suffix='-cfdg')
+$HOME/bin/cfdg -w 1920 -h 1080 -b 0 -x 0.1 "$@" -o $tmpfile && feh $tmpfile
