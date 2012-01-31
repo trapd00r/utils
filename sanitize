@@ -6,3 +6,4 @@ prename "s{['#\]\[]}{_}g"  * && prename "s{['#\]\[]}{_}g"  */*
 prename "s{_+}{_}g"        * && prename "s{_+}{_}g"        */*
 prename "s{,+}{.}g"        * && prename "s{,+}{.}g"        */*
 prename "s{[.]+}{.}g"      * && prename "s{,+}{.}g"        */*
+prename "s{ö+}{o}g"        * && prename "s{ö+}{o}g"        */*
