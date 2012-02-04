@@ -1,0 +1,19 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings FATAL => 'all';
+use JSON;
+use Data::Dumper;
+
+my $file = shift // '/mnt/Mvids/Aerosmith/Aerosmith-Amazing.mpg';
+
+close(STDERR) or die $!;
+my $meta = ffprobe($file);
+
+printf("\e[38;5;196;1m%s\e[m\n", $file);
+print Dumper $meta;
+sub ffprobe {
+  chomp(my $s = `ffprobe -show_streams -print_format json $_[0]`);
+  $s;
+}
+
