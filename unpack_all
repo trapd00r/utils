@@ -1,0 +1,11 @@
+#!/bin/sh
+back=$(pwd)
+
+for x in $(find . -type f -iname '*.rar' -printf "%h\n" \
+  | perl -pe 's{^[.]/}{}' \
+  | sort -u); do
+  $x=$(absname $x);
+  cd $x && (unrar x *.rar && rm *.r*)
+done
+
+cd $back
