@@ -1,0 +1,52 @@
+#!/usr/bin/perl
+use strict;
+use warnings FATAL => 'all';
+
+use Getopt::Long;
+
+# shell function:
+# mplayer_redir () {
+#   /usr/bin/mplayer -quiet -msglevel all=0 -identify \
+#     -include $XDG_CONFIG_HOME/mplayer/config -profile $HOST \
+#     $(absname "$@") > $XDG_CONFIG_HOME/mplayer/log.txt
+#   rm -v $XDG_CONFIG_HOME/mplayer/log.txt
+# }
+
+my $opt = {
+  log => "$ENV{XDG_CONFIG_HOME}/mplayer/log.txt",
+  rm  => 0,
+};
+
+GetOptions(
+  'log:s'     => \$opt->{log},
+  'rm|delete' => sub { rm( get_np_file() ); exit },
+  'np'        => sub { printf("%s\n", get_np_file()); exit },
+);
+
+sub rm {
+  my $file = shift;
+  printf("rm(): unlink %s ? [Y/n] ", $file);
+  chomp(my $choice = <>);
+
+  if(lc($choice) eq 'y') {
+    if(unlink($file)) {
+      printf("removed '%s'\n", $file);
+    }
+    else {
+      warn "Could not unlink $file: $!\n";
+    }
+  }
+}
+
+sub get_np_file {
+  open(my $fh, '<', $opt->{log}) or die $!;
+  my $meta = { };
+
+  my @rev_log = map { chomp; $_ } reverse( <$fh> );
+
+  for my $line(@rev_log) {
+    if($line =~ m/ID_FILENAME=(.+)$/) {
+      return $1;
+    }
+  }
+}
