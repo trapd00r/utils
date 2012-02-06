@@ -1,0 +1,57 @@
+#!/usr/bin/perl
+# html2text
+# usage:
+#   html2text foo.html
+#   html2text < foo.html
+#   html2text http://japh.se
+use strict;
+use warnings FATAL => 'all';
+
+use File::Which ();
+
+my @browsers = map { ucfirst $_ } (
+  $ENV{TERM} eq 'linux'
+    ? (File::Which::which('html2text') ? 'html2text' : (), qw(w3m lynx links))
+    : qw(w3m lynx links elinks)
+);
+
+my($subclass, @err);
+for my $browser(@browsers) {
+  eval "require HTML::FormatText::$browser";
+  if($@) {
+    push(@err, "$browser: $@");
+    next;
+  }
+  else {
+    $subclass = $browser;
+    last;
+  }
+  die "Found no suitable parsers:\n", map { "  $_\n" } @err;
+}
+
+my $html_str = do {
+  local $/;
+  my $fh;
+  if(@ARGV) {
+    if($ARGV[0] =~ m{(https?://(?:www[.])?.+)} and ! -e $1) {
+      require LWP::Simple;
+      my $content = LWP::Simple::get($ARGV[0]);
+      open($fh, '<', \$content) or die $!;
+    }
+    else {
+      open($fh, '<', $ARGV[0]) or die $!;
+    }
+  }
+  else {
+    $fh = *STDIN
+  }
+  <$fh>;
+};
+
+print "HTML::FormatText::$subclass"->format_string(
+  $html_str,
+  rightmargin    => 78,
+  leftmargin     => 2,
+  input_charset  => 'UTF-8',
+  output_charset => 'UTF-8',
+);
