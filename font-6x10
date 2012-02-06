@@ -1,0 +1,4 @@
+#!/bin/sh
+printf '\e]710;%s\a' 6x10
+printf '\e]711;%s\a' 6x10
+printf '\e]712;%s\a' 6x10
