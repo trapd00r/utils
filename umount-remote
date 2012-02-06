@@ -1,25 +1,23 @@
 #!/bin/sh
 
-mkdir -p $HOME/http
 fusermount -u $HOME/http
-fusermount -u /mnt/irclogs
 fusermount -u /mnt/httpd
+fusermount -u /mnt/floff
+fusermount -u /mnt/irclogs
 fusermount -u /mnt/Books
+fusermount -u /mnt/Movies_1
+fusermount -u /mnt/Movies_2
+fusermount -u /mnt/Movies_3
+fusermount -u /mnt/Movies_4
 fusermount -u /mnt/Music_1
 fusermount -u /mnt/Music_2
 fusermount -u /mnt/Music_3
 fusermount -u /mnt/Music_4
 fusermount -u /mnt/Music_5
 fusermount -u /mnt/Music_6
-fusermount -u /mnt/Music_7
-fusermount -u /mnt/TV_1
-fusermount -u /mnt/TV_1
-fusermount -u /mnt/TV_1
-fusermount -u /mnt/TV_1
-fusermount -u /mnt/Movies_1
-fusermount -u /mnt/Movies_2
-fusermount -u /mnt/Movies_3
-fusermount -u /mnt/Movies_4
+fusermount -u /mnt/Music_6
 fusermount -u /mnt/Mvids
-fusermount -u /mnt/Games_1
-fusermount -u /mnt/Games_2
+fusermount -u /mnt/TV_1
+fusermount -u /mnt/TV_2
+fusermount -u /mnt/TV_3
+fusermount -u /mnt/TV_4
