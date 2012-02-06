@@ -1,0 +1,10 @@
+#!/usr/bin/perl
+use strict;
+use warnings FATAL => 'all';
+use Term::ExtendedColor qw(:attributes);
+
+Term::ExtendedColor::autoreset(1);
+printf(" autoreset %s\n", fg(70, bold('ON')));
+for my $attr(qw(bold faint italic underline blink reverse conceal)) {
+  printf("%s\n", fg($attr, $attr));
+}
