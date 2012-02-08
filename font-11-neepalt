@@ -1,0 +1,9 @@
+#!/bin/sh
+
+printf '\e]710;%s\a' \
+  'xft:Neep Alt:style=SemiCondensed:pixelsize=11'
+printf '\e]711;%s\a' \
+  'xft:Neep Alt:style=Bold SemiCondensed:pixelsize=11'
+printf '\e]712;%s\a' \
+  '-misc-fixed-medium-r-normal--9-90-75-75-c-60-iso8859-1'
+  #'-nil-profont-medium-r-normal--11-110-72-72-c-60-iso8859-1'
