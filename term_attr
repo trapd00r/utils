@@ -5,6 +5,9 @@ use Term::ExtendedColor qw(:attributes);
 
 Term::ExtendedColor::autoreset(1);
 printf(" autoreset %s\n", fg(70, bold('ON')));
-for my $attr(qw(bold faint italic underline blink reverse conceal)) {
+for my $attr(qw(normal bold faint italic underline reverse conceal)) {
   printf("%s\n", fg($attr, $attr));
 }
+
+print "\n-\n";
+print fg($_, $_) for qw(normal bold italic),"\n";
