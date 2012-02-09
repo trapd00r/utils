@@ -1,0 +1,142 @@
+#!/usr/bin/python2
+import getpass
+import re
+import sys
+import urllib2
+from optparse import OptionParser
+
+class swedbank:
+    def __init__(self):
+        """ Set default stuff to pycurl"""
+        self.data = ""
+        self.pch = urllib2.build_opener(urllib2.HTTPCookieProcessor())
+        urllib2.install_opener(self.pch)
+        
+    def request(self, url, post):
+        """ Make the request"""
+        if post:
+            tmp = self.pch.open(url, post)
+            self.data = tmp.read()
+        else:
+            tmp = self.pch.open(url)
+            self.data = tmp.read()
+
+    def login(self, user, passwd, bank):
+        """ Login """
+        self.request("https://mobilbank.swedbank.se/banking/swedbank/login.html", "")
+        data = re.search("csrf_token\".*?value=\"([^\"]+)\"", self.getdata())
+
+        if not data:
+            return 0
+
+        token = data.group(1)
+        self.rstdata()
+        params = "auth-method=code&xyz=" + user + "&_csrf_token=" + token
+        self.request("https://mobilbank.swedbank.se/banking/swedbank/loginNext.html", params)
+        data = re.search("csrf_token\".*?value=\"([^\"]+)\"", self.getdata())
+
+        if not data:
+            return 0
+
+        token = data.group(1)
+        params = "zyx=" + passwd + "&_csrf_token=" + token
+        self.rstdata()
+        self.request("https://mobilbank.swedbank.se/banking/swedbank/login.html", params)
+        
+        if re.search("menu\.html\?bank=(\d{1,})\">", self.getdata()):
+            self.request("https://mobilbank.swedbank.se/banking/swedbank/menu.html?bank=" + bank, "")
+
+        if not re.search("misslyckats", self.getdata()):
+            return 1
+        else:
+            print "Wrong username/password"
+            return 0
+        
+    def accounts(self, which):
+        """ Accounts """
+        self.request("https://mobilbank.swedbank.se/banking/swedbank/accounts.html","")
+        if which == -1:
+            match = re.finditer("""
+                <dd\ class="[^"]*"> .*?
+                     <span\ class="name">([^<]+)</span> .*?
+                     <span\ class="amount">([^<]+)</span> .*?
+                </dd>
+            """, self.getdata(), re.X | re.S)
+            for i in match:
+                print i.groups()[0] + " " + i.groups()[1]
+        else:
+            match = re.findall("""
+                <dd\ class="[^"]*"> .*?
+                     <span\ class="name">([^<]+)</span> .*?
+                     <span\ class="amount">([^<]+)</span> .*?
+                </dd>
+            """, self.getdata(), re.X | re.S)
+            try:
+                print match[which][0] + " " + match[which][1]
+            except IndexError:
+                print "Can't find that account"
+                sys.exit(1)
+
+    def writedata(self, buf):
+        """ Save the response """
+        self.data += buf
+
+    def getdata(self):
+        """ Get the response data """
+        return self.data
+
+    def rstdata(self):
+        """ Reset response"""
+        self.data = ""
+
+def main():
+    """ Main """
+    usage = "usage: %prog [options]"
+    parser = OptionParser(usage=usage)
+    parser.add_option("-u", "--username",
+        metavar="username", help="Username")
+    parser.add_option("-p", "--password",
+        metavar="passwd", help="Password")
+    parser.add_option("-a", "--account",
+        metavar="account", help="Choose what account you want to see.\nDefault all")
+    parser.add_option("-b", "--bank",
+        metavar="bank", help="Choose which bank you want to use.\nDefault first bank")
+    (options, args) = parser.parse_args()
+
+    if not options.username:
+        print "Missing username!"
+        parser.print_help()
+        sys.exit(1)
+    else:
+        username = options.username
+
+    if options.password:
+        password = options.password
+    else:
+        password = getpass.getpass()
+
+    if options.bank:
+        bank = options.bank
+    else:
+        bank = "0"
+
+    if not password:
+        print "Missing password!"
+        parser.print_help()
+        sys.exit(1)
+
+    if options.account:
+        try:
+            account = int(options.account)-1
+        except ValueError:
+            print "Account need to be a number."
+            sys.exit(1)
+    else:
+        account = -1
+
+    swed = swedbank()
+    if swed.login(username, password, bank):
+        swed.accounts(account)
+
+if __name__ == "__main__":
+    main()
