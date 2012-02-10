@@ -4,5 +4,9 @@ for(@ARGV) {
   if($_ =~ m/\A0x/) {
     $_ = hex($_);
   }
-  printf("[0x%x, %d]: %s\n", $_, $_, chr($_));
+  if(! -t STDOUT) {
+    printf "%s\n", chr $_;
+    next;
+  }
+  printf "[0x%x, %d]: %s\n", $_, $_, chr $_;
 }
