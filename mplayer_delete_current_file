@@ -12,6 +12,10 @@ use Getopt::Long;
 #   rm -v $XDG_CONFIG_HOME/mplayer/log.txt
 # }
 
+# input.conf:
+# DEL run 'mplayer_delete_current_file -rm'
+
+
 my $opt = {
   log => "$ENV{XDG_CONFIG_HOME}/mplayer/log.txt",
   rm  => 0,
@@ -25,21 +29,25 @@ GetOptions(
 
 sub rm {
   my $file = shift;
-  printf("rm(): unlink %s ? [Y/n] ", $file);
-  chomp(my $choice = <>);
 
-  if(lc($choice) eq 'y') {
-    if(unlink($file)) {
-      printf("removed '%s'\n", $file);
+  if(-t STDOUT) {
+    printf("rm(): unlink %s ? [Y/n] ", $file);
+    chomp(my $choice = <>);
+
+    if(lc($choice) ne 'y') {
+      return;
     }
-    else {
-      warn "Could not unlink $file: $!\n";
-    }
+  }
+  if(unlink($file)) {
+    printf("removed '%s'\n", $file);
+  }
+  else {
+    warn "Could not unlink $file: $!\n";
   }
 }
 
 sub get_np_file {
-  open(my $fh, '<', $opt->{log}) or die $!;
+  open(my $fh, '<', $opt->{log}) or die "mplayer not running?\n";
   my $meta = { };
 
   my @rev_log = map { chomp; $_ } reverse( <$fh> );
