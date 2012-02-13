@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 use vars qw($VERSION);
-$VERSION = '0.02';
+$VERSION = '0.04';
 
 use strict;
 use Cwd;
@@ -52,6 +52,16 @@ sub pass_on {
   }
 
   elsif($_[0] eq 'dist') {
+    chomp(my $git_status = `git status 2> /dev/null | tail -n1`);
+    if(
+      !($git_status ~~ ('nothing to commit (working directory clean)',
+                        'nothing added to commit but untracked files present (use "git add" to track)'
+                      )
+       )
+     ) {
+      warn "W: repository \e[m" . fg(196, bold('DIRTY')) . "! Aborting...\n";
+      exit;
+    }
     my ($project) = cwd() =~ m|.*/(.+)$|m;
     $project =~ s/::/-/g;
 
