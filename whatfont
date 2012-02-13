@@ -7,5 +7,6 @@
 printf "\e]710;?\a"; xxd
 printf "\e]711;?\a"; xxd
 printf "\e]712;?\a"; xxd
+printf "\e]713;?\a"; xxd # urxvt boldItalic
 
 printf "\e]50;?\a"; xxd
