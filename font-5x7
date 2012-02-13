@@ -1,4 +1,4 @@
 #!/bin/sh
 printf '\e]710;%s\a' 5x7
-printf '\e]711;%s\a' 5x7
+printf '\e]711;%s\a' 'xft:fixed:pixelsize=7:antialias=1:hinting=1:embolden=1'
 printf '\e]712;%s\a' 5x7
