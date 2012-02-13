@@ -138,7 +138,7 @@ sub fork_output() {
     }
 
     if (-t STDOUT) {
-        my $pager = $ENV{PAGER} || "less";
+        my $pager = '/bin/cat'; #$ENV{PAGER} || "less";
         debug("piping STDOUT to $pager");
         if ($pager =~ /more|less/ && ($ENV{LESSCHARSET} || "") ne "utf-8") {
             $ENV{LESSCHARSET} = "utf-8";
