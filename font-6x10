@@ -1,4 +1,7 @@
 #!/bin/sh
-printf '\e]710;%s\a' 6x10
-printf '\e]711;%s\a' 6x10
-printf '\e]712;%s\a' 6x10
+printf '\e]710;%s\a' \
+  6x10
+printf '\e]711;%s\a' \
+  '-fontforge-proggytinysz-bold-r-normal--10-80-96-96-c-60-iso8859-1'
+printf '\e]712;%s\a' \
+  '-b&h-lucidatypewriter-bold-r-normal-sans-10-100-75-75-m-60-iso10646-1'
