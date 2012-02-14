@@ -10,4 +10,4 @@ for my $attr(qw(normal bold faint italic underline reverse conceal)) {
 }
 
 print "\n-\n";
-print fg($_, $_) for qw(normal bold italic),"\n";
+print fg($_, $_) for qw(normal bold italic), fg('bold', fg('italic', 'bolditalic')),"\n";
