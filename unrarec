@@ -1,0 +1,49 @@
+#!/usr/bin/perl
+use strict;
+use warnings FATAL => 'all';
+use vars qw($VERSION);
+
+my $APP  = 'unrarec';
+$VERSION = '0.001';
+
+{
+  package Data::Dumper;
+  no strict 'vars';
+  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
+  $Quotekeys = 0;
+}
+use Cwd qw(getcwd);
+use Devel::Comments;
+use File::Find::Rule;
+use File::Spec;
+
+my $start_path = File::Spec->rel2abs(shift);
+my $old_path   = getcwd();
+
+#chdir($start_path) or die $!;
+
+my $dirs = { };
+map { s{(.*)/.+[.]rar$}{$1}; $dirs->{$_}=1;} File::Find::Rule->file()
+                                                             ->name('*.rar')
+                                                             ->in($start_path);
+### $dirs
+
+print "\e[1mDescend\e[m? [Y/n] ";
+chomp(my $response = <>);
+if(lc($response) ne 'y') {
+  die "Bailing out...\n";
+}
+for my $d(sort(keys(%$dirs))) {
+  chdir $d or die "chdir $d: $!\n";
+  warn "chdir $d\n";
+  system('unrar', 'x', '*.rar');
+}
+
+chdir $old_path or warn "chdir $old_path: $!\n";
+
+BEGIN {
+  printf "\e[?7t"
+}
+END {
+  printf "\e[?7t"
+}
