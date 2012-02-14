@@ -1,11 +1,14 @@
 #!/usr/bin/perl
-# html2text
+# html2txt
 # usage:
-#   html2text foo.html
-#   html2text < foo.html
-#   html2text http://japh.se
+#   html2txt foo.html
+#   html2txt < foo.html
+#   html2txt http://japh.se
 use strict;
 use warnings FATAL => 'all';
+use encoding 'utf8';
+use utf8;
+use open qw(:std :utf8);
 
 use File::Which ();
 
@@ -51,7 +54,6 @@ my $html_str = do {
 print "HTML::FormatText::$subclass"->format_string(
   $html_str,
   rightmargin    => 78,
-  leftmargin     => 2,
-  input_charset  => 'UTF-8',
-  output_charset => 'UTF-8',
+  leftmargin     => 0,
+  #output_charset => 'utf-8',
 );
