@@ -52,8 +52,10 @@ for(sort(@ARGV)) {
     print STDERR "$was not renamed: $_ already exists\n";
   }
   elsif(($no_act) or (rename($was, $_))) {
+    $was = sprintf("%.25s%s", $was, length($was) > 25 ? "\e[38;5;40m...\e[m" : '');
+    printf("%s => %s\n", $was, $_);
     # Thank you mauke        ↓
-    print ls_color(sprintf('%*s', $max_len, $was)), ' => ', ls_color($_), "\n";
+    #print sprintf('%*s', $max_len, $was), ' => ', $_, "\n";
 
     # This breaks perl.vim :)
     #printf("@{[ls_color(sprintf(\"%${max_len}s\", $was))]} => %s\n", ls_color($_));
