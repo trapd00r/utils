@@ -1,9 +1,11 @@
 #!/bin/sh
 
-prename 's{\s+}{_}g'       * && prename 's{\s+}{_}g'       */*
-prename 's{[åä]}{a}g'      * && prename 's{[åä]}{a}g'      */*
-prename "s{['#\]\[]}{_}g"  * && prename "s{['#\]\[]}{_}g"  */*
-prename "s{_+}{_}g"        * && prename "s{_+}{_}g"        */*
-prename "s{,+}{.}g"        * && prename "s{,+}{.}g"        */*
-prename "s{[.]+}{.}g"      * && prename "s{,+}{.}g"        */*
-prename "s{ö+}{o}g"        * && prename "s{ö+}{o}g"        */*
+prename 's{\s+}{_}g'             * && prename 's{\s+}{_}g'             */*
+prename 's{[åä]}{a}g'            * && prename 's{[åä]}{a}g'            */*
+prename "s{['#\]\[]}{_}g"        * && prename "s{['#\]\[]}{_}g"        */*
+prename "s{_+}{_}g"              * && prename "s{_+}{_}g"              */*
+prename "s{,+}{.}g"              * && prename "s{,+}{.}g"              */*
+prename "s{[.]+}{.}g"            * && prename "s{,+}{.}g"              */*
+prename "s{ö+}{o}g"              * && prename "s{ö+}{o}g"              */*
+prename "s{(?:_-_|[.]-[.])}{-}g" * && prename "s{(?:_-_|[.]-[.])}{-}g" */*
+prename "s{[-_.]$}{}"            * && prename "s{[-_.]$}{}"            */*
