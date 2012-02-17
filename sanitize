@@ -1,11 +1,34 @@
-#!/bin/sh
+#!/bin/zsh
 
-prename 's{\s+}{_}g'             * && prename 's{\s+}{_}g'             */*
-prename 's{[åä]}{a}g'            * && prename 's{[åä]}{a}g'            */*
-prename "s{['#\]\[]}{_}g"        * && prename "s{['#\]\[]}{_}g"        */*
-prename "s{_+}{_}g"              * && prename "s{_+}{_}g"              */*
-prename "s{,+}{.}g"              * && prename "s{,+}{.}g"              */*
-prename "s{[.]+}{.}g"            * && prename "s{,+}{.}g"              */*
-prename "s{ö+}{o}g"              * && prename "s{ö+}{o}g"              */*
-prename "s{(?:_-_|[.]-[.])}{-}g" * && prename "s{(?:_-_|[.]-[.])}{-}g" */*
-prename "s{[-_.]$}{}"            * && prename "s{[-_.]$}{}"            */*
+if [[ $1 == '-l' || $1 == '-tolower' ]]; then
+  # lowercase everything
+  prename 's/(.+)/\L$1/' * && prename 's/(.+)/\L$1/' **/*
+elif [[ $1 == '-u' || $1 == '-toupper' ]]; then
+  # uppercase everything
+  prename 's/(.+)/\L$1/' * && prename 's/(.+)/\L$1/' **/*
+elif [[ $1 == '-t' || $1 == '-totitle' ]]; then
+  # titlecase words globally
+  prename 's/(\w+)/\u$1/g' * && prename 's/(\w+)/\u$1/g' **/
+elif [[ $1 == '-lf' || $1 == '-lcfirst' ]]; then
+  # lcfirst words globally
+  prename 's/(\w+)/lcfirst($1)/eg' * prename 's/(\w+)/lcfirst($1)/eg' **/*
+elif [[ $1 == '-uf' || $1 == '-ucfirst' ]]; then
+  # ucfirst words globally
+  prename 's/(\w+)/ucfirst($1)/eg' * && prename 's/(\w+)/ucfirst($1)/eg' **/*
+fi
+
+prename 's/[åä]/a/g; s/ö/o/g' * && prename 's/[åä]/a/g; s/ö/o/g' **/*
+prename 's/\s/_/g'            * && prename 's/\s/_/g'            **/*
+prename 's/_-_/-/g'           * && prename 's/_-_/-/g'           **/*
+prename 's/\[|]//g'           * && prename 's/\[|]//g'           **/*
+prename 's/[()]//g'           * && prename 's/[()]//g'           **/*
+
+#prename "s{[#\]\[]}{_}g"         * && prename "s{[#\]\[]}{_}g"         */*
+#prename "s{_+}{_}g"              * && prename "s{_+}{_}g"              */*
+#prename "s{,+}{.}g"              * && prename "s{,+}{.}g"              */*
+#prename "s{[.]+}{.}g"            * && prename "s{,+}{.}g"              */*
+#prename "s{(?:_-_|[.]-[.])}{-}g" * && prename "s{(?:_-_|[.]-[.])}{-}g" */*
+#prename "s{[-_.]$}{}"            * && prename "s{[-_.]$}{}"            */*
+#prename 's/[.][-_]+/_/'          * && prename 's/[.][-_]+/_/'          */*
+#prename 's/[-_][.]+/_/'          * && prename 's/[-_][.]+/_/'          */*
+#prename "s/'//g"                 * && prename "s/'//g"                 */*
