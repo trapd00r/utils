@@ -5,8 +5,10 @@ use warnings FATAL => 'all';
 use vars qw($VERSION);
 use List::Util ();
 
-my $sleep = 1200;
-my @walls = List::Util::shuffle( glob("$ENV{HOME}/wallpapers/*") );
+my $sleep = 15;
+my @walls = List::Util::shuffle(
+  glob("$ENV{HOME}/wallpapers/HD/*"),
+);
 
 daemonize();
 
