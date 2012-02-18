@@ -1,0 +1,8 @@
+#!/bin/sh
+# The GNU unifont claims to support all printable codepoints in the Unicode 5.1
+# Basic Multilingual Plane (BMP). That's U+0000..U+ffff, a total of 65536
+# codepoints.
+
+printf '\e]710;xft:unifont:pixelsize=32:antialias=:false:hinting=false:lcdfilter=lcdlight\a'
+printf '\e]711;xft:unifont:pixelsize=32:antialias=:false:hinting=false:lcdfilter=lcdlight\a'
+printf '\e]712;xft:unifont:pixelsize=32:antialias=:false:hinting=false:lcdfilter=lcdlight\a'
