@@ -17,18 +17,17 @@ elif [[ $1 == '-uf' || $1 == '-ucfirst' ]]; then
   prename 's/(\w+)/ucfirst($1)/eg' * && prename 's/(\w+)/ucfirst($1)/eg' **/*
 fi
 
-prename 's/[åä]/a/g; s/ö/o/g' * && prename 's/[åä]/a/g; s/ö/o/g' **/*
-prename 's/\s/_/g'            * && prename 's/\s/_/g'            **/*
-prename 's/_-_/-/g'           * && prename 's/_-_/-/g'           **/*
-prename 's/\[|]//g'           * && prename 's/\[|]//g'           **/*
-prename 's/[()]//g'           * && prename 's/[()]//g'           **/*
+prename "s/[',&]//g" * && prename "s/[',&]//g" **/*
+prename 's/[åä]/a/g; s/ö/o/g; s/\s/_/g; s/_-_/-/g; s/\[|]//g; s/[()]//g; s/[.]_/_/g; s/([._-]){2,}/$1/g;' * \
+  && prename 's/[åä]/a/g; s/ö/o/g; s/\s/_/g; s/_-_/-/g; s/\[|]//g; s/[()]//g; s/[.]_/_/g; s/([._-]){2,}/$1/g;' **/*
 
-#prename "s{[#\]\[]}{_}g"         * && prename "s{[#\]\[]}{_}g"         */*
-#prename "s{_+}{_}g"              * && prename "s{_+}{_}g"              */*
-#prename "s{,+}{.}g"              * && prename "s{,+}{.}g"              */*
-#prename "s{[.]+}{.}g"            * && prename "s{,+}{.}g"              */*
 #prename "s{(?:_-_|[.]-[.])}{-}g" * && prename "s{(?:_-_|[.]-[.])}{-}g" */*
+#prename "s{,+}{.}g"              * && prename "s{,+}{.}g"              */*
+#prename "s{[#\]\[]}{_}g"         * && prename "s{[#\]\[]}{_}g"         */*
 #prename "s{[-_.]$}{}"            * && prename "s{[-_.]$}{}"            */*
-#prename 's/[.][-_]+/_/'          * && prename 's/[.][-_]+/_/'          */*
+#prename "s{[.]+}{.}g"            * && prename "s{,+}{.}g"              */*
+#prename "s{_+}{_}g"              * && prename "s{_+}{_}g"              */*
 #prename 's/[-_][.]+/_/'          * && prename 's/[-_][.]+/_/'          */*
-#prename "s/'//g"                 * && prename "s/'//g"                 */*
+#prename 's/[.][-_]+/_/'          * && prename 's/[.][-_]+/_/'          */*
+
+# vim: set tw=0:
