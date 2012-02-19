@@ -1,0 +1,4 @@
+#!/bin/sh
+
+fusermount -u /mnt/n900 &> /dev/null
+sshfs n900:MyDocs/.sounds /mnt/n900/ && printf 'Mounted.\n'
