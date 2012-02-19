@@ -4,6 +4,6 @@ use strict;
 use encoding 'utf8';
 use charnames qw(:full);
 
-for my $ord ( 0x1d100 .. 0x1d1ff ) {
+for my $ord(0x1d100 .. 0x1d1ff,0x1b61 .. 0x1b7c,0xd0000 .. 0x1d0ff,0x266e,0x266f) {
   printf("%6d, %6x: %s %s\n", $ord, $ord, chr($ord), charnames::viacode($ord));
 }
