@@ -21,8 +21,6 @@ sub output {
     type  => 'hex',
   });
 
-  my $end = int(256/16);
-
   if($opt_html) {
     open(my $fh, '>', "$0.html") or die("Cant open $0.html for writing: $!");
     select($fh);
@@ -46,7 +44,7 @@ EOF
   print "<body bgcolor=\"#121212\">";
   for my $index(sort{$a <=> $b} (keys(%{ $c }))) {
     if($opt_html) {
-      printf("<font color=\"#ff1b00\"><h4>xterm index </h4><h1>%s</h1><h4> have RGB values %s",
+      printf("<font color=\"#ff1b00\"><h1>%s</h1> %s",
         "<font color=\"#"
           . $c->{$index}->{rgb}
           . "\">$index</font>",
@@ -58,7 +56,6 @@ EOF
 
           $c->{$index}->{rgb},
         );
-      print "<br><strong>----<br></strong>";
       }
     else {
       print fg('bold', sprintf("%3d ", $index)),
