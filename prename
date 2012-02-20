@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 my $APP      = 'prename';
-our $VERSION = '0.160';
+our $VERSION = '0.162';
 use strict;
 use warnings;
 
@@ -10,8 +10,6 @@ use encoding 'utf8';
 
 use Getopt::Long;
 use Pod::Usage;
-use String::Utils qw(longest);
-use File::LsColor qw(ls_color);
 
 my ($verbose, $no_act, $force);
 
