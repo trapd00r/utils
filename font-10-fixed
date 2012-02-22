@@ -6,3 +6,5 @@ printf '\e]711;%s\a' \
   'xft:Fixed:weight=bold:pixelsize=10:antialias=0'
 printf '\e]712;%s\a' \
   'xft:Fixed:pixelsize=9:antialias=0'
+printf '\e]713;%s\a' \
+  'xft:DejaVu Sans Mono:style=Book:pixelsize=10:antialias=1:hinting=1:hintstyle=3'
