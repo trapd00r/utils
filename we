@@ -1,2 +1,2 @@
-#!/bin/bash
-vim $(which "$@")
+#!/bin/zsh
+vim ="$@"
