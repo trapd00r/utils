@@ -1,0 +1,9 @@
+#!/bin/sh
+printf '\e]710;%s\a' \
+  '-nil-profont-medium-r-normal--11-110-72-72-c-60-iso8859-1'
+printf '\e]711;%s\a' \
+  'xft:ProFont:style=Regular:pixelsize=11:embolden=1'
+printf '\e]712;%s\a' \
+  'xft:Lucida:style=Sans Italic:antialias=1:hinting=1:hintstyle=3:pixelsize=11'
+printf '\e]713;%s\a' \
+  'xft:Lucida:style=Sans Bold Italic:antialias=1:hinting=1:hintstyle=3:pixelsize=11'

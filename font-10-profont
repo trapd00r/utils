@@ -1,0 +1,9 @@
+#!/bin/sh
+printf '\e]710;%s\a' \
+  '-nil-profont-medium-r-normal--10-100-72-72-c-50-iso8859-1'
+printf '\e]711;%s\a' \
+  'xft:ProFont:style=Regular:pixelsize=10:embolden=1'
+printf '\e]712;%s\a' \
+  'xft:ProFont:style=Regular:pixelsize=10:slant=italic'
+printf '\e]713;%s\a' \
+  'xft:DejaVu Sans Mono:style=Book:pixelsize=10:antialias=1:hinting=1:hintstyle=3'
