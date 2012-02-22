@@ -40,7 +40,7 @@ my %code_for = (
 
             my $diff;
             if (my $lines = $status =~ tr/\n/\n/) {
-                $diff .= "\e[32m+$lines\e[m";
+                $diff .= "\e[38;5;40;1m+$lines\e[m";
             }
 
             my $reverse = `git rev-list $plain_name..$plain_name\@{u} 2>&1`;
