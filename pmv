@@ -1,5 +1,5 @@
 #!/bin/sh
 #pmv - move files matching pattern $1 to $2
 
-find . -regextype awk -iregex ".*$1.*" -print0 \
+find . -ignore_readdir_race -regextype awk -iregex ".*$1.*" -print0 \
   | xargs -0 mv -v -t "$2"
