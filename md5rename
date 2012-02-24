@@ -1,6 +1,6 @@
 #!/bin/sh
 for x; do 
   mv -iv "$x" \
-    "$(md5sum $x | awk '{print $1}').$(ffprobe -show_format $x 2> /dev/null | awk -F '=' '/format_name/ {print $2}')"
+    "$(md5sum "$x" | awk '{print $1}').$(ffprobe -show_format $x 2> /dev/null | awk -F '=' '/format_name|codec_name/ {print $2}')"
 done
 #vim: set tw=0:
