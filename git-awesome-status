@@ -7,23 +7,37 @@ my @order = (
     'Working tree',
     'Index',
     'Local branches',
+    'Feature branches',
 );
+
+my $branches;
+sub branches {
+    unless ($branches) {
+        $branches = [ map { s/\s+$//; $_ } split /\n/, `git branch -l --color` ];
+    }
+    return @$branches;
+}
 
 my %code_for = (
     'Untracked files' => sub {
-        my $untracked_files = `git ls-files -z --exclude-standard --others --full-name`;
-        return map { " $_\n" } split "\0", $untracked_files;
+        my $untracked_files = `git ls-files -z --exclude-standard --directory --others --full-name`;
+        return {
+            output => [map { " $_\n" } split "\0", $untracked_files],
+        };
     },
     'Working tree' => sub {
-        return `git diff --color --stat`;
+        return {
+            output => [`git diff --color --stat`],
+        };
     },
     'Index' => sub {
-        return `git diff --color --stat --cached`;
+        return {
+            output => [`git diff --color --stat --cached`],
+        };
     },
     'Local branches' => sub {
-        my @branches = map { s/\s+$//; $_ } split /\n/, `git branch -l --color`;
         my @output;
-        for my $colored_name (@branches) {
+        for my $colored_name (branches) {
             my $plain_name = $colored_name;
             $plain_name =~ s/^[\s*]+//;
             # strip ansi colors, ew
@@ -40,7 +54,7 @@ my %code_for = (
 
             my $diff;
             if (my $lines = $status =~ tr/\n/\n/) {
-                $diff .= "\e[38;5;40;1m+$lines\e[m";
+                $diff .= "\e[32m+$lines\e[m";
             }
 
             my $reverse = `git rev-list $plain_name..$plain_name\@{u} 2>&1`;
@@ -52,18 +66,52 @@ my %code_for = (
                 if $diff;
         }
 
-        return @output;
+        return {
+            output => \@output,
+        };
+    },
+    'Feature branches' => sub {
+        chomp(my $integration = `git config awesome-status.integration`);
+        $integration ||= 'master';
+
+        my @output;
+        for my $colored_name (branches) {
+            my $plain_name = $colored_name;
+            $plain_name =~ s/^[\s*]+//;
+            # strip ansi colors, ew
+            # http://stackoverflow.com/questions/7394889/best-way-to-remove-ansi-color-escapes-in-unix
+            $plain_name =~ s/\e\[[\d;]*[a-zA-Z]//g;
+
+            next if $plain_name eq '(no branch)';
+
+            my $status = `git rev-list $integration..$plain_name 2>&1`;
+
+            my $diff;
+            if (my $lines = $status =~ tr/\n/\n/) {
+                $diff .= "\e[32m+$lines\e[m";
+            }
+
+            push @output, " $colored_name: $diff\n"
+                if $diff;
+        }
+
+        return {
+            component => "Feature branches (merging into $integration)",
+            output    => \@output,
+        };
     },
 );
 
 my $printed_block = 0;
 for my $component (@order) {
-    my @results = $code_for{$component}->();
-    next unless @results;
+    my $results = $code_for{$component}->();
+    next unless $results && @{ $results->{output} };
+
+    $results->{component} ||= $component;
 
     print "\n" if $printed_block;
     $printed_block++;
 
-    print "$component:\n";
-    print @results;
+    print "$results->{component}:\n";
+    print @{ $results->{output} };
 }
