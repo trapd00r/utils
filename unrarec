@@ -4,7 +4,7 @@ use warnings FATAL => 'all';
 use vars qw($VERSION);
 
 my $APP  = 'unrarec';
-$VERSION = '0.001';
+$VERSION = '0.002';
 
 {
   package Data::Dumper;
@@ -13,7 +13,7 @@ $VERSION = '0.001';
   $Quotekeys = 0;
 }
 use Cwd qw(getcwd);
-use Devel::Comments;
+#use Devel::Comments;
 use File::Find::Rule;
 use File::Spec;
 
@@ -26,7 +26,7 @@ my $dirs = { };
 map { s{(.*)/.+[.]rar$}{$1}; $dirs->{$_}=1;} File::Find::Rule->file()
                                                              ->name('*.rar')
                                                              ->in($start_path);
-### $dirs
+print Dumper $dirs, "\n-\n";
 
 print "\e[1mDescend\e[m? [Y/n] ";
 chomp(my $response = <>);
