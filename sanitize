@@ -2,32 +2,40 @@
 
 if [[ $1 == '-l' || $1 == '-tolower' ]]; then
   # lowercase everything
-  prename 's/(.+)/\L$1/' * && prename 's/(.+)/\L$1/' **/*
+  shift
+  prename 's/(.+)/\L$1/' $@
+  exit
 elif [[ $1 == '-u' || $1 == '-toupper' ]]; then
   # uppercase everything
-  prename 's/(.+)/\L$1/' * && prename 's/(.+)/\L$1/' **/*
+  shift
+  prename 's/(.+)/\U$1/' $@
+  exit
 elif [[ $1 == '-t' || $1 == '-totitle' ]]; then
   # titlecase words globally
-  prename 's/(\w+)/\u$1/g' * && prename 's/(\w+)/\u$1/g' **/
+  shift
+  prename 's/(\w+)/\u$1/g' $@
+  exit
 elif [[ $1 == '-lf' || $1 == '-lcfirst' ]]; then
   # lcfirst words globally
-  prename 's/(\w+)/lcfirst($1)/eg' * prename 's/(\w+)/lcfirst($1)/eg' **/*
+  shift
+  prename 's/(\w+)/lcfirst($1)/eg' $@
+  exit
 elif [[ $1 == '-uf' || $1 == '-ucfirst' ]]; then
   # ucfirst words globally
-  prename 's/(\w+)/ucfirst($1)/eg' * && prename 's/(\w+)/ucfirst($1)/eg' **/*
+  shift
+  prename 's/(\w+)/ucfirst($1)/eg' $@
+  exit
+elif [[ $1 == '-x' || $1 == '-fixall' ]]; then
+  shift
+  prename "s/[',&!?#]//g"';s/[åä]/a/g; s/ö/o/g; s/\s/_/g; s/_-_/-/g; s/\[|]//g; s/[()]//g; s/[.]_/_/g; s/([._-]){2,}/$1/g;' -- $@
+  exit
+else
+  printf "usage: $0 [ OPTIONS ]\n\n  OPTIONS:\n\n%s\n%s\n%s\n%s\n%s\n%s\n" \
+    '   -l,  -tolower' \
+    '   -u,  -toupper' \
+    '   -t,  -totitle' \
+    '  -lf,  -lcfirst' \
+    '  -uf,  -ucfirst' \
+    '   -x,  -fixall'
+  exit
 fi
-
-prename "s/[',&!?#]//g" -- * && prename "s/[',&!?#]//g" -- **/*
-prename 's/[åä]/a/g; s/ö/o/g; s/\s/_/g; s/_-_/-/g; s/\[|]//g; s/[()]//g; s/[.]_/_/g; s/([._-]){2,}/$1/g;' -- * \
-  && prename 's/[åä]/a/g; s/ö/o/g; s/\s/_/g; s/_-_/-/g; s/\[|]//g; s/[()]//g; s/[.]_/_/g; s/([._-]){2,}/$1/g;' --  **/*
-
-#prename "s{(?:_-_|[.]-[.])}{-}g" * && prename "s{(?:_-_|[.]-[.])}{-}g" */*
-#prename "s{,+}{.}g"              * && prename "s{,+}{.}g"              */*
-#prename "s{[#\]\[]}{_}g"         * && prename "s{[#\]\[]}{_}g"         */*
-#prename "s{[-_.]$}{}"            * && prename "s{[-_.]$}{}"            */*
-#prename "s{[.]+}{.}g"            * && prename "s{,+}{.}g"              */*
-#prename "s{_+}{_}g"              * && prename "s{_+}{_}g"              */*
-#prename 's/[-_][.]+/_/'          * && prename 's/[-_][.]+/_/'          */*
-#prename 's/[.][-_]+/_/'          * && prename 's/[.][-_]+/_/'          */*
-
-# vim: set tw=0:
