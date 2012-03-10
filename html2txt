@@ -6,15 +6,15 @@
 #   html2txt http://japh.se
 use strict;
 use warnings FATAL => 'all';
-use encoding 'utf8';
-use utf8;
-use open qw(:std :utf8);
+#use encoding 'utf8';
+#use utf8;
+#use open qw(:std :utf8);
 
 use File::Which ();
 
 my @browsers = map { ucfirst $_ } (
   $ENV{TERM} eq 'linux'
-    ? (File::Which::which('html2text') ? 'html2text' : (), qw(w3m lynx links))
+    ? File::Which::which('html2text') ? 'html2text' : ((), qw(w3m lynx links))
     : qw(w3m lynx links elinks)
 );
 
