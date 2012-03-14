@@ -1,4 +1,5 @@
 #!/bin/sh
 printf '\e]710;%s\a' 5x7
 printf '\e]711;%s\a' 'xft:fixed:pixelsize=7:antialias=1:hinting=1:embolden=1'
-printf '\e]712;%s\a' 5x7
+printf '\e]712;%s\a' '-schumacher-clean-medium-r-normal--6-60-75-75-c-40-iso646.1991-irv'
+printf '\e]713;%s\a' 5x7
