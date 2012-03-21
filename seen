@@ -1,0 +1,15 @@
+#!/usr/bin/perl
+use strict;
+use warnings FATAL => 'all';
+
+for my $f(@ARGV) {
+  if(-f $f) {
+    chmod(02740, $f) or warn "chmod: $!\n";
+  }
+  elsif(-d $f) {
+    chmod(01700, $f) or warn "chmod: $!\n";
+  }
+  else {
+    warn "E: $_ is neither a file or a directory\n";
+  }
+}
