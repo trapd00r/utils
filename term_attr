@@ -1,13 +1,33 @@
 #!/usr/bin/perl
 use strict;
 use warnings FATAL => 'all';
-use Term::ExtendedColor qw(:attributes);
 
-Term::ExtendedColor::autoreset(1);
-printf(" autoreset %s\n", fg(70, bold('ON')));
-for my $attr(qw(normal bold faint italic underline reverse conceal)) {
-  printf("%s\n", fg($attr, $attr));
+my $attr = {
+  normal        => 0,
+  bold          => 1,
+  faint         => 2,
+  italic        => 3,
+  underline     => 4,
+  blink         => 5,
+  blink_ms      => 6,
+  reverse       => 7,
+  conceal       => 8,
+  lookup        => 9,
+};
+
+for my $c(0..255) {
+  for my $tr(sort { $attr->{$a} <=> $attr->{$b} } keys %$attr) {
+    next if $tr =~ m/blink/;
+
+    printf("\e[38;5;%d;%dm%s\e[m\t",
+      $c, $attr->{$tr}, $tr, $c,
+    );
+    if($attr->{$tr} ==3) {
+      printf("\e[38;5;%d;%sm%s\e[m\t",
+        $c, '3;1',  'bolditalic', $c,
+      );
+    }
+  }
+  print "\n";
 }
 
-print "\n-\n";
-print fg($_, $_) for qw(normal bold italic), fg('bold', fg('italic', 'bolditalic')),"\n";
