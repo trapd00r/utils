@@ -8,12 +8,19 @@ open(my $fh, '<', "$ENV{HOME}/.ssh/config") or die $!;
 my @hosts;
 while(my $l = <$fh>) {
   next if $l =~ /^#/;
-  push(@hosts, $1) if $l =~ m/^[Hh]ost\s+(\w+)/;
+  if ($l =~ m/^[Hh]ost\s+([\w.]+)/ and $1 ne $ENV{HOSTNAME}) {
+    push(@hosts, $1);
+  }
 }
 
-my $i = 35;
-for my $h(@hosts) {
-  printf("\e[48;5;%d;1;38;5;232m%s\e[m:\n", $i, $h);
+#close(STDERR) or die "cant close STDERR: $!\n";
+for my $h(sort(@hosts)) {
+  print STDERR sprintf "%-10s ", $h;
   system('ssh', $h, $command);
-  $i += 30;
+}
+print STDERR sprintf "%-10s ", $ENV{HOSTNAME};
+system($command);
+
+END {
+#  open(STDERR, '>', '/dev/fd/2') or die "Cant reopen STDERR: $!\n";
 }
