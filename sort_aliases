@@ -1,6 +1,7 @@
+#!/usr/bin/perl
 use strict;
 
-my $alias = "$ENV{HOME}/configs/zsh/alias.zsh";
+my $alias = "$ENV{HOME}/etc/zsh/02-alias.zsh";
 
 open(my $fh, '<', $alias) or die($!);
 
