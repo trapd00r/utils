@@ -5,5 +5,4 @@ use encoding 'utf8';
 use open qw(:std :utf8);
 use utf8;
 use Cwd qw(getcwd);
-$\="\n";
 print map { my $cwd = getcwd(); -e "$cwd/$_" ? "$cwd/$_\n" : "$_\n" } @ARGV;
