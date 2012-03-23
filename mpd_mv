@@ -1,11 +1,16 @@
 #!/bin/sh
-# mvmpd
-TARGET=/mnt/mp3/MUSIC
 
-if [ "$1" == "-d" ]; then
-        cp -Rv /mnt/Music_1/$(mpc --format %file% |
-        head -1 |
-        perl -pe 's/(\/.*\/).*$/$1/g') $TARGET
+if  [[ $# -eq 0 ]]; then
+  printf "usage: $0 [OPTIONS]\n"
+  exit
+fi
+TARGET='.'
+MPD_MUSIC_DIR=/mnt/Music_1
+
+if [[ "$1" == "-d" ]]; then
+  cp -Rv /mnt/Music_1/$(mpc --format %file% \
+    | head -1 \
+    | perl -pe 's/(\/.*\/).*$/$1/g') $TARGET
 else
-        cp -v /mnt/Music_1/$(mpc --format %file% | head -1) $TARGET
+  cp -vn "$MPD_MUSIC_DIR/$(mpc --format %file% | head -1)" $TARGET
 fi
