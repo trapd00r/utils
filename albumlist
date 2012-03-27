@@ -1,0 +1,5 @@
+#!/bin/sh
+
+mpc search artist "$@" \
+  | perl -pe 's{(.+)/.+$}{$1}' \
+  | sort -u
