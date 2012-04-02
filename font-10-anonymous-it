@@ -1,0 +1,11 @@
+#!/bin/sh
+
+printf '\e]710;%s\a' \
+  'xft:Anonymous Pro:style=Regular:pixelsize=10:antialias=1:hinting=1:hintstyle=3'
+printf '\e]711;%s\a' \
+  'xft:Anonymous Pro:style=Bold:pixelsize=10:antialias=1:hinting=1:hintstyle=3'
+printf '\e]712;%s\a' \
+  '6x9'
+  #'-b&h-lucidatypewriter-medium-r-normal-sans-11-80-100-100-m-70-iso8859-1'
+printf '\e]713;%s\a' \
+  '-windows-proggysmall-medium-r-normal--10-80-96-96-c-70-iso8859-1'
