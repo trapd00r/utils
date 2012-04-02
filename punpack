@@ -8,7 +8,8 @@ my $mp = 'mplayer -fs -msgcolor';
 my $pwd = shift // getcwd();
 
 #my $permdir  = 01742; # -rwxr---wT
-my $permdir = 01700; # -rwx------T
+#my $permdir = 01700; # -rwx------T
+my $permdir  = 02740; #
 
 chmod($permdir, $pwd);
 
