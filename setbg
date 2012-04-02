@@ -1,0 +1,40 @@
+#!/usr/bin/perl
+
+my @c = qw(
+  13141a
+  1a1314
+  141a13
+  0a0212
+  150e00
+  15000e
+  000e15
+  0e0c12
+  101c1c
+  111111
+  2c2c2c
+  121212
+  131313
+  04141c
+  05151e
+  061620
+  071722
+  081824
+  091926
+  0b1b2a
+  0c1c2c
+  0d1d2e
+  0e1e30
+  0f1f32
+  102034
+  112136
+  9d9d9d
+  13233a
+);
+
+bg();
+
+sub bg {
+  my $background = $_[0] || $c[int(rand(scalar(@c)))];
+  warn "$background\n";
+  print "\e]11;#$background\a";
+}
