@@ -1,7 +1,8 @@
 #!/bin/sh
 
-mpc search artist "$@" \
+artist="$@"
+[ -z $artist ] && artist=$(mpc --format '%artist%' | head -1)
+mpc search artist "$artist" \
   | perl -pe 's{(.+)/.+$}{$1}' \
   | sort -u \
   | perl -pe 's{^}{/mnt/Music_1/}'
-
