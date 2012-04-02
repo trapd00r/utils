@@ -1,10 +1,10 @@
 #!/usr/bin/perl
 use strict;
-use warnings FATAL => 'all';
 use vars qw($VERSION);
 
 my $APP  = 'unrarec';
 $VERSION = '0.002';
+use Data::Dumper;
 
 {
   package Data::Dumper;
@@ -13,7 +13,7 @@ $VERSION = '0.002';
   $Quotekeys = 0;
 }
 use Cwd qw(getcwd);
-use Data::Printer;
+#use Data::Printer;
 use File::Find::Rule;
 use File::Spec;
 
