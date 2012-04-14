@@ -3,4 +3,4 @@
 if [ $@ ]; then
   mpc next
 fi
-twmnc -p 9797 -c "$(mpc current)" --pos top_right
+twmnc -fn Sans -p 9797 -c "$(mpc current)" --pos top_right
