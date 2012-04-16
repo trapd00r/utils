@@ -1,4 +1,4 @@
 #!/bin/zsh
 setopt nullglob
 rm -vi **/*.{rar,r[0-9][0-9],sfv,md5}
-rm -rvi **/{?Sample,Subs,Proof}
+rm -rvi **/{*Sample,Subs,Proof}
