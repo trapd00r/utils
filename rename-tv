@@ -1,0 +1,9 @@
+#!/bin/sh
+
+prename 's/[.]([0-9]+)[.]of.([0-9]+)/.S01E0$1/i' "$@"
+prename 's/[.]p(?:ar)?t[.]?([0-9]+)/.S01E0$1/i' "$@"
+prename 's/(s[0-9]+e[0-9]+)/\U$1/' "$@"
+
+prename 's/^nova/PBS.NOVA/i' "$@"
+prename 's/^horizon/BBC.Horizon/i' "$@"
+prename 's/^sciencenow/scienceNOW/i' "$@"
