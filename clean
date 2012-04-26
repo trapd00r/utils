@@ -1,5 +1,5 @@
 #!/bin/zsh
 setopt nullglob
 setopt extendedglob
-rm -vi **/*(rar|r[0-9][0-9]|sfv|md5|srt|txt)(#i)
-rm -rvi **/*(sample|subs|proof)(#i)
+rm -vi **/*.(rar|r[0-9][0-9]|sfv|md5|srt|txt)
+rm -rvi */([sS]ample|[sS]ubs|[pP]roof)
