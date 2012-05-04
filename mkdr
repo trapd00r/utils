@@ -2,9 +2,7 @@
 use strict;
 use warnings FATAL => 'all';
 use File::Copy;
-use File::LsColor       qw(ls_color);
 use File::Path          qw(make_path);
-use Term::ExtendedColor qw(:attributes);
 
 _mkdir(@ARGV);
 
@@ -18,11 +16,11 @@ sub _mkdir {
             printf("%50.50s => %s\n", $file, $new_dir);
           }
           else {
-            die fg(196, bold('ERROR')) . ": $@\n";
+            die "ERROR: $@\n";
           }
         }
         else {
-          die fg(124, 'WARNING') . ": $@\n";
+          die "WARNING: $@\n";
         }
       }
     }
