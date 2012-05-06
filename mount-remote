@@ -2,6 +2,7 @@
 
 mkdir -p $HOME/http
 
+sshfs -o allow_other n900:MyDocs/.sounds     $HOME/toburn
 sshfs -o allow_other xfloff.se:/             /mnt/floff
 sshfs -o allow_other laleh:/mnt/Books        /mnt/Books
 sshfs -o allow_other laleh:/mnt/Music_1      /mnt/Music_1
