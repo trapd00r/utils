@@ -7,6 +7,7 @@ my $attr = {
   bold          => 1,
   faint         => 2,
   italic        => 3,
+  bolditalic    => '1;3',
   underline     => 4,
   blink         => 5,
   blink_ms      => 6,
@@ -15,19 +16,7 @@ my $attr = {
   lookup        => 9,
 };
 
-for my $c(0..255) {
-  for my $tr(sort { $attr->{$a} <=> $attr->{$b} } keys %$attr) {
-    next if $tr =~ m/blink/;
-
-    printf("\e[38;5;%d;%dm%s\e[m\t",
-      $c, $attr->{$tr}, $tr, $c,
-    );
-    if($attr->{$tr} ==3) {
-      printf("\e[38;5;%d;%sm%s\e[m\t",
-        $c, '3;1',  'bolditalic', $c,
-      );
-    }
-  }
-  print "\n";
+for my $t( sort { $attr->{$a} cmp $attr->{$b} } keys(%{ $attr })) {
+  $t =~ /^blink/ and printf("%s\e[48;5;196;38;5;233;1;3mSKIPPING: SHOULD NEVER HAVE BEEN IMPLEMENTED\e[m\n", sprintf("%-10s", $t)), next;
+  printf("\e[$attr->{$t}m$t\e[m\n");
 }
-
