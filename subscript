@@ -1,0 +1,27 @@
+#!/usr/bin/perl
+use strict;
+use warnings FATAL => 'all';
+use vars qw($VERSION);
+
+my $APP  = 'subscript';
+$VERSION = '0.001';
+
+my $map = {
+  0 => '₀',  # 2080  SUBSCRIPT ZERO
+  1 => '₁',  # 2081  SUBSCRIPT ONE
+  2 => '₂',  # 2082  SUBSCRIPT TWO
+  3 => '₃',  # 2083  SUBSCRIPT THREE
+  4 => '₄',  # 2084  SUBSCRIPT FOUR
+  5 => '₅',  # 2085  SUBSCRIPT FIVE
+  6 => '₆',  # 2086  SUBSCRIPT SIX
+  7 => '₇',  # 2087  SUBSCRIPT SEVEN
+  8 => '₈',  # 2088  SUBSCRIPT EIGHT
+  9 => '₉',  # 2089  SUBSCRIPT NINE
+};
+
+my @input = <>;
+
+for my $int(keys(%{ $map })) {
+  map { s/$int/$map->{$int}/g; $_ } @input;
+}
+print @input;
