@@ -6,4 +6,4 @@ printf '\e]711;%s\a' \
 printf '\e]712;%s\a' \
   'xft:Lucida:style=Sans Italic:antialias=1:hinting=1:hintstyle=3:pixelsize=11'
 printf '\e]713;%s\a' \
-  'xft:Lucida:style=Sans Bold Italic:antialias=1:hinting=1:hintstyle=3:pixelsize=11'
+  '-erus-erusfont-bold-r-normal--11-80-100-100-c-60-iso10646-1'
