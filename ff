@@ -1,0 +1,8 @@
+#!/bin/sh
+
+find . -type f \
+  | sort \
+  | perl -MFile::LsColor=ls_color_internal -lne \
+  'if($_ =~ m{^([.]/)([^/]+)/(.+)}) {
+    printf "\e[1;3m$1\e[m\e[38;5;30m$2/\e[m%s\n", ls_color_internal($3)
+  }'
