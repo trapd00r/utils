@@ -6,4 +6,6 @@ printf '\e]711;%s\a' \
   'xft:Neep Alt:style=Bold SemiCondensed:pixelsize=11'
 printf '\e]712;%s\a' \
   '-misc-fixed-medium-r-normal--9-90-75-75-c-60-iso8859-1'
+printf '\e]713;%s\a' \
+  '-misc-fixed-medium-r-normal--7-70-75-75-c-50-koi8'
   #'-nil-profont-medium-r-normal--11-110-72-72-c-60-iso8859-1'
