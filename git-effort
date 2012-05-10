@@ -1,0 +1,22 @@
+#!/bin/sh
+
+files=$(git ls-files)
+
+printf "\e[4mcommits\e[m   \e[4mfile\e[m\n"
+
+for file in $files; do
+  commits=`git log --oneline $file | wc -l`
+  color='38;5;2;9;9'
+
+  test $commits -gt 10  && color='38;5;33;9;9'
+  test $commits -gt 25  && color='38;5;93;1;9'
+  test $commits -gt 50  && color='38;5;85;3;1'
+  test $commits -gt 100 && color='38;5;92;9;9'
+
+  commits="$(printf '%04d' $commits)"
+  commits="$(printf \\e\[${color}m%s\\e[m $commits)"
+
+  printf "  %s ┃ %.72s\n"  $commits "$(echo $file|ls_color_internal)" \
+    | perl -pe 's/^/   /'
+
+done | sort -rnk1 | perl -pe 's/0[^1-9]//g'
