@@ -1,0 +1,2 @@
+#!/usr/bin/perl
+warn "@ARGV\n";
