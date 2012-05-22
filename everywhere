@@ -15,10 +15,20 @@ while(my $l = <$fh>) {
 
 #close(STDERR) or die "cant close STDERR: $!\n";
 for my $h(sort(@hosts)) {
-  print STDERR sprintf "%-10s ", $h;
+  if(-t STDOUT) {
+    print STDERR sprintf "%-10s ", $h;
+  }
+  else {
+    printf "%-10s ", $h unless $h =~ m/xfloff/;
+  }
   system('ssh', '-o', 'ConnectTimeout=2', $h, $command);
 }
-print STDERR sprintf "%-10s ", $ENV{HOSTNAME};
+if(-t STDOUT) {
+  print STDERR sprintf "%-10s ", $ENV{HOSTNAME};
+}
+else {
+  printf "%-10s ", $ENV{HOSTNAME};
+}
 system($command);
 
 END {
