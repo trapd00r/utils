@@ -16,7 +16,7 @@ while(my $l = <$fh>) {
 #close(STDERR) or die "cant close STDERR: $!\n";
 for my $h(sort(@hosts)) {
   print STDERR sprintf "%-10s ", $h;
-  system('ssh', $h, $command);
+  system('ssh', '-o', 'ConnectTimeout=2', $h, $command);
 }
 print STDERR sprintf "%-10s ", $ENV{HOSTNAME};
 system($command);
