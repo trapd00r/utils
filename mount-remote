@@ -2,11 +2,9 @@
 
 mkdir -p $HOME/http
 
-sshfs -o allow_other n900:MyDocs/.sounds     $HOME/toburn
-sshfs -o allow_other xfloff.se:/             /mnt/floff
 sshfs -o allow_other laleh:/mnt/Books        /mnt/Books
 sshfs -o allow_other laleh:/mnt/Music_1      /mnt/Music_1
-sshfs -o allow_other laleh:/mnt/Music_2      /mnt/Music_2
+#sshfs -o allow_other laleh:/mnt/Music_2      /mnt/Music_2
 sshfs -o allow_other laleh:/mnt/Music_3      /mnt/Music_3
 sshfs -o allow_other laleh:/mnt/Music_4      /mnt/Music_4
 sshfs -o allow_other laleh:/mnt/Music_5      /mnt/Music_5
@@ -20,9 +18,12 @@ sshfs -o allow_other rambo:/mnt/Games_2      /mnt/Games_2
 sshfs -o allow_other rambo:/mnt/Movies_1     /mnt/Movies_1
 sshfs -o allow_other rambo:/mnt/Movies_2     /mnt/Movies_2
 sshfs -o allow_other rambo:/mnt/Movies_3     /mnt/Movies_3
-sshfs -o allow_other rambo:/mnt/Movies_4     /mnt/Movies_4
 sshfs -o allow_other rambo:/mnt/Mvids        /mnt/Mvids
 sshfs -o allow_other rambo:/mnt/TV_1         /mnt/TV_1
 sshfs -o allow_other rambo:/mnt/TV_2         /mnt/TV_2
 sshfs -o allow_other rambo:/mnt/TV_3         /mnt/TV_3
 sshfs -o allow_other rambo:/mnt/TV_4         /mnt/TV_4
+sshfs -o allow_other rambo:/mnt/TV_5         /mnt/TV_5
+
+sshfs -o allow_other xfloff.se:/             /mnt/floff
+sshfs -o allow_other n900:MyDocs/.sounds     $HOME/toburn
