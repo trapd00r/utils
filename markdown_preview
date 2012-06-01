@@ -1,7 +1,10 @@
 #!/usr/bin/perl
-use strict;
+#use strict;
 use Text::Markdown qw(markdown);
 use File::Temp     qw(tempfile);
+use utf8;
+use open qw(:std :utf8);
+
 
 my($fh, $file) = tempfile('markdown_previewXXXX', SUFFIX => '.html');
 print $fh markdown(do { local $/; <> });
