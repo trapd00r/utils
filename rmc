@@ -1,0 +1,7 @@
+#!/bin/sh
+
+/bin/rm -vr "$@" \
+  | sort \
+  | perl -MFile::LsColor=ls_color_internal -lne '
+    s/removed `(.+).$/"\e[48;5;160;38;5;232;1;7m R \e[m " . ls_color_internal($1)/e;
+    print'
