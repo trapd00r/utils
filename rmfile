@@ -1,6 +1,13 @@
 #!/usr/bin/perl
 # there's rmdir but no rmfile...
+use strict;
+use warnings FATAL => 'all';
+use File::LsColor;
 
-for(grep{ -f $_ and $_ } @ARGV) {
-  unlink $_ and printf("removed '%s'\n", $_)
+for(grep { -f $_ } @ARGV) {
+  printf "%s %s\n", 
+    (unlink $_)
+      ? "removed"
+      : "W: $_ - $!",
+    "'" . File::LsColor::ls_color_internal($_) . "'";
 }
