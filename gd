@@ -4,7 +4,7 @@ use strict;
 use Syntax::Highlight::Engine::Kate;
 use Term::ExtendedColor qw(:attributes);
 
-delete($ENV{PAGER});
+local $ENV{GIT_PAGER} = '';
 open(my $popen, '-|', qq{git diff @ARGV}) or die($!);
 chomp(my @input = <$popen>);
 
