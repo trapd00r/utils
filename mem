@@ -2,15 +2,15 @@
 import sys, os, string
 
 if os.geteuid() != 0:
-    sys.stderr.write("Sorry, root permission required.\n");
-    sys.exit(1)
+  sys.stderr.write("Values might not be currect, try running me as root.\n");
+#    sys.exit(1)
 
 PAGESIZE=os.sysconf("SC_PAGE_SIZE")/1024 #KiB
 our_pid=os.getpid()
 
 #(major,minor,release)
 def kernel_ver():
-    return '2.6.37'
+    return '3.1.1'
     #kv=open("/proc/sys/kernel/osrelease").readline().split(".")[:2]
     #for char in "-_":
     #    kv[2]=kv[2].split(char)[0]
