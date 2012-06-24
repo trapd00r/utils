@@ -1,8 +1,11 @@
 #!/usr/bin/perl
 # absname
 # you can't trust $PWD in linux
+use strict;
+use warnings FATAL => 'all';
 use encoding 'utf8';
 use open qw(:std :utf8);
 use utf8;
 use Cwd qw(getcwd);
-print map { my $cwd = getcwd(); -e "$cwd/$_" ? "$cwd/$_\n" : "$_\n" } @ARGV;
+my $cwd = getcwd();
+print map { -e "$cwd/$_" ? "$cwd/$_\n" : "$_\n" } @ARGV;
