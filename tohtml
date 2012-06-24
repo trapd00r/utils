@@ -1,3 +1,5 @@
-#!/bin/bash
+#!/bin/sh
 #tohtml
-vim $@ -c TOhtml -c :w -c :q! -c :q!
+for f in $@; do 
+  wim "$f" -c TOhtml -c :w -c :q! -c :q!
+done
