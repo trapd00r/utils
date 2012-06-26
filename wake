@@ -11,7 +11,7 @@ use File::LsColor qw(ls_color);
 use File::Find::Rule;
 
 
-my $remote_host   = '192.168.1.128';
+my $remote_host   = 'laleh';
 my $remote_port   = '19217';
 my $remote_user   = 'scp1';
 my $remote_dest   = 'http/japh.se/devel';
