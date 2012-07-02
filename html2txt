@@ -14,7 +14,7 @@ use File::Which ();
 
 my @browsers = map { ucfirst $_ } (
   $ENV{TERM} eq 'linux'
-    ? File::Which::which('html2text') ? 'html2text' : ((), qw(w3m lynx links))
+    ? File::Which::which('html2text') ? 'html2text' : ((), qw(lynx w3m links))
     : qw(w3m lynx links elinks)
 );
 
