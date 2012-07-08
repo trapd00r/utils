@@ -1,29 +1,52 @@
-#!/bin/sh
+#!/bin/zsh
+# vim: ft=sh:
 
 mkdir -p $HOME/http
 
-sshfs -o allow_other laleh:/mnt/Books        /mnt/Books
-sshfs -o allow_other laleh:/mnt/Music_1      /mnt/Music_1
-#sshfs -o allow_other laleh:/mnt/Music_2      /mnt/Music_2
-sshfs -o allow_other laleh:/mnt/Music_3      /mnt/Music_3
-sshfs -o allow_other laleh:/mnt/Music_4      /mnt/Music_4
-sshfs -o allow_other laleh:/mnt/Music_5      /mnt/Music_5
-sshfs -o allow_other laleh:/mnt/Music_6      /mnt/Music_6
-sshfs -o allow_other laleh:/mnt/Music_7      /mnt/Music_7
-sshfs -o allow_other laleh:/var/log/lighttpd /mnt/httpd
-sshfs -o allow_other laleh:http              $HOME/http
-sshfs -o allow_other laleh:irclogs           /mnt/irclogs
-sshfs -o allow_other rambo:/mnt/Games_1      /mnt/Games_1
-sshfs -o allow_other rambo:/mnt/Games_2      /mnt/Games_2
-sshfs -o allow_other rambo:/mnt/Movies_1     /mnt/Movies_1
-sshfs -o allow_other rambo:/mnt/Movies_2     /mnt/Movies_2
-sshfs -o allow_other rambo:/mnt/Movies_3     /mnt/Movies_3
-sshfs -o allow_other rambo:/mnt/Mvids        /mnt/Mvids
-sshfs -o allow_other rambo:/mnt/TV_1         /mnt/TV_1
-sshfs -o allow_other rambo:/mnt/TV_2         /mnt/TV_2
-sshfs -o allow_other rambo:/mnt/TV_3         /mnt/TV_3
-sshfs -o allow_other rambo:/mnt/TV_4         /mnt/TV_4
-sshfs -o allow_other rambo:/mnt/TV_5         /mnt/TV_5
+for drive in /mnt/{Music_{1..7},Books}
+do
+  fusermount -u $drive &> /dev/null
+  sshfs -s -C \
+    -o workaround=all         \
+    -o allow_root             \
+    -o reconnect              \
+    -o cache_timeout=8        \
+    -o cache_timeout=8        \
+    -o transform_symlinks     \
+    -o follow_symlinks        \
+    -o default_permissions    \
+    -o hard_remove            \
+    -o direct_io              \
+    -o umask=0077             \
+    -o uid=1000               \
+    -o sync_read              \
+  laleh:${drive} ${drive}
+done
+for drive in /mnt/Games_{1..2} /mnt/TV_{1,2,3,4} /mnt/Movies_{1,2,3,4}
+do
+  fusermount -u $drive &> /dev/null
+  sshfs -s -C \
+    -o workaround=all         \
+    -o allow_root             \
+    -o reconnect              \
+    -o cache_timeout=8        \
+    -o cache_timeout=8        \
+    -o transform_symlinks     \
+    -o follow_symlinks        \
+    -o default_permissions    \
+    -o hard_remove            \
+    -o direct_io              \
+    -o umask=0077             \
+    -o uid=1000               \
+    -o sync_read              \
+  rambo:${drive} ${drive}
+done
 
-sshfs -o allow_other xfloff.se:/             /mnt/floff
-sshfs -o allow_other n900:MyDocs/.sounds     $HOME/toburn
+fusermount -u /mnt/n900 &> /dev/null
+fusermount -u /mnt/n950 &> /dev/null
+sshfs -s -C -o reconnect n900:/ /mnt/n900
+sshfs -s -C -o reconnect n950:/ /mnt/n950
+sshfs -s -C -o reconnect $HOME/.CD n900:MyDocs/.sounds
+sshfs -s -C -o reconnect rambo:/mnt/Mvids /mnt/Mvids
+sshfs -s -C -o reconnect india:/ /mnt/india
+sshfs -s -C -o reconnect xfloff.se:/ /mnt/floff
