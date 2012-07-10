@@ -1,1 +1,2 @@
+#!/bin/sh
 mpc --format "%artist% - %title%" | head -1 | perl -pe 's/[åä]/a/gi; s/[ö]/o/gi'
