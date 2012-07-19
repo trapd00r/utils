@@ -7,7 +7,7 @@ if( (!-d $dir) && (-f $dir) ) {
 }
 else {
   $dir = '.';
-  print "Searching for *.{mp4,flv,webm}\n";
+  print "Searching for *.{mp4,flv,webm,avi}\n";
   flac_it( (glob("$dir/*.mp4"), glob("$dir/*.flv"), glob("$dir/*.webm")) );
 }
 
