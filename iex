@@ -235,7 +235,7 @@ if [ -f "$HOME/.iexrc" ]; then
 else
     EX_IEXRC="NONE"
 fi
-EX_COMPATIBLE="$true"
+EX_COMPATIBLE=""
 EX_NOPLUGIN="$true"
 EX_VIMINFO=NONE
 EX_QUIET="$false"
