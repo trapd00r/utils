@@ -1,5 +1,17 @@
 #!/bin/sh
 printf '\e[?7t'
 ps aux | sort -k3 | tail -40 |
-  perl -e '@_=<>; for(@_){ print if /^USER/ } print for reverse grep{!/^USER/} @_'
+  perl -e '
+    @_=<>;
+    $sum = 0;
+    for(@_) {
+      $user = m/^(\w+)/;
+      $sum  = 0;
+      for my $c(split(//, $user)) {
+        $sum += ord $c;
+      }
+      print if /^USER/;
+    }
+    print for reverse grep { ! /^USER/ } @_
+    ';
 printf '\e[?7t'
