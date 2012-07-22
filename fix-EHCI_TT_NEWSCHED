@@ -1,0 +1,11 @@
+#!/bin/sh
+## Enable CONFIG_USB_EHCI_TT_NEWSCHED and recompile
+##
+##    -> Device Drivers
+##      -> USB support
+##        -> Support for Host-side USB
+##          -> EHCI HCD (USB 2.0) support
+##
+## As a temporary fix, this script should work
+
+echo 64 > /sys/block/sdn/device/max_sectors && mount -a
