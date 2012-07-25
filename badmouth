@@ -1,0 +1,63 @@
+#!/usr/bin/perl
+use strict;
+use v5.12;
+use Cwd            qw(abs_path);
+use Regexp::Common qw(profanity);
+use File::LsColor  ();
+use Data::Dumper;
+{
+  package Data::Dumper;
+  no strict 'vars';
+  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
+  $Quotekeys = 0;
+}
+
+use feature qw(switch);
+
+$0 = basename($0);
+
+{
+  warn "hm.\n";
+  eval {
+    use autodie;
+    open(my $fh, '|-',  'ls_color_internal');
+    print "hello.pl";
+    close($fh);
+    open(my $fh, '-|',  'ls_color_internal');
+
+  };
+  given ($@) {
+    when (undef)   { select STDOUT; say "No error";                    }
+    when ('open')  {  say "Error from open()\n  $@";             }
+    when (':io')   {  say "Non-open, IO error.";         }
+    when (':all')  {  say "All other autodie errors."    }
+    default        {  select STDOUT; say "  it is better to die() than to return() in failure"  }
+  }
+
+  select STDOUT;
+}
+
+*ls = *File::LsColor::ls_color_internal;
+my $stats = { };
+
+@ARGV = '-' unless @ARGV;
+
+if($ARGV[0] eq '-') {
+  while(<>) {
+    m/($RE{profanity})/ and print "$.: $1\n";
+  }
+}
+else {
+  for my $f(@ARGV) {
+    open my $fh, '<', $f or next;
+    for my $line(<$fh>) {
+      if($line =~ m,($RE{profanity}),i) {
+      push( @{ $stats->{$1} }, $f);
+        printf "%s:%-5d %s\n",
+          ls(sprintf("%20s", $f)), $., $1;
+      }
+    }
+  }
+}
+
+print Dumper $stats;
