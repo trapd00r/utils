@@ -1,0 +1,2 @@
+#!/bin/sh
+mplayer http://sverigesradio.se/topsy/direkt/179-hi.mp3
