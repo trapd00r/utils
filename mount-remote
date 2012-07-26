@@ -1,45 +1,55 @@
 #!/bin/zsh
-# vim: ft=sh:
 
 mkdir -p $HOME/http
-
 
 for drive in /mnt/{Music_{1..7},Books}
 do
   echo
-  fusermount -q -u $drive #&> /dev/null
+  fusermount -q -u $drive &> /dev/null
   sshfs \
     -o workaround=all         \
     -o allow_root             \
     -o reconnect              \
     -o hard_remove            \
     -o direct_io              \
+    -o sync_read              \
     -o umask=0077             \
     -o uid=1000               \
     -o gid=100                \
-  laleh:${drive} ${drive}
+    -o cache=0                \
+    -o kernel_cache=0         \
+    -o noauto_cache           \
+    -o from_code=UTF-8        \
+    -o to_code=UTF-8          \
+    laleh:${drive} ${drive}
 done
 #    -o default_permissions    \
 
-for drive in /mnt/Games_{1..2} /mnt/TV_{1,2,3,4} /mnt/Movies_{1,2,3,4}
-do
-  fusermount -q -u $drive # &> /dev/null
-  sshfs \
-    -o workaround=all         \
-    -o allow_root             \
-    -o reconnect              \
-    -o umask=0077             \
-    -o uid=1000               \
-    -o gid=100                \
-    -o sync_read              \
-  rambo:${drive} ${drive}
-done
+  for drive in /mnt/Games_{1..2} /mnt/TV_{1,2,3,4} /mnt/Movies_{1,2,3,4}
+  do
+    fusermount -q -u $drive &> /dev/null
+    sshfs \
+      -o workaround=all         \
+      -o allow_root             \
+      -o reconnect              \
+      -o umask=0077             \
+      -o uid=1000               \
+      -o gid=100                \
+      -o sync_read              \
+      -o cache=0                \
+      -o kernel_cache=0         \
+      -o noauto_cache           \
+      -o from_code=UTF-8        \
+      -o to_code=UTF-8          \
+      rambo:${drive} ${drive}
+  done
 
-fusermount -u /mnt/n900 &> /dev/null
-fusermount -u /mnt/n950 &> /dev/null
-sshfs C -o reconnect,allow_other,allow_root n900:/ /mnt/n900
-sshfs C -o reconnect,allow_other,allow_root n950:/ /mnt/n950
-sshfs C -o reconnect,allow_other,allow_root $HOME/.CD n900:MyDocs/.sounds
-sshfs C -o reconnect,allow_other,allow_root rambo:/mnt/Mvids /mnt/Mvids
-sshfs C -o reconnect,allow_other,allow_root india:/ /mnt/india
-sshfs C -o reconnect,allow_other,allow_root xfloff.se:/ /mnt/floff
+  fusermount -u /mnt/n900 &> /dev/null
+  fusermount -u /mnt/n950 &> /dev/null
+
+  sshfs -o reconnect,allow_other workaround=all n900:/           /mnt/n900
+  sshfs -o reconnect,allow_other workaround=all n950:/           /mnt/n950
+  sshfs -o reconnect,allow_other workaround=all rambo:/mnt/Mvids /mnt/Mvids
+  sshfs -o reconnect,allow_other workaround=all india:/          /mnt/india
+  sshfs -o reconnect,allow_other workaround=all laleh:http       $HOME/http
+  sshfs -o reconnect,allow_other workaround=all xfloff.se:/      /mnt/floff
