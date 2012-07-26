@@ -1,0 +1,7 @@
+#!/bin/zsh
+find . -type f -iname '*.zip' -print0 \
+  | xargs -L1 -0  unzip -j -o -C
+yes|unrarec
+yes|clean
+
+chmod a-x og-w  **/*(.)
