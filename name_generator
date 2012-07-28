@@ -3,20 +3,33 @@ use strict;
 
 my @words;
 for my $list(
-  '/usr/share/dict/cracklib-small',
-  "$ENV{XDG_DOCUMENTS_DIR}/wordlists/big",
+  qw(/usr/share/dict/cracklib-small/),
+  "$ENV{XDG_DOCUMENTS_DIR}/wordlists/oz.txt",
+  "$ENV{XDG_DOCUMENTS_DIR}/wordlists/names.txt",
+  "$ENV{XDG_DOCUMENTS_DIR}/wordlists/names-female.txt",
+  "$ENV{XDG_DOCUMENTS_DIR}/wordlists/norskeskitlisten.txt",
+  "$ENV{XDG_DOCUMENTS_DIR}/wordlists/firstup.txt",
+  "$ENV{XDG_DOCUMENTS_DIR}/wordlists/unabbr.txt",
+  "$ENV{XDG_DOCUMENTS_DIR}/wordlists/swedish-365k.txt",
+  "$ENV{XDG_DOCUMENTS_DIR}/wordlists/dict-0294.txt",
+  "$ENV{XDG_DOCUMENTS_DIR}/wordlists/english-106k.txt",
+  "$ENV{XDG_DOCUMENTS_DIR}/wordlists/tech-jargon.txt",
 ) {
   open(my $fh, '<', $list) or next;
   push(@words, <$fh>);
 }
-#open(my $fh, '<', '/usr/share/dict/cracklib-small') or die($!);
-##open(my $fh, '<', '/home/scp1/doc/wordlist_swedish.txt');
-##open(my $fh, '<', "$ENV{HOME}/usr/share/doc/wordlists/big") or die($!);
-my @words = grep{ (length($_) > 4) && lc(chomp($_)) } @words;
+my @words = grep{ length $_ > 4 and length $_ < 12 && lc chomp $_ } @words;
 
 my $re = shift;
 
-for my $w( sort{ length($a) <=> length($b) } grep{ m/$re/ } @words) {
-  print "$w\n";
+my $i = 0;
+my $seen = 0;
+for my $w( sort{ length($b) <=> length($a) } grep{ m/$re/ } @words) {
+  printf " %s %15s  %s\n",
+    ( length $w < $seen )
+      ? sprintf "%2d %s ", length $w, $w
+      : sprintf "%2s %s ", ' ', $w,,
+      $w;
+  $seen = length $w;
 }
-
+print "\n";
