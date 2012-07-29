@@ -1,0 +1,30 @@
+#!/bin/zsh
+# vim: set ft=sh:
+#                  LiMPDeg
+#      injects n moldy playlists in mpd
+#   ‗‗‗‗‗‗‗‗‗‗‗‗ ‗‗‗‗‗‗ ‗‗‗‗‗‗‗‗ ‗‗‗‗‗‗‗‗‗‗‗
+#         author Magnus Woldrich <m@japh.se>
+#         btime  2012-07-28 23:12:49
+#         mtime  2012-07-28 23:52:26
+#           git  http://github.com/trapd00r/utils/   (up-to-date)
+#           url  http://devel.japh.se/utils/limpdeg
+#           irc  japh@freenode #zsh #vim #perl
+#   ‗‗‗‗‗‗‗‗‗‗‗‗ ‗‗‗‗‗‗‗‗‗‗‗‗‗ ‗‗‗‗ ‗‗‗‗ ‗‗‗‗
+
+mpd_music_dir=/mnt/Music_1
+  mpd_pls_dir=${mpd_music_dir}/Playlists
+
+random_source=/dev/urandom
+#[ -c /dev/input/by-id/usb-HP_HP_Wireless_Keyboard_Kit-event-kbd ] && \
+#[ -r /dev/input/by-id/usb-HP_HP_Wireless_Keyboard_Kit-event-kbd ] && \
+[ -c /dev/input/event3 ] && [ -r /dev/input/event3 ] && \
+  random_source=/dev/input/by-id/usb-HP_HP_Wireless_Keyboard_Kit-event-kbd
+
+#warn "using ${random_source} as random source\n"
+
+setopt extendedglob nonomatch nullglob
+print -P -C1 \
+  ${mpd_pls_dir}/**/*.{m3u,pls,playlist}(#i)(.-MNOamM+6:t)   \
+  | sort --parallel 8 --random-source ${random_source} -u -R \
+  | head -15 \
+  | mpc load
