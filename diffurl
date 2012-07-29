@@ -1,0 +1,4 @@
+#!/bin/zsh
+$EDITOR -dMN \
+  -c 'windo set fen dip& dip+=foldcolumn:1,vertical scb' \
+  -dMN <(curl -s "$1") <(curl -s "$2")
