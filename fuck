@@ -1,0 +1,9 @@
+#!/bin/zsh
+# vim: ft=sh:
+
+setopt extendedglob nonomatch nullglob
+date
+=feh -FZrGdD.98 \
+  --quiet --draw-tinted --action "cp -v '%f' /mnt/Porn_3/_" \
+  /mnt/Porn_{2,3}/{_*,.new,pix} \
+  && date
