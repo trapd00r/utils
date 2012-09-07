@@ -1,0 +1,72 @@
+#!/bin/sh
+# vim: ft=sh:
+
+ossmix -qd0 vmix0-channels                Multich
+ossmix -qd0 vmix0-src                     OFF
+ossmix -qd0 vmix0-enable                  ON
+ossmix -qd0 vmix0-invol                   0.0
+ossmix -qd0 vmix0-outvol                  25.0
+ossmix -qd0 vmix0.pcm8                    21.6:21.6
+ossmix -qd0 vmix0.pcm9                    18.3:18.3
+ossmix -qd0 vmix0.pcm10                   16.9:16.9
+ossmix -qd0 vmix0.pcm11                   21.0:21.0
+
+ossmix -qd0 jack.green.front              63.9:63.9
+ossmix -qd0 jack.green.mode               front
+
+ossmix -qd0 jack.black.mode               rear
+ossmix -qd0 jack.blue.mode                input
+ossmix -qd0 jack.fp-green.mode            rear
+ossmix -qd0 jack.fp-pink.mode             front
+ossmix -qd0 jack.orange.mode              center/LFE
+ossmix -qd0 jack.pink.mode                front
+
+ossmix -qd0 misc.input-mix                linein
+ossmix -qd0 misc.pcm42                    input-mix
+ossmix -qd0 misc.side2                    side
+
+ossmix -qd0 jack.black.rear               0.0:0.0
+ossmix -qd0 jack.orange.center/lfe        0.0:0.0
+ossmix -qd0 misc.center/lfe               0.0:0.0
+ossmix -qd0 misc.fp-headphone             0.0:0.0
+ossmix -qd0 misc.fp-mic                   0.0:0.0
+ossmix -qd0 misc.front                    0.0:0.0
+ossmix -qd0 misc.linein                   0.0:0.0
+ossmix -qd0 misc.mic                      0.0:0.0
+ossmix -qd0 misc.pcm41                    0.0:0.0
+ossmix -qd0 misc.rear                     0.0:0.0
+ossmix -qd0 misc.side1                    0.0:0.0
+
+ossmix -qd0 jack.black.input-mix-mute     ON
+ossmix -qd0 jack.black.mute               OFF
+ossmix -qd0 jack.black.rear-mute          ON
+ossmix -qd0 jack.blue.mute                ON
+ossmix -qd0 jack.fp-green.mute            ON
+ossmix -qd0 jack.fp-pink.mute             ON
+ossmix -qd0 jack.green.front-mute         OFF
+ossmix -qd0 jack.green.input-mix-mute     ON
+ossmix -qd0 jack.green.mute               OFF
+ossmix -qd0 jack.orange.center/lfe-mute   ON
+ossmix -qd0 jack.orange.input-mix-mute    ON
+ossmix -qd0 jack.orange.mute              OFF
+ossmix -qd0 jack.pink.mute                ON
+ossmix -qd0 misc.input-mix-mute1          ON
+ossmix -qd0 misc.input-mix-mute2          ON
+ossmix -qd0 misc.pcm4-mute                ON
+ossmix -qd0 misc.side-mute                ON
+ossmix -qd0 record.mix.mute.center/lfe1   OFF
+ossmix -qd0 record.mix.mute.center/lfe2   OFF
+ossmix -qd0 record.mix.mute.fp-headphone1 OFF
+ossmix -qd0 record.mix.mute.fp-headphone2 OFF
+ossmix -qd0 record.mix.mute.fp-mic1       OFF
+ossmix -qd0 record.mix.mute.fp-mic2       OFF
+ossmix -qd0 record.mix.mute.front1        OFF
+ossmix -qd0 record.mix.mute.front2        OFF
+ossmix -qd0 record.mix.mute.input-mix1    OFF
+ossmix -qd0 record.mix.mute.input-mix2    OFF
+ossmix -qd0 record.mix.mute.linein1       OFF
+ossmix -qd0 record.mix.mute.linein2       OFF
+ossmix -qd0 record.mix.mute.mic1          OFF
+ossmix -qd0 record.mix.mute.mic2          OFF
+ossmix -qd0 record.mix.mute.rear1         OFF
+ossmix -qd0 record.mix.mute.rear2         OFF
