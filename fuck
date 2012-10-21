@@ -1,9 +1,12 @@
 #!/bin/zsh
-# vim: ft=sh:
+# vim: ft=sh et sw=2 list:
 
 setopt extendedglob nonomatch nullglob
 date
-=feh -FZrGdD.98 \
-  --quiet --draw-tinted --action "cp -v '%f' /mnt/Porn_3/_" \
-  /mnt/Porn_{2,3}/{_*,.new,pix} \
+
+# =feh -r -xd -B black -ZD3 -g 1920x1080 -r  --action "cp -v '%f' /home/scp1/_" .
+
+=feh -FZrGdD2.98 -g 1080x1920 \
+  --quiet --draw-tinted --action "cp -v '%f' ~/_" \
+  /mnt/porn*/{.00*,pix} \
   && date
