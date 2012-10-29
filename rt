@@ -1,0 +1,16 @@
+#!/bin/sh
+# vim: ft=sh:
+export RT_SOCKET=${HOME}/var/rtorrent/scgi
+test -S $RT_SOCKET \
+  && lsof $RT_SOCKET > /dev/null \
+  && { echo "rTorrent already running pal"; exit 1; }
+test ! -e $RT_SOCKET || rm $RT_SOCKET
+
+_at_exit() {
+  test -z "$TMUX" || tmux set-w automatic-rename on # >/dev/null
+  stty sane
+  test ! -e $RT_SOCKET || rm $RT_SOCKET
+}
+trap _at_exit INT TERM EXIT
+
+rtorrent -n -o import=$HOME/etc/rtorrent.rc
