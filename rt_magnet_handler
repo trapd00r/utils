@@ -1,0 +1,10 @@
+#!/bin/bash
+# vim: ft=sh:
+# :o about:config
+# create a new boolean:
+#   network.protocol-handler.expose.magnet = false
+watch_folder=/mnt/porn5/.torrents
+cd $watch_folder || exit 1
+[[ "$1" =~ xt=urn:btih:([^&/]+) ]] || exit;
+echo "d10:magnet-uri${#1}:${1}e" >> "meta-${BASH_REMATCH[1]}.torrent"
+ratpoison -c "echo '${BASH_REMATCH[1]}  ${watch_folder}'"
