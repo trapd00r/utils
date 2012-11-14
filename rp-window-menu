@@ -1,0 +1,38 @@
+#!/bin/bash
+# vim: ft=sh smc=78 et sw=2:
+
+# Lets you switch between all windows in a way that minimizes keystrokes.
+
+# Two ways to order:
+# - If order=last, the windows are listed in the order that
+#   you last visited them in.
+# - If order=sequential, the windows are listed in number order.
+order=last
+
+# Yes, bash is really necessary, because it's version of printf makes this
+# script possible.  Regular bourne shell printf does NOT.
+
+window_index_str=$(ratpoison -c "info" | sed 's/^.*\([0-9]\)(.*$/\1/')
+if [ "$window_index_str" = "No window." ]; then
+    group_index=$($HOME/.ratpoison/workspace current)
+    ratmenu -style snazzy -fg #ff00dd -bg #000000 "No windows in group $group_index" /bin/true
+else
+    ratpoison -c "echo $window_index_str"
+    echo "$window_index_str">/tmp/log
+    window_index=$[ $window_index_str + 1 ]
+    if [ $order = sequential ]; then
+        ( printf "ratmenu -style dreary -fg orange -bg black -io $window_index \
+          \"Grab one\" /bin/true";
+          ratpoison -c "windows %n %n %t" | sort -n | while read w x z; do
+            a=$(printf "%3q" $x); b="ratpoison -c \"select $x\"";
+            printf " %q\\ %q %q"  "$a" "$z" "$b";
+          done; echo \;) | sh
+    elif [ $order = last ]; then
+        ( printf "ratmenu -style dreary -fg black -bg orange -io $window_index \
+          \"\n\" /bin/true";
+          ratpoison -c "windows %l %n %t" | sort -rn | while read w x z; do
+            a=$(printf "%3q" $x); b="ratpoison -c \"select $x\"";
+            printf " %q\\ %q %q"  "$a" "$z" "$b";
+          done; echo \;) | sh
+    fi
+fi
