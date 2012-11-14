@@ -39,7 +39,8 @@ sub rm {
     }
   }
   if(unlink($file)) {
-    printf("removed '%s'\n", $file);
+    printf("\n » \e[38;5;196;1mremoved '%s'\e[m\n\n", $file);
+    system('ratpoison', '-c', "echo $file deleted.");
   }
   else {
     warn "Could not unlink $file: $!\n";
