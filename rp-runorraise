@@ -1,0 +1,14 @@
+#!/usr/bin/perl
+# vim: ft=perl et sw=2 cc=+1 smc=80:
+my ($class, $command) = @ARGV;
+die "Usage: $0 windowclassname [ command ]"
+  unless defined $class and $class =~ /\w/i;
+$command ||= lc $class;
+my @windows = sort { $b->[1] <=> $a->[1] } 
+map { [split /\\000/] } 
+grep { /^$class\\000/i } 
+split /\n/, `ratpoison -c "windows %c\\000%l\\000%n"`;
+exec $command unless scalar @windows;
+my $current = `ratpoison -c "info %n"`;
+shift @windows if $windows[0]->[2] == $current;
+exec "ratpoison -c 'select $windows[0]->[2]'";
