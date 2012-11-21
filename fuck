@@ -5,8 +5,11 @@ setopt extendedglob nonomatch nullglob
 date
 
 # =feh -r -xd -B black -ZD3 -g 1920x1080 -r  --action "cp -v '%f' /home/scp1/_" .
+#
 
-=feh -FZrGdD2.98 -g 1080x1920 \
+
+
+=feh -FZrGdD2.48 -g1080x1920 \
   --quiet --draw-tinted --action "cp -v '%f' ~/_" \
-  /mnt/porn*/{.00*,pix} \
+  /mnt/erotica/(#a1i){.00,pix} \
   && date
