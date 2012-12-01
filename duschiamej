@@ -1,12 +1,16 @@
 #!/bin/sh
-# vim: ft=zsh et sw=2:
+# vim: ft=sh et sw=2 smc=80 cc=:
 
-# FIXME - stty hack
-LINES=90
-dush  -mfdcsn $(($LINES/4)) "$@" 2>&1 \
-  | awk '
+where="${@:-.}"
+printf '\033[?7l'
+
+# hi, I was going to explain why the abuse of the %d format specifier for the
+# first column is not a bug, but there's pie in the kitchen that needs to be
+# eaten and you, you could need some exercise
+dush  -mfdcsn $(($(stty size|awk '{print $1}') / 2)) $where 2>&1 \
+  | awk -F: '
   {
-    gsub(/:$/, "", $1);
-    printf("% 6d \033[1m% 1s\033[m \033[1m%s\033[m\n", $2, $3, $1 )
+    printf("\033[38;5;202m% 6d\033[38;5;241mMB\033[m \033[38;5;86;4m% 1s\033[m \033[38;5;30m%s\033[m\n", $2, "-", $1 )
   }
 '
+printf '\033[?7h'
