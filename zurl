@@ -294,7 +294,7 @@ export PASTETERMINAL="${PASTETERMINAL:-termite}"
 export IMAGEOPENER="${IMAGEOPENER:-feh}"
 [[ -z "$PASTEEXEC" && "$PASTETERMINAL" == "termite" ]] && export PASTEEXEC="-e"
 [[ -z "$GIFARGS" ]] && export GIFARGS="-loop 0 -speed 1"
-[[ -z "$IMAGEARGS" && "$IMAGEOPENER" == "feh" ]] && export IMAGEARGS="--scale-down"
+[[ -z "$IMAGEARGS" && "$IMAGEOPENER" == "feh" ]] && export IMAGEARGS="-F -Z -B black -g 1080x1920"
 [[ -z "$YOUTUBEARGS" ]] && export YOUTUBEARGS="-loop 0 -speed 1"
 [[ -z "$PASTEARGS" ]] && export PASTEARGS="--servername $SERVERNAME"
 [[ -z "$OPENEDPASTEARGS" ]] && export OPENEDPASTEARGS="$PASTEARGS --remote-tab-silent"
@@ -337,7 +337,7 @@ case "$filetypeis" in
                     ;;
             *)
                 zcurl "$1" > "${ZURLDIR%/}/$val"
-                (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" "${(e)IMAGEARGS}" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$1"
+                (( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" " ${(e)IMAGEARGS}" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$1"
                 ;;
         esac
         ;;
