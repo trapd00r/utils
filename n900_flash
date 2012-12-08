@@ -1,14 +1,14 @@
 #!/bin/sh
 
-# It's VERY important to flash the eMMC first, remove the battery for a moment
-# and then flash the rootfs image!
-# Do NOT UNDER ANY CIRCUMSTANCES USE THE -R FLAG!
-
 # latest eMMC:
 # http://tablets-dev.nokia.com/nokia_N900.php?f=RX-51_2009SE_10.2010.13-2.VANILLA_PR_EMMC_MR0_ARM.bin
 
 # latest Maemo 5 release:
+# http://tablets-dev.nokia.com/nokia_N900.php?f=RX-51_2009SE_20.2010.36-2_PR_COMBINED_MR0_ARM.bin
 # http://tablets-dev.nokia.com/nokia_N900.php?f=RX-51_2009SE_3.2010.02-8_PR_COMBINED_MR0_ARM.bin
+
+# flasher:
+# http://tablets-dev.nokia.com/maemo-dev-env-downloads.php?f=maemo_flasher-3.5_2.5.2.2.tar.gz
 
 # XXX WARNING:
 # Using this approach results in the n900 not finding any cellular networks.
