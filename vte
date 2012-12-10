@@ -1,3 +1,36 @@
 #!/bin/sh
 
-/usr/bin/vte -G -h -n 1000 -a -D -A --reverse
+/usr/bin/vte -GD --reverse -n 200 --cursor-shape block  --cursor-blink=off "$@"
+#/usr/bin/vte -G -h -n 1000 -a -D   --reverse
+
+#Application Options:
+#  -A, --antialias                Disable the use of anti-aliasing
+#  -B, --background               Specify a background image
+#  -C, --console                  Watch /dev/console
+#  -D, --dingus                   Highlight URLs inside the terminal
+#  -S, --shell                    Disable spawning a shell inside the terminal
+#  -T, --transparent              Enable the use of a transparent background
+#  -2, --double-buffer            Disable double-buffering
+#  -a, --audible                  Use visible, instead of audible, terminal bell
+#  -c, --command                  Execute a command in the terminal
+#  -d, --debug                    Enable various debugging checks
+#  -f, --font                     Specify a font to use
+#  -g, --geometry=GEOMETRY        Set the size (in characters) and position
+#  -h, --highlight                Enable distinct highlight color for selection
+#  -i, --icon-title               Enable the setting of the icon title
+#  -k, --keep                     Live on after the window closes
+#  -n, --scrollback-lines         Specify the number of scrollback-lines
+#  --cursor-blink=MODE            Cursor blink mode (system|on|off)
+#  -r, --color-cursor             Enable a colored cursor
+#  --cursor-shape                 Set cursor shape (block|underline|ibeam)
+#  -s, --scroll-background        Enable a scrolling background
+#  -t, --termcap                  Specify the terminal emulation to use
+#  -w, --working-directory        Specify the initial working directory of the terminal
+#  --reverse                      Reverse foreground/background colors
+#  -G, --no-geometry-hints        Allow the terminal to be resized to any dimension, not constrained to fit to an integer multiple of characters
+#  -W, --scrolled-window          Use a GtkScrolledWindow as terminal container
+#  -P, --scrollbar-policy         Set the policy for the vertical scroolbar in the scrolled window (always|auto|never; default:always)
+#  -N, --object-notifications     Print VteTerminal object notifications
+#  --output-file                  Save terminal contents to file at exit
+#  --pty-flags                    PTY flags set from default|no-utmp|no-wtmp|no-lastlog|no-helper|no-fallback
+#  --display=DISPLAY              X display to use
