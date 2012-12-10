@@ -1,5 +1,5 @@
 #!/bin/zsh
-setopt extendedglob nullglob nonomatch
-=rm -rv */([sS]ample|[sS]ubs|[pP]roof)
-=rm -vi \
-  **/{{sample,subs,proof}(#i)(/),*.(r{ar,[0-9][0-9]}|s{fv,rt}|b{ak,mp}|db|zip|torrent|lnk|url)}
+# vim: ft=sh smc=78 cc=:
+setopt extendedglob nullglob nomatch
+=rm -vr (#i)**/{sample,subs,proof}(/)
+=rm -vi (#i)**/*.{rar,r[0-9][0-9],sfv,nfo,ion,ini,txt,url,htm*,exe,pdf,bak,*_Store,lnk}(.)
