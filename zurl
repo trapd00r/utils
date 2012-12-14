@@ -282,7 +282,7 @@ done
 [[ -f ~/.zurlrc ]] && . ~/.zurlrc
 [[ -f "$XDG_CONFIG_HOME"/zurl/config ]] && . "$XDG_CONFIG_HOME"/zurl/config
 export AURLINKS="${AURLINKS:-PKGBUILD}"
-export BROWSER="${BROWSER:-firefox}"
+export BROWSER="${BROWSER:-jumanji}"
 export GIFPLAYER="${GIFPLAYER:-mplayer}"
 export YOUTUBEPLAYER="${YOUTUBEPLAYER:-mplayer}"
 export PASTEEDITOR="${PASTEBINEDITOR:-vim}"
