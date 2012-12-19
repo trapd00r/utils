@@ -45,7 +45,7 @@ if(lc($response) ne 'y') {
 for my $d(sort(keys(%$dirs))) {
   chdir $d or die "chdir $d: $!\n";
   #warn "chdir $d\n";
-  system('unrar', '-o-', 'x', '*.rar');
+  system('unrar', '-kb', '-o-', 'x', '*.rar');
 }
 
 chdir $old_path or warn "chdir $old_path: $!\n";
