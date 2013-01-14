@@ -1,0 +1,27 @@
+#!/usr/bin/perl
+# vim: ft=perl et sw=2:
+# ratpoison repl
+use strict;
+use warnings;
+use autodie;
+
+sub prompt;
+prompt();
+while(my $cmd = <>) {
+  chomp $cmd;
+  if( ($cmd eq 'help') or ($cmd eq 'usage') or ($cmd eq '') ) {
+    help();
+    prompt();
+    next;
+  }
+  print do { local $/; "\e[1m" . `ratpoison -c '$cmd'` . "\e[m" };
+  prompt();
+}
+
+sub prompt {
+  printf "\e[32mrat\e[1m»\e[m ";
+}
+
+sub help {
+  print do { local $/; "\e[1m" . `ratpoison -c help` . "\e[m\n" };
+}
