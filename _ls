@@ -1,6 +1,6 @@
 #!/bin/zsh
-# vim: ft=zsh tw=80 sw=2:
-if [[ -x  =ls++ ]] && [[ $TERM != 'linux' ]]; then
+# vim: ft=sh tw=80 sw=2:
+if [[ -x  =ls++ && $HURRY -lt 1 ]] && [[ $TERM != 'linux' ]]; then
   ls++ "$@"
 elif [[ -x  =vdir ]]; then
   vdir -bBGhHnNvXw $(($COLUMNS * 0.92 )) \
