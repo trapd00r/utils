@@ -1,0 +1,29 @@
+#!/usr/bin/perl
+# vim: ft=perl:
+use strict;
+use warnings FATAL => 'all';
+use Net::Domain qw(hostname);
+
+my %channels = map { $_ => "http://japh.se/$_" } qw(
+  p1 p2 p3 p4 dingata street
+  dnb hc hs gabber ds
+  psy psy2 psy3 psy4
+  kohina kohina2 keygen rainwave cvgm paralax slay sid
+  hard dnb2
+  moh wc
+  ost old
+);
+my $choice = (defined $ARGV[0] && exists($channels{$ARGV[0]}))
+  ? shift @ARGV
+  : 'kohina';
+
+play($channels{$choice});
+
+sub play {
+  system('mplayer',
+    '-identify',
+    '-include', $ENV{MPLAYER_CONFIG},
+    '-profile', hostname(),
+    shift @_
+  );
+}
