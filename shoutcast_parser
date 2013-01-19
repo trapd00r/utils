@@ -1,0 +1,24 @@
+#!/usr/bin/perl
+# vim: ft=perl:
+use strict;
+use LWP::Simple;
+
+my $url = shift or usage();
+
+my $seen_title = 0;
+for my $l(split(/\n/, LWP::Simple::get($url))) {
+  if(($seen_title < 1) && ($l =~ m/Title[0-9]+=(.+)$/)) {
+    $seen_title++;
+    print STDERR "$1\n";
+  }
+  elsif($l =~ m/^File[0-9]+=(\S+)$/) {
+    print "$1\n";
+  }
+}
+
+sub usage() {
+  die << "."
+  Usage: $0 url
+.
+;
+}
