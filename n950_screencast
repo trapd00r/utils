@@ -1,0 +1,5 @@
+#!/bin/sh
+# vim: ft=sh cc= smc=80:
+gst-launch-0.10 ximagesrc ! videorate ! ffmpegcolorspace ! jpegenc ! multipartmux ! fdsink fd=1 \
+  | ssh -p 19210 scp1@192.168.1.3 'cat > /tmp/screenlapse.mjpeg'
+#mencoder /tmp/screenlapse.mjpeg -fps 25 -ofps 3 -o screenlapse.avi -vf scale=1280:720 -ovc lavc -lavcopts  vcodec=mjpeg -oac copy
