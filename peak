@@ -1,0 +1,5 @@
+#!/bin/zsh
+# vim: ft=zsh:
+print -C4 $(strings "${@:-$0}" | grep -Po '\b[^_][A-Z_]{3,}' | uniq)
+
+# PEAK WHAT WHERE DUDE
