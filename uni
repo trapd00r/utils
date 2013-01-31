@@ -1,0 +1,7 @@
+#!/bin/zsh
+# vim: ft=sh:
+print -OaiC8 $(
+  uninames "${@:-bracket}" \
+    | =grep -vP '[x#=*]' \
+    | awk '{print $1}'   \
+) | perl -pe 's/^/  /'
