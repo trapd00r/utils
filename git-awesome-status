@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 my @order = (
-#    'Untracked files',
+    'Untracked files',
     'Working tree',
     'Index',
     'Local branches',
