@@ -1,12 +1,32 @@
 #!/usr/bin/perl
-
+use encoding 'utf-8';
+use utf8;
+use open qw(:std :utf8);
 for(@ARGV) {
-  if($_ =~ m/\A0x/) {
-    $_ = hex($_);
-  }
+  $_ = looks_like_hex($_) ? hex($_) : $_;
   if(! -t STDOUT) {
     printf "%s\n", chr $_;
     next;
   }
-  printf "[0x%x, %d]: %s\n", $_, $_, chr $_;
+  $|++;
+  print chr $_;
+  select STDERR;
+  printf " [0x%x %d]", $_, $_;
+  select STDOUT;
+  print "\n";
+}
+
+sub looks_like_hex {
+  my $n = shift;
+
+  if($n =~ m/\A0x([a-f0-9]+|[a-f]+|[0-9]+)/) {
+    return 1;
+  }
+  if($n =~ m/^[a-f]+(?:[0-9]+)?$/) {
+    return 1;
+  }
+  if($n =~ m/^[0-9]+[a-f]+$/) {
+    return 1;
+  }
+  return 0;
 }
