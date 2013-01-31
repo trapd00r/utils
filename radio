@@ -22,6 +22,7 @@ play($channels{$choice});
 sub play {
   system('mplayer',
     '-identify',
+    '-really-quiet',
     '-include', $ENV{MPLAYER_CONFIG},
     '-profile', hostname(),
     shift @_
