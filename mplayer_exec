@@ -3,6 +3,7 @@ use strict;
 use warnings FATAL => 'all';
 
 use Getopt::Long;
+use File::LsColor ();
 
 # shell function:
 # mplayer_redir () {
@@ -24,8 +25,15 @@ my $opt = {
 GetOptions(
   'log:s'     => \$opt->{log},
   'rm|delete' => sub { rm( get_np_file() ); exit },
-  'np'        => sub { printf("%s\n", get_np_file()); exit },
+  'np'        => sub { np(); exit },
 );
+
+print STDERR "USAGE: mplayer_exec [[np|rm][log=...]]\n";
+exit;
+
+sub np {
+  printf "%s\n", File::LsColor::ls_color_internal(get_np_file());
+}
 
 sub rm {
   my $file = shift;
@@ -39,7 +47,7 @@ sub rm {
     }
   }
   if(unlink($file)) {
-    printf("\n » \e[38;5;196;1mremoved '%s'\e[m\n\n", $file);
+    printf("\n [DELETED] %s\n", $file);
     system('ratpoison', '-c', "echo $file deleted.");
   }
   else {
