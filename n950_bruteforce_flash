@@ -1,0 +1,17 @@
+#!/bin/sh
+# vim: ft=sh:
+
+# http://harmattan-dev.nokia.com/release/N950-39-5/Linux_OCF_39-5_RM680-RM680-OEM1.bin
+# http://harmattan-dev.nokia.com/release/N950/firmware/Linux_OCF_02-6_RM680-RM680-OEM1.bin
+
+wget http://harmattan-dev.nokia.com/release/N950/firmware/Linux_OCF_02-6_RM680-RM680-OEM1.bin -O knark
+if [[ $? == 0 ]]
+then
+  chmod +x knark
+  su -c 'while true
+  do
+    modprobe -r cdc_phonet phonet
+    ./knark
+    sleep .1
+  done'
+fi
