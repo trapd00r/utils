@@ -1,0 +1,43 @@
+#!/usr/bin/perl
+# vim: ft=perl nolist:
+
+use strict;
+
+my $type = 'groups';
+my $select = 'select';
+if ($ARGV[0] and $ARGV[0] eq '-g') {
+  $type = 'groups';
+  $select = 'gselect';
+}
+
+my @windowlist = split(/\n/, `ratpoison -c $type`);
+
+# Check if there are any groups, if not simulate ratpoison's
+# behaviour
+
+if ($#windowlist == 0 and $windowlist[0] !~ /^\d/) {
+  exec('ratpoison', '-c', "echo No managed $type");
+
+# Else create a group list sorted and suitable for ratmenu
+} else {
+  my %windowlist = map { /^(\d+)/ => $_ } @windowlist;
+  @windowlist = map { $windowlist{$_} => "ratpoison -c '$select $_'" }
+	sort { $a <=> $b }
+	keys %windowlist;
+
+  # Search group which would be next by default
+  my $io = 0;
+  my $found = 0;
+  for my $i (@windowlist) {
+	  $io++ if $i =~ /^\d/;
+	  if ($i =~ /^\d+\+/) {
+	    $found = 1;
+	    last;
+	  }
+  }
+  $io = 1 unless $found;
+
+  system 'ratmenu',
+    qw(-style dreary), qw(-fg black -bg orange),
+    '-label', 'ratmenu: ratpoison groups', '-io', $io, @windowlist;
+}
