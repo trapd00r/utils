@@ -1,0 +1,30 @@
+#!/bin/sh
+# vim: ft=sh:
+#
+# 0 */2 * * * ~/dev/utils/fx_ramdisk_sync
+# echo ~/dev/utils/fx_ramdisk_sync | tee ~/.zlog{in,out}
+
+static=main
+link=4yri02ns.default
+volatile=~/shm/firefox
+
+IFS=
+set -efu
+
+cd ~/.mozilla/firefox
+
+if [ ! -r $volatile ]; then
+  mkdir -m0700 $volatile
+fi
+
+if [ "$(readlink $link)" != "$volatile" ]; then
+  mv $link $static
+  ln -s $volatile $link
+fi
+
+if [ -e $link/.unpacked ]; then
+  rsync -av --delete --exclude .unpacked ./$link/ ./$static/
+else
+  rsync -av ./$static/ ./$link/
+  touch $link/.unpacked
+fi
