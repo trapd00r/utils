@@ -1,12 +1,12 @@
 #!/bin/sh
 
-printf '\e]710;%s\a' \
+printf '\033]710;%s\007' \
   'xft:Anonymous Pro:style=Regular:pixelsize=10:antialias=1:hinting=1:hintstyle=3'
-printf '\e]711;%s\a' \
+printf '\033]711;%s\007' \
   'xft:Anonymous Pro:style=Bold:pixelsize=10:antialias=1:hinting=1:hintstyle=3'
 #  xft:DejaVu Sans Mono:style=Bold:pixelsize=10:antialias=1:hinting=1:hintstyle=3
-printf '\e]712;%s\a' \
+printf '\033]712;%s\007' \
   '6x9'
   #'-b&h-lucidatypewriter-medium-r-normal-sans-11-80-100-100-m-70-iso8859-1'
-printf '\e]713;%s\a' \
+printf '\033]713;%s\007' \
   '-nil-profont-medium-r-normal--10-100-72-72-c-50-iso8859-1'

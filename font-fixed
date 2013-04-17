@@ -1,8 +1,8 @@
 #!/bin/sh
 # vim: ft=sh smc=120 tw=120 et:
-printf "\ec\e(K\e[J\e[m\e[?25h"
+printf "\033c\033(K\033[J\033[m\033[?25h"
 xft='hinting=0:autohint=0:rgba=0:antialias=0:lcdfilter=0'
-printf "\e]710;xft:Fixed:size=9:${xft}\a"
-printf "\e]711;xft:Fixed:size=9:${xft}:embolden=1\a"
-printf "\e]712;-fontforge-proggytinysz-bold-r-normal--10-80-96-96-c-60-iso8859-1\a"
-printf "\e]713;xft:Fixed:size=9:${xft}:embolden=1:scale=.8:lcdfilter=2:autohint=1:hintstyle=3\a"
+printf "\033]710;xft:Fixed:size=9:${xft}\a"
+printf "\033]711;xft:Fixed:size=9:${xft}:embolden=1\a"
+printf "\033]712;-fontforge-proggytinysz-bold-r-normal--10-80-96-96-c-60-iso8859-1\a"
+printf "\033]713;xft:Fixed:size=9:${xft}:embolden=1:scale=.8:lcdfilter=2:autohint=1:hintstyle=3\a"

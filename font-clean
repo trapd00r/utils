@@ -1,7 +1,7 @@
 #!/bin/sh
-printf '\e]710;%s\a' \
+printf '\033]710;%s\007' \
   -schumacher-clean-medium-r-normal--10-100-75-75-c-50-iso646.1991-irv
-printf '\e]711;%s\a' \
+printf '\033]711;%s\007' \
   -fontforge-proggytinysz-bold-r-normal--10-80-96-96-c-60-iso8859-1
-printf '\e]712;%s\a' \
+printf '\033]712;%s\007' \
   -nil-profont-medium-r-normal--10-100-72-72-c-50-iso8859-1

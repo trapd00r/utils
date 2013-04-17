@@ -4,9 +4,9 @@
 # urxvt note: you *must* have enabled frills *and* you must set the insecure
 # resource. xterm is 'insecure' by default.
 
-printf "\e]710;?\a"; xxd
-printf "\e]711;?\a"; xxd
-printf "\e]712;?\a"; xxd
-printf "\e]713;?\a"; xxd # urxvt boldItalic
+printf "\033]710;?\007"; xxd
+printf "\033]711;?\007"; xxd
+printf "\033]712;?\007"; xxd
+printf "\033]713;?\007"; xxd # urxvt boldItalic
 
-printf "\e]50;?\a"; xxd
+printf "\033]50;?\007"; xxd

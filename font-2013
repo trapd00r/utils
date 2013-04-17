@@ -1,0 +1,12 @@
+#!/bin/sh
+# vim: ft=sh:
+printf '\033]710;%s\007' '-stlarch-terminusmod-medium-r-normal--12-120-72-72-c-60-iso8859-1,-xos4-terminus-medium-o-normal--12-120-72-72-c-60-iso10646-1,-windows-montecarlo-medium-r-normal--11-110-72-72-c-60-microsoft-cp1252,-jmk-neep-medium-r-normal--11-100-75-75-c-60-iso8859-15,-nil-profont-medium-r-normal--11-110-72-72-c-60-iso8859-1,6,-erus-erusfont-medium-r-normal--11-80-100-100-c-60-iso10646-1'
+printf '\033]711;%s\007' '-stlarch-terminusmod-bold-r-normal--12-120-72-72-c-60-iso8859-1,-xos4-terminus-medium-o-normal--12-120-72-72-c-60-iso10646-1,-windows-montecarlo-bold-r-normal--11-110-72-72-c-60-microsoft-cp1252,-jmk-neep-bold-r-normal--11-100-75-75-c-60-iso8859-9,-b&h-luc,-erus-erusfont-medium-r-normal--11-80-100-100-c-60-iso10646-1'
+printf '\033]712;%s\007' \
+  '-erus-erusfont-medium-r-normal--11-80-100-100-c-60-iso10646-1,-xos4-terminus-medium-o-normal--12-120-72-72-c-60-iso10646-1,-misc-fixed-medium-r-semicondensed--12-110-75-75-c-60-iso10646-1,-schumacher-clean-medium-r-normal--12-120-75-75-c-60-iso8859-14,xft:DejaVu Sans Mono:style=Book:pixelsize=10:antialias=1:hinting,-erus-erusfont-medium-r-normal--11-80-100-100-c-60-iso10646-1'
+printf '\033]713;%s\007' \
+  '-erus-erusfont-bold-r-normal--11-80-100-100-c-60-iso10646-1,-xos4-terminus-bold-o-normal--12-120-72-72-c-60-iso10646-1,-misc-fixed-medium-r-semicondensed--12-110-75-75-c-60-iso10646-1,-windows-montecarlo-bold-r-normal--11-110-72-72-c-60-microsoft-cp1252,xft:DejaVu Sans Mono:style=Book:pixelsize=10:antialias=1:hinting=1:hintstyle=3,-erus-erusfont-medium-r-normal--11-80-100-100-c-60-iso10646-1'
+
+#  '-misc-fixed-medium-r-normal--9-90-75-75-c-60-iso8859-1'
+#  '-misc-fixed-medium-r-normal--7-70-75-75-c-50-koi8'
+#  #'-nil-profont-medium-r-normal--11-110-72-72-c-60-iso8859-1'

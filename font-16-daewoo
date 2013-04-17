@@ -1,10 +1,10 @@
 #!/bin/sh
 
-printf '\e]710;%s\a' \
+printf '\033]710;%s\007' \
   -daewoo-mincho-medium-r-normal--16-120-100-100-c-160-ksc5601.1987-0
-printf '\e]711;%s\a' 7x13bold
+printf '\033]711;%s\007' 7x13bold
   #-schumacher-clean-bold-r-normal--13-130-75-75-c-80-iso646.1991-irv
-printf '\e]712;%s\a' \
+printf '\033]712;%s\007' \
   -nil-profont-medium-r-normal--12-120-72-72-c-60-iso8859-1
   #-windows-proggycleansz-medium-r-normal--13-80-96-96-c-70-iso8859-1
   #-schumacher-clean-medium-r-normal--13-130-75-75-c-60-iso646.1991-irv

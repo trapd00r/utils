@@ -4,11 +4,11 @@
 #'xft:C64 Pro Mono:style=Regular:pixelsize=12:antialias=1:hinting=1:autohint=1:width=0:weight=light'
 #'xft:C64 User:style=Regular:pixelsize=12:antialias=1:hinting=1:autohint=1:width=0:weight=light'
 
-printf '\e]710;%s\a' \
+printf '\033]710;%s\007' \
   'xft:C64 Pro Mono:style=Regular:pixelsize=12:antialias=1:hinting=1:autohint=1:width=0:weight=light'
-printf '\e]711;%s\a' \
+printf '\033]711;%s\007' \
   'xft:C64 Pro Mono:style=Regular:embolden=1:pixelsize=12:antialias=1:hinting=1:autohint=1:width=0:weight=light'
-printf '\e]712;%s\a' \
+printf '\033]712;%s\007' \
   'xft:C64 Pro Mono:style=Regular:slant=italic:pixelsize=12:antialias=1:hinting=1:autohint=1:width=0:weight=light'
-printf '\e]713;%s\a' \
+printf '\033]713;%s\007' \
   'xft:C64 Pro Mono:style=Regular:embolden=1:slant=italic:pixelsize=12:antialias=1:hinting=1:autohint=1:width=0:weight=light'

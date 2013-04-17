@@ -1,8 +1,8 @@
 #!/bin/sh
 
-printf '\e]710;%s\a' \
+printf '\033]710;%s\007' \
   'xft:ProggyTinyTTSZ:weight=light:spacing=proportional:pixelsize=15:antialias=0:hinting=0:width=condensed'
-printf '\e]711;%s\a' \
+printf '\033]711;%s\007' \
   'xft:Fixed:pixelsize=10:antialias=0:weight=light'
-printf '\e]712;%s\a' \
+printf '\033]712;%s\007' \
   'xft:Fixed:pixelsize=9:antialias=0'

@@ -1,9 +1,9 @@
 #!/bin/sh
-printf '\e]710;%s\a' \
+printf '\033]710;%s\007' \
   '-nil-profont-medium-r-normal--11-110-72-72-c-60-iso8859-1'
-printf '\e]711;%s\a' \
+printf '\033]711;%s\007' \
   'xft:ProFont:style=Regular:pixelsize=11:embolden=1'
-printf '\e]712;%s\a' \
+printf '\033]712;%s\007' \
   'xft:Lucida:style=Sans Italic:antialias=1:hinting=1:hintstyle=3:pixelsize=11'
-printf '\e]713;%s\a' \
+printf '\033]713;%s\007' \
   '-erus-erusfont-bold-r-normal--11-80-100-100-c-60-iso10646-1'

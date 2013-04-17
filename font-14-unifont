@@ -3,7 +3,7 @@
 # Basic Multilingual Plane (BMP). That's U+0000..U+ffff, a total of 65536
 # codepoints.
 
-printf '\e]710;xft:unifont:pixelsize=14:antialias=0:hinting=1\a'
-printf '\e]711;xft:unifont:pixelsize=14:antialias=0:hinting=1:hintstyle=3:embolden=1\a'
-printf '\e]712;xft:unifont:pixelsize=14:antialias=0:hinting=1:\a'
-printf '\e]713;xft:unifont:pixelsize=14:antialias=0:hinting=1:\a'
+printf '\033]710;xft:unifont:pixelsize=14:antialias=0:hinting=1\007'
+printf '\033]711;xft:unifont:pixelsize=14:antialias=0:hinting=1:hintstyle=3:embolden=1\007'
+printf '\033]712;xft:unifont:pixelsize=14:antialias=0:hinting=1:\007'
+printf '\033]713;xft:unifont:pixelsize=14:antialias=0:hinting=1:\007'

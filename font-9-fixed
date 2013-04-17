@@ -1,8 +1,8 @@
 #!/bin/sh
 
-printf '\e]710;%s\a' \
+printf '\033]710;%s\007' \
   'xft:Fixed:weight=medium:pixelsize=9:antialias=0'
-printf '\e]711;%s\a' \
+printf '\033]711;%s\007' \
   'xft:Fixed:weight=bold:pixelsize=9:antialias=0'
-printf '\e]712;%s\a' \
+printf '\033]712;%s\007' \
   'xft:Fixed:pixelsize=8:antialias=0'

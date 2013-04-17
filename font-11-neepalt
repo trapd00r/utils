@@ -1,11 +1,11 @@
 #!/bin/sh
 
-printf '\e]710;%s\a' \
+printf '\033]710;%s\007' \
   'xft:Neep Alt:style=SemiCondensed:pixelsize=11'
-printf '\e]711;%s\a' \
+printf '\033]711;%s\007' \
   'xft:Neep Alt:style=Bold SemiCondensed:pixelsize=11'
-printf '\e]712;%s\a' \
+printf '\033]712;%s\007' \
   '-misc-fixed-medium-r-normal--9-90-75-75-c-60-iso8859-1'
-printf '\e]713;%s\a' \
+printf '\033]713;%s\007' \
   '-misc-fixed-medium-r-normal--7-70-75-75-c-50-koi8'
   #'-nil-profont-medium-r-normal--11-110-72-72-c-60-iso8859-1'

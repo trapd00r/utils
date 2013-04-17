@@ -1,11 +1,11 @@
 #!/bin/sh
 
 
-printf '\e]710;%s\a' \
+printf '\033]710;%s\007' \
   "xft:Yoshi's Story game text BRK:style=Regular:pixelsize=20:antialias=1:hinting=1:hintstyle=3"
-printf '\e]711;%s\a' \
+printf '\033]711;%s\007' \
   "xft:Yoshi's Story game text BRK:style=Bold:pixelsize=20:antialias=1:hinting=1:hintstyle=3"
-printf '\e]712;%s\a' \
+printf '\033]712;%s\007' \
   "xft:Yoshi's Story game text BRK:style=Italic:pixelsize=20:antialias=1:hinting=1:hintstyle=3"
-printf '\e]713;%s\a' \
+printf '\033]713;%s\007' \
   "xft:Yoshi's Story game text BRK:style=Black:pixelsize=20:antialias=1:hinting=1:hintstyle=3"
