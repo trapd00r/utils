@@ -1,0 +1,6 @@
+#!/bin/zsh
+# vim: ft=sh:
+
+for i in 71{0..3}; do
+  printf "\033]${i};%s\007" "$@"
+done
