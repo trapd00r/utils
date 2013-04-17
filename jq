@@ -2,17 +2,21 @@
 # vim: ft=zsh smc&:
 setopt -L nonomatch extendedglob
 f="${@:-crpd}"
-du -h (#i)/mnt/porn{1/{.new,_Trans,javdl},2/{jav,idol,tmp,.new},[35]/{.new,tmp}}/*${f}* 2>/dev/null \
-  | sort -t \/ -k4 -g \
+du -h (#i)/mnt/porn{7/{in,done,jav2},2/{+done,+in,jav/new,jav,idol,tmp,.new},[35]/{.new,tmp}}/*${f}* 2>/dev/null \
+  | sort  -k 2  \
   | perl -MFile::LsColor=ls_color_internal -MFile::Basename -ne \
-'($s,$f) = split/\t/, $_;if($s eq "4.0K") {
-  $s = "\e[38;5;30m $s\e[m";
+'($s,$f) = split/\t/, $_;
+$offset = 8 - length($s);
+if($s eq "4.0K") {
+  $s = "\e[38;5;030m$s\e[m";
 }
 elsif($s =~ /M$/) {
-  $s = "\e[38;5;106m $s\e[m";
+  $s = "\e[38;5;106m$s\e[m";
 }
 elsif($s =~ m/G$/) {
-  $s = " \e[38;5;208m$s\e[m";
+  $s = "\e[38;5;208m$s\e[m";
 }
-($base, $dir) = (basename($f), "\e[38;5;30m" . dirname($f) . "/\e[m ");
-printf "% 5s %s\n",$s, $dir . ls_color_internal($base)'
+$s =~ s/^/ / while --$offset;
+
+($base, $dir) = (basename($f), "\e[38;5;030m" . sprintf("%.14s", dirname($f)) . "\e[m ");
+printf "%s %s\n",$s, $dir . ls_color_internal($base)'
