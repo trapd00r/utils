@@ -282,20 +282,20 @@ done
 [[ -f ~/.zurlrc ]] && . ~/.zurlrc
 [[ -f "$XDG_CONFIG_HOME"/zurl/config ]] && . "$XDG_CONFIG_HOME"/zurl/config
 export AURLINKS="${AURLINKS:-PKGBUILD}"
-export BROWSER="${BROWSER:-jumanji}"
+export BROWSER="${BROWSER:-firefox}"
 export GIFPLAYER="${GIFPLAYER:-mplayer}"
 export YOUTUBEPLAYER="${YOUTUBEPLAYER:-mplayer}"
 export PASTEEDITOR="${PASTEBINEDITOR:-vim}"
 export MULTIPLEXER="${MULTIPLEXER:-screen}"
 export SERVERNAME="${SERVERNAME:-PASTIE}"
-export ZURLDIR="${ZURLDIR:-/tmp}"
+export ZURLDIR="${ZURLDIR:-~/tmp}"
 export REMOVEFILE="${REMOVEFILE:-1}"
-export PASTETERMINAL="${PASTETERMINAL:-termite}"
+export PASTETERMINAL="${PASTETERMINAL:-urxvt}"
 export IMAGEOPENER="${IMAGEOPENER:-feh}"
 [[ -z "$PASTEEXEC" && "$PASTETERMINAL" == "termite" ]] && export PASTEEXEC="-e"
 [[ -z "$GIFARGS" ]] && export GIFARGS="-loop 0 -speed 1"
-[[ -z "$IMAGEARGS" && "$IMAGEOPENER" == "feh" ]] && export IMAGEARGS="-FZBblack -g1080x1920"
-[[ -z "$YOUTUBEARGS" ]] && export YOUTUBEARGS="-loop 0 -speed 1"
+[[ -z "$IMAGEARGS" && "$IMAGEOPENER" == "feh" ]] && export IMAGEARGS="-FZBblack -g1920x1080"
+[[ -z "$YOUTUBEARGS" ]] && export YOUTUBEARGS=""
 [[ -z "$PASTEARGS" ]] && export PASTEARGS="--servername $SERVERNAME"
 [[ -z "$OPENEDPASTEARGS" ]] && export OPENEDPASTEARGS="$PASTEARGS --remote-tab-silent"
 [[ -z "$MULTIARGS" ]] && export MULTIARGS="neww -n $SERVERNAME"
@@ -338,7 +338,7 @@ case "$filetypeis" in
             *)
                 zcurl "$1" > "${ZURLDIR%/}/$val"
                 #FIXME
-                feh -GNFZrxdD1.9 -Bblack -g1080x1920 -k -j ~/dump --action "cp -v '%f' ~/_" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$1"
+                feh -GNFZrxdD1.9 -Bblack -g1920x1080 -k -j ~/dump --action "cp -v '%f' ~/_" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$1"
                 #(( $+commands[$IMAGEOPENER] )) && "$IMAGEOPENER" " ${IMAGEARGS}" "${ZURLDIR%/}"/"$val" || "$BROWSER" "$1"
                 ;;
         esac
