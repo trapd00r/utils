@@ -1,0 +1,2 @@
+#!/bin/sh
+ratpoison -c "echo $(mplayer_exec -np|uncolor)"
