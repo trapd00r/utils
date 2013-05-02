@@ -1,2 +1,7 @@
 #!/bin/sh
+# vim: ft=sh:smc&:
+ratpoison -c "set  bargravity nw"
+ratpoison -c "set font Terminus:pixelsize=32:weight=bold:antialias=1:autohint=1:hinting=1:hintstyle=3:rgba=rgba\a"
 ratpoison -c "echo $(mplayer_exec -np|uncolor)"
+ratpoison -c "set  bargravity c"
+ratpoison -c "set font Terminus:size=14:weight=bold"
