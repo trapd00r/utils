@@ -1,2 +1,11 @@
 #!/bin/sh
-mplayer http://sverigesradio.se/topsy/direkt/179-hi.mp3
+# vim: ft=sh:
+while true; do
+  mplayer \
+    -include ${HOME}/etc/mplayer/config \
+    -profile sid  \
+    -softvol      \
+    -volume 30    \
+    http://sverigesradio.se/topsy/direkt/179-hi.mp3
+  sleep 0.86
+done
