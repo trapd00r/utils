@@ -1,0 +1,115 @@
+#!/usr/bin/perl
+# vim: ft=perl:fdm=marker:fmr=#<,#>:fen:et:sw=2:
+# 
+# clone all of trapd00rs github repos in one go
+use strict;
+use warnings FATAL => 'all';
+use vars     qw($VERSION);
+
+my $APP  = 'clone_gh';
+$VERSION = '0.001';
+
+my @repos=qw(
+  Acme-CPANAuthors-Swedish
+  Bundle-Woldrich-Term
+  Daemon-Mplayer
+  Documentation
+  File-LsColor
+  File-Media-Sort
+  File-PatternMatch
+  Flexget-PatternMatch
+  LS_COLORS
+  Mock-Person
+  Mock-Person-SV
+  Mplayer-NowPlaying
+  Mplayer-NowPlaying-Crappy
+  PKGBUILDS
+  Parse-Flexget
+  RPD
+  SeTTy
+  Skate
+  Term-ExtendedColor
+  Term-ExtendedColor-TTY
+  Term-ExtendedColor-Xresources
+  Yoghurt
+  autocam
+  autotest
+  cc256
+  clipbored
+  colorcoke
+  configs
+  configs-laptop
+  configs-n900
+  cope
+  dontbeahero
+  epic
+  feh
+  firefox-remote
+  hammer.vim
+  id3shit
+  irc.vim
+  irssi-scripts
+  ls--
+  matrix
+  mpdcheat
+  mpdmon-full
+  mpdmon-realtime
+  mpdscrobloc
+  n900
+  neverland-vim-theme
+  pamixer
+  perldoc.vim
+  perlgolf
+  perlutils
+  pickyfont
+  pimpd
+  pimpd2
+  pnfo
+  potify
+  programmers_qwerty
+  rapio
+  ratpoison-desktop
+  ratpoison_scripts
+  rel
+  rgbterm
+  rmcd
+  rmshit
+  rxvt-unicode
+  screenfo
+  sexpac
+  showatar
+  stderred
+  tests
+  time-spent-in-vim
+  trapd00r.se
+  ttycolor
+  utils
+  vidir
+  vim
+  vim-after-syntax-perl
+  vim-after-syntax-vim
+  vim-ansicolors
+  vim-extendedcolor
+  vim-highlight-default-highlight-groups
+  vim-script-runner
+  vim-syntax-github-recent
+  vim-syntax-ratpoison
+  vim-syntax-todo
+  vim-syntax-vidir-ls
+  vim-xclipboard
+  vimpoint
+  windows
+  with
+  x11colors.vim
+  xkcd
+  zcompdef
+  zsh-syntax-highlighting-filetypes
+);
+
+my $base = "$ENV{HOME}/dev";
+my $gitb = "git://github.com/trapd00r";
+
+for my $r(@repos) {
+  chdir($base);
+  system(sprintf("git clone %s/%s.git\n", $gitb, $r));
+}
