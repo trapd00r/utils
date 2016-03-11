@@ -1,0 +1,12 @@
+#!/bin/sh
+
+r='http://rarlab.com'
+
+mkdir -p winrar;cd winrar
+wget $( \
+  for x in '' {2..4}; \
+    do curl -s $r/themes$x.htm | \
+    grep -Po '\/(.+theme\.rar)'| \
+    perl -pe "s;^;$r;";          \
+  done  \
+)
