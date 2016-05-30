@@ -1,0 +1,2 @@
+#!/bin/sh
+cvlc http://juice.citrus3.com:2199/tunein/knradio.pls &
