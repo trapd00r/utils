@@ -1,2 +1,6 @@
 #!/bin/sh
+
+trap 'exit' SIGHUP SIGINT SIGTERM
 cvlc http://juice.citrus3.com:2199/tunein/knradio.pls &
+echo "np: knradio 92.2"
+read a
