@@ -1,0 +1,6 @@
+#!/bin/sh
+
+trap 'exit' SIGHUP SIGINT SIGTERM
+cvlc http://sverigesradio.se/topsy/direkt/204-hi-mp3.m3u &
+echo "np: SR P4 Värmland - Melodikrysset med Anders Eldeman (lycka till!)"
+read a
