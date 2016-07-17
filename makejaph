@@ -1,0 +1,9 @@
+# vim:ft=zsh:
+#!/bin/sh
+
+###
+# build and deploy japh.se using hugo
+###
+cd C:/Users/japh/Documents/Github/dev/japh.se.hugo && 
+make clean &&
+hugo --buildDrafts --theme=japh -d ../japh.github.io
