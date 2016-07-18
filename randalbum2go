@@ -1,0 +1,25 @@
+#!/bin/sh
+# vim:ft=zsh:
+
+## 2016-08-18
+# Having a hard time selecting what albums to take
+# with me on the go, this script is doing all the
+# hard work for me. Bonus: I get to listen to new
+# tunes.
+#  
+# Features: 
+# - Hardcoded values (enjoy)
+# - Colors!
+# - Should do this in perl instead of making an external call
+# - It works! In MS Windows! (msys2)
+##
+
+tmpdir='F:/tomp3'
+album_path="$(find F:/music -maxdepth 2 -type d|sort -R|head -1)"
+album=$(printf "%s" $album_path|perl -pe 's;^.+/(.+)$;$1;')
+
+
+mkdir -p $tmpdir
+echo "> processing..."
+cp -r "$album_path" $tmpdir &&
+  printf "beamed: \e[31;1m%.60s\e[m\n" $album
