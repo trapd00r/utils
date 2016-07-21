@@ -1,0 +1,9 @@
+#!/bin/sh
+# vim:ft=zsh:
+printf "\033[31;1mSYSTEMBOLAGET KARLSTAD, DROTTNINGGATAN\033[m  ";
+date "+%A %Y%m%d%n"
+curl -s https://www.systembolaget.se/butiker-ombud/butik/varmlands-lan/karlstad/drottninggatan-26-28-1701 |
+  grep '>Idag' |
+  sed 's:<[^>]*>::g;s:Idag::;s: *::' |
+  perl -pe 's;(..:..).(.....); open  $1\nclose:\b\033[31m$2;'
+echo
