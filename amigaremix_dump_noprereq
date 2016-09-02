@@ -1,0 +1,12 @@
+#!/bin/sh
+# vim: synmaxcol& ft=zsh:
+mkdir -p amigaremix && cd amigaremix;
+wget $( \
+  for x in $( \
+    for d in {1..64};
+      do printf "http://amigaremix.com/remixes/$d\n";
+    done
+  ); do curl -s $x; done \
+    | grep -iPo 'a href=..listen.+\.mp3"' \
+    | perl -pe 's/^a href="(.+mp3)"$/http:\/\/amigaremix.com$1/' \
+    | perl -pe "s/ /%20/g")
