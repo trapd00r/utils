@@ -1,0 +1,10 @@
+#!/bin/sh
+
+printf '\033]710;%s\007' \
+  'xft:Terminus:style=Regular:pixelsize=20:antialias=1:hinting=1'
+printf '\033]711;%s\007' \
+  'xft:Terminus:style=Bold:pixelsize=20:antialias=1:hinting=1'
+printf '\033]712;%s\007' \
+  'xft:Aerial Mono:style=italic:pixelsize=20:antialias=1:hinting=1'
+printf '\033]713;%s\007' \
+  'xft:Aerial Mono:style=Bold Italic:pixelsize=20:antialias=1:hinting=1'
