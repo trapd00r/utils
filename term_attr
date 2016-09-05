@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+# vim:ft=perl:
 use strict;
 use warnings FATAL => 'all';
 
@@ -20,3 +21,9 @@ for my $t( sort { $attr->{$a} cmp $attr->{$b} } keys(%{ $attr })) {
   $t =~ /^blink/ and printf("%s\e[48;5;196;38;5;233;1;3mSKIPPING: SHOULD NEVER HAVE BEEN IMPLEMENTED\e[m\n", sprintf("%-10s", $t)), next;
   printf("\e[$attr->{$t}m$t\e[m\n");
 }
+
+# in case we're abusing LD_PRELOAD
+# https://github.com/trapd00r/stderred
+print "\nstdout\n";
+select STDERR;
+print "stderr\n";
