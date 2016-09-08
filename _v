@@ -77,6 +77,7 @@ function! s:GroupToAnsi(groupnum)
   let bg = synIDattr(groupnum, 'bg', s:type)
   let rv = synIDattr(groupnum, 'reverse', s:type)
   let bd = synIDattr(groupnum, 'bold', s:type)
+  let bg = 0
 
   " FIXME other attributes?
 
