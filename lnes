@@ -1,0 +1,28 @@
+#!/usr/bin/perl
+# vim:ft=perl:
+# 2016-09-08 12:24:30
+# NES game launcher utilizing ratmenu
+use strict;
+
+my $emu     = 'nestopia';
+#my $rat = 'ratmenu';
+my $rat     = 'ratmenu -font -nil-profont-medium-r-normal--12-120-72-72-c-60-iso8859-1';
+
+my $basedir = "$ENV{HOME}/emu/nes";
+
+my %games = (
+  castlevania     => 'castlevania.nes',
+  castlevania2    => 'castlevania2.nes',
+  castlevania3    => 'castlevania3.nes',
+  kidicarus       => 'kidicarus.nes',
+  smb             => 'smb.nes',
+  smb2            => 'smb2.nes',
+  smb3            => 'smb3.nes',
+);
+
+my @games;
+for my $shname(sort {$games{$a} cmp $games{$b}} keys(%games)) {
+  push(@games, "\"$games{$shname}\" \"$emu -dpu\"\\ $basedir/$games{$shname}");
+}
+
+system("$rat @games &>/dev/null");
