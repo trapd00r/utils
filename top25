@@ -1,5 +1,8 @@
 #!/usr/bin/perl
+# setopt no_hist_save_no_dups
 use strict;
+
+$0 =~ s;^.*/(\w+)$;$1;;
 
 my $history = shift // "$ENV{XDG_DATA_HOME}/zsh/history";
 my $count   = shift // 25;
@@ -12,6 +15,7 @@ my %commands = ();
 
 for(@records) {
   s/^:\s+[0-9]+:[0-9]+;//;
+  next if $_ eq $0;
   $commands{$_}++;
 }
 
