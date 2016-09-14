@@ -1,0 +1,6 @@
+#!/bin/sh
+# now playing for knradio
+
+curl -s "http://www.knradio.se/latlist/exfile.php" \
+  | grep -i spelas \
+  | perl -pe 's/^.+://'
