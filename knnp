@@ -3,4 +3,4 @@
 
 curl -s "http://www.knradio.se/latlist/exfile.php" \
   | grep -i spelas \
-  | perl -pe 's/^.+://'
+  | perl -pe 's/^.+:(.+)$/$1/'
