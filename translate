@@ -1,69 +1,7 @@
-#!/usr/bin/perl
+#!/bin/sh
 
-use REST::Client;
-use JSON;
-use HTML::Entities qw(decode_entities);
-use Getopt::Long;
-use strict;
-
-use utf8;
-use open qw(:std :utf8);
-
-my $base     = 'https://www.googleapis.com/language/translate/v2?';
-my $key      = 'key=AIzaSyACJybEm6lyelnYHZzXfydtk-V6-Uz48bQ&';
-my $from     = 'sv';
-my $to       = 'en';
-my $query    = 'q=';
-
-my %lang = (
-  en  => 'English',
-  sv  => 'Swedish',
-  swe => 'Swedish',
-);
-
-GetOptions(
-  'from:s'  => \$from,
-  'to:s'    => \$to,
-  'swe'     => sub { ($from, $to) = ('en', 'sv'); },
-  'sv'      => sub { ($from, $to) = ('en', 'sv'); },
-  'en'      => sub { ($from, $to) = ('sv', 'en'); },
-);
-
-$from eq 'swe' and $from = 'sv';
-
-printf("%s -> %s\n",
-  (exists($lang{$from})) ? $lang{$from} : $from,
-  (exists($lang{$to}))   ? $lang{$to}   : $to,
-);
-
-$from .= '&';
-$to = "target=$to&";
-
-my $full_url = join('', ($base, $key, $from, $to, $query));
-
-TRANSLATE: while (1) {
-  print " > ";
-  chomp ( $_ = <STDIN>);
-
-  if( ($_ eq 'en') or ($_ eq 'swe') ) {
-    my $new_lang = $_;
-    my ($old_lang) = $to =~ m{target=(.+)&};
-    $full_url = join('',
-      ($base, $key, $_ . '&',
-        ($_ eq 'swe') ? 'target=en&' : 'target=swe&',
-      $query)
-    );
-    next TRANSLATE;
-  }
-
-  my $client = REST::Client->new();
-  $client->GET( $full_url . $_ );
-  my $response = $client->responseContent();
-
-  my $json_text = from_json( $response );
-
-  for my $t(@{$json_text->{data}->{translations}}) {
-    printf("\e[36m>>\e[m %s", decode_entities($t->{translatedText}));
-  }
-  print "\n";
-}
+while true; do
+  printf "translate: "
+  read word
+  /usr/bin/translate FROM swe $word
+done
