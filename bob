@@ -1,0 +1,12 @@
+#!/bin/sh
+# mount bob
+
+mkdir -p /home/scp1/mnt/bob
+mount -t cifs //BOXEEBOX/bob /home/scp1/mnt/bob \
+  -o user=guest            \
+  -o password=a            \
+  -o uid=scp1              \
+  -o gid=users             \
+  -o workgroup=workgroup   \
+  -o ip=192.168.0.191      \
+  -o iocharset=utf8
