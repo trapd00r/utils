@@ -1,0 +1,87 @@
+#!/usr/bin/perl
+use strict;
+
+use WWW::Mechanize;
+
+my $m = WWW::Mechanize->new;
+
+$SIG{INT} = sub { print "\e[?25h\n" and exit };
+
+my $url = 'http://cyanode.nadim.cc/';
+
+$m->get($url);
+
+$|++;
+printf("\e[?25l");
+
+while(1) {
+  $m->submit(
+    button    => 'BEEP',
+  ) or do { $m->get($url) and next };
+  my ($beep) = $m->find_all_submits();
+  $beep = $beep->{value_name};
+  my($beeps, $msg) = $beep =~ m{(\d+) (.+)};
+  printf("\e[31m\e[1m%s\e[m %s\r", $beeps, $msg);
+  sleep 1;
+}
+
+
+
+__END__
+
+=pod
+
+=head1 NAME
+
+beep - beep and watch beeps being beeped at Kaepora's server.
+
+=head1 USAGE
+
+  beep
+
+=head1 DESCRIPTION
+
+B<beep> will constantly send beeps to the L<cyanode.nadim.cc> server as
+described here: L<http://www.reddit.com/r/linux/comments/fmvbb/i_setup_a_server_in_my_bedroom_that_beeps/>
+
+It well also let you see the total number of beeps beeped in realtime!
+
+=head1 REPORTING BUGS
+
+Report bugs and/or feature requests on rt.cpan.org, the repository issue tracker
+or directly to L<magnus@trapd00r.se>
+
+=head1 AUTHOR
+
+  Magnus Woldrich
+  CPAN ID: WOLDRICH
+  magnus@trapd00r.se
+  http://japh.se
+
+=head1 CONTRIBUTORS
+
+None required yet.
+
+=head1 COPYRIGHT
+
+Copyright 2011 the B<beep> L</AUTHOR> and L</CONTRIBUTORS> as listed
+above.
+
+=head1 LICENSE
+
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=head1 SEE ALSO
+
+L<http://www.reddit.com/r/linux/comments/fmvbb/i_setup_a_server_in_my_bedroom_that_beeps/>
+
+L<http://cyanode.nadim.cc/index.php>
+
+L<http://www.youtube.com/watch?v=doQZYnliquk>
+
+L<http://www.youtube.com/watch?v=z_L4G4Im_MI>
+
+=cut
+
+# vim: set ts=2 et sw=2:
