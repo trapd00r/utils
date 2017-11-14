@@ -1,8 +1,8 @@
 #!/bin/sh
 
-DATE=$(date +"%Y-%m-%d_%H%M%S")
 
 while true; do
-  sleep 1200;
-  raspistill -vf -o $HOME/camera/$DATE.jpg
+  DATE=$(date +"%Y-%m-%d_%H%M%S")
+  raspistill -vf -o $HOME/camera/$DATE.jpg && printf "$DATE.jpg written\n"
+  sleep 600;
 done
