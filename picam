@@ -3,6 +3,6 @@
 
 while true; do
   DATE=$(date +"%Y-%m-%d_%H%M%S")
-  raspistill -vf -o $HOME/camera/$DATE.jpg && printf "$DATE.jpg written\n"
-  sleep 600;
+  raspistill -vf -n -o $HOME/camera/$DATE.jpg && printf "$DATE.jpg written\n"
+  sleep 300;
 done
