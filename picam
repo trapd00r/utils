@@ -1,8 +1,22 @@
 #!/bin/sh
 
+# set up:
+#   credentials for auto-scp'ing
+#   photo save dir
+#   sleep time
+
+           USER='scp1'
+           HOST='laleh'
+ SAVE_DIR_LOCAL="${HOME}/camera"
+SAVE_DIR_REMOTE="_picam"
+          SLEEP=360
 
 while true; do
-  DATE=$(date +"%Y-%m-%d_%H%M%S")
-  raspistill -vf -n -o $HOME/camera/$DATE.jpg && printf "$DATE.jpg written\n"
-  sleep 300;
+  FILE=$(date +"%Y-%m-%d_%H%M%S").jpg
+
+  printf -- "----------\n"
+  raspistill -vf -n -o $FILE && printf "$FILE written\n"
+  scp $FILE ${USER}@${HOST}:${SAVE_DIR_REMOTE} && rm -v $FILE
+  printf -- "----------\n"
+  sleep $SLEEP
 done
