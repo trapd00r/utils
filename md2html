@@ -1,0 +1,27 @@
+#!/usr/bin/perl
+# vim: ft=perl:fdm=marker:fmr=#<,#>:fen:et:sw=2:
+# convert input markdown file to html
+use strict;
+use warnings FATAL => 'all';
+
+use Text::Markdown qw(markdown);
+
+if(!@ARGV) {
+  print usage(), "\n";
+  exit;
+}
+
+my $file = shift;
+
+# slurp file content into scalar
+local $/;
+open(my $fh, '<', $file) or die "Cannot open '$file': $!\n";
+my $markdown = <$fh>;
+close $fh;
+
+my $html = markdown($markdown);
+print $html;
+
+sub usage {
+  return "Usage: $0 file.md";
+}
