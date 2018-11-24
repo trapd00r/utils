@@ -1,0 +1,3 @@
+#!/bin/sh
+
+convert -delay 1 "$1" "$1".gif
