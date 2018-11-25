@@ -1,0 +1,26 @@
+#!/usr/bin/perl
+# vim: ft=perl:fdm=marker:fmr=#<,#>:fen:et:sw=2:
+use strict;
+use warnings FATAL => 'all';
+use vars     qw($VERSION);
+
+use Number::RGB;
+use Term::ExtendedColor::Xresources qw(set_xterm_color set_background_color);
+
+my $red_start :RGB(0, 0, 0); # 000
+
+
+my $i = 0;
+#for(0..256) {
+#  printf "%s\n", Number::RGB->new(rgb => [$i, 0, 0])->hex;
+#  $i += 1;
+#}
+
+# set xterm colors to shades of grey
+for(0..1024) {
+  my $hex_color = Number::RGB->new(rgb => [$i, $i, $i])->hex;
+  $hex_color =~ s/^\#//;
+  set_xterm_color({ $i => $hex_color});
+  $i += 1;
+#  set_background_color($hex_color);
+}
