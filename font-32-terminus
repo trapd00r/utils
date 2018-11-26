@@ -1,9 +1,9 @@
 #!/bin/sh
 
 printf '\033]710;%s\007' \
-  'xft:Terminus:style=Regular:pixelsize=32:antialias=1:hinting=1'
+  'xft:xos4 Terminus:style=Regular:pixelsize=32:antialias=1:hinting=1'
 printf '\033]711;%s\007' \
-  'xft:Terminus:style=Bold:pixelsize=32:antialias=1:hinting=1'
+  'xft:xos4 Terminus:style=Bold:pixelsize=32:antialias=1:hinting=1'
 printf '\033]712;%s\007' \
   'xft:Aerial Mono:style=italic:pixelsize=32:antialias=1:hinting=1'
 printf '\033]713;%s\007' \
