@@ -1,0 +1,45 @@
+#!/usr/bin/perl
+# vim:ft=perl:
+# tool to aid me in writing a new blog post using jekyll.
+use strict;
+
+my $posts_dir = "$ENV{HOME}/dev/japh.se/_posts";
+
+#chdir($posts_dir) or die("Can not chdir to '$posts_dir': $!!\n");
+
+my ($day, $month, $year);
+(undef, undef, undef, $day, $month, $year) = localtime(time);
+$year += 1900;
+
+
+# read blog post title
+print "title: ";
+chomp(my $post_title = <STDIN>);
+$post_title =~ s/\s+/-/g;
+
+my $post_filename = sprintf(
+  "%s-%s-%s-%s.markdown",$year, $month, $day, $post_title
+);
+
+system($ENV{EDITOR}, "$posts_dir/$post_filename") or die "$!\n";
+
+=pod
+
+~/etc/vim/templates/template.markdown:
+
+---
+layout: post
+ title:
+  date:
+  tags:
+---
+
+vim/nancy/000-ft.vim:
+
+au BufNewFile *.markdown
+  \   silent! 0r $VIMRUNTIME/templates/template.markdown
+  \ 0
+  \ exe 'normal d$A'
+  \ startinsert
+
+=end
