@@ -1,2 +1,3 @@
 #!/bin/sh
+killall NetworkManager
 dhcpcd; ip link set wlo1 up; NetworkManager
