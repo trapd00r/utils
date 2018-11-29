@@ -1,0 +1,31 @@
+#!/usr/bin/perl
+# vim: ft=perl:fdm=marker:fmr=#<,#>:fen:et:sw=2:
+use strict;
+use warnings FATAL => 'all';
+use vars     qw($VERSION);
+
+# dump defined colortable to be used with kitty
+
+use Term::ExtendedColor::Xresources qw(get_xterm_color);
+
+
+my $tmp_file = "/tmp/$0.txt";
+
+my $colors = get_xterm_color(
+  {
+    index => [0..255],
+    type  => 'hex',
+  }
+);
+
+# we dump the colors directly to a file, because the terminal will block
+# if we print to stdout and try to pipe the output elsewhere
+#
+open(my $fh, '>', $tmp_file) or die "Can't open '$tmp_file': $!\n";
+
+select $fh;
+for my $i(sort{ $a <=> $b } keys(%$colors)) {
+  printf("color%d: #%s\n", $i, $colors->{$i}->{rgb});
+}
+close $fh;
+select STDOUT;
