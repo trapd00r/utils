@@ -1,0 +1,3 @@
+#!/bin/sh
+
+scp -r ~/dev/japh.se/_site/* pi@pi:httpd
