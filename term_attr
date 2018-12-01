@@ -18,7 +18,7 @@ my $attr = {
 };
 
 for my $t( sort { $attr->{$a} cmp $attr->{$b} } keys(%{ $attr })) {
-  $t =~ /^blink/ and printf("%s\e[48;5;196;38;5;233;1;3mSKIPPING: SHOULD NEVER HAVE BEEN IMPLEMENTED\e[m\n", sprintf("%-10s", $t)), next;
+#  $t =~ /^blink/ and printf("%s\e[48;5;196;38;5;233;1;3mSKIPPING: SHOULD NEVER HAVE BEEN IMPLEMENTED\e[m\n", sprintf("%-10s", $t)), next;
   printf("\e[$attr->{$t}m$t\e[m\n");
 }
 
