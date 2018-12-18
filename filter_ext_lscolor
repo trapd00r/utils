@@ -1,0 +1,18 @@
+#!/usr/bin/perl
+# vim: ft=perl:fdm=marker:fmr=#<,#>:fen:et:sw=2:
+use strict;
+use warnings FATAL => 'all';
+use autodie  qw(:all);
+
+use File::Extension qw(filter_by_meta);
+
+use File::LsColor qw(ls_color);
+
+
+my $query = shift or die "What to filter?\n";
+
+my $filter = filter_by_meta($query);
+
+for my $ext(sort(keys(%{$filter}))) {
+  printf("%s | %s\n", sprintf("%40s", $filter->{$ext}), ls_color(" .$ext"));
+}
