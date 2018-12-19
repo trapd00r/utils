@@ -1,0 +1,3 @@
+#!/bin/sh
+echo on > /sys/bus/pci/devices/0000\:00\:19.0/power/control 
+dhcpcd eno1
