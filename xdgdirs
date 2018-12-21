@@ -1,0 +1,27 @@
+#!/usr/bin/perl
+# vim:ft=perl:et:
+use strict;
+
+# show defined XDG dirs
+
+
+my @xdg = qw(
+ XDG_CACHE_HOME
+ XDG_DESKTOP_DIR
+ XDG_MUSIC_DIR
+ XDG_RUNTIME_DIR
+ XDG_TEMPLATES_DIR
+ XDG_CONFIG_HOME
+ XDG_DOCUMENTS_DIR
+ XDG_PICTURES_DIR
+ XDG_VIDEOS_DIR
+ XDG_DATA_HOME
+ XDG_DOWNLOAD_DIR
+ XDG_PUBLICSHARE_DIR
+);
+
+my $missing;
+for my $x(sort(@xdg)) {
+  $missing = (-d $ENV{$x} ? '' : "\033[48;5;196;38;5;187mENOEXIST\033[m");
+  printf "%20s: %s %s\n", $x, $ENV{$x}, $missing;
+}
