@@ -1,8 +1,11 @@
 #!/usr/bin/perl
+# vim:ft=perl:
 use strict;
 
-my $mame = 'sdlmame';
-my $rat  = 'ratmenu -font -nil-profont-medium-r-normal--12-120-72-72-c-60-iso8859-1';
+my $font = '7x13';
+my $mame = 'mame';
+my $rat  = "ratmenu -font $font -label mame";
+
 
 my %games = (
   cninja          => 'Cavemen Ninja (Platform, 1991)',
