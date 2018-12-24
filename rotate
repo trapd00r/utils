@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# rotate screen based on current rotation
+
+ROTATION=$(xrandr -q | head -2 | tail -1 | awk '{print $5}')
+
+if [ "$ROTATION" = 'left' ]; then
+  xrandr --output DVI-D-0 --rotate normal
+else
+  xrandr --output DVI-D-0 --rotate left
+fi
