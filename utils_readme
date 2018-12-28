@@ -1,0 +1,53 @@
+#!/usr/bin/perl
+# vim: ft=perl:fdm=marker:fmr=#<,#>:fen:et:sw=2:
+# abstract: generate README.md from utils/*
+use strict;
+use warnings FATAL => 'all';
+use vars     qw($VERSION);
+use autodie  qw(:all);
+use File::Basename qw(basename);
+
+my $APP  = 'utils_readme';
+$VERSION = '0.001';
+
+my @files = glob("$ENV{HOME}/dev/utils/*");
+
+my %what;
+
+for my $file(@files) {
+
+  # we expect the abstract to be found in the first 6 lines
+  my $line_nr = 1;
+  open(my $fh, '<', $file) or die $!;
+  while(<$fh>) {
+    if($_ =~ m/^[#"!]+\s*abstract: (.+)/) {
+      $what{$file} = $1;
+      $line_nr++;
+      last if $line_nr > 5;
+    }
+  }
+}
+
+generate_markdown();
+
+sub generate_markdown {
+  print << "EOF";
+  [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=65SFZJ25PSKG8&currency_code=SEK&source=url) - Every tiny cent helps a lot!
+
+  \$HOME/dev/utils
+  ---------------
+
+  This is essentially my **~/bin**:
+
+  A collection of smaller and larger scripts that help me get by
+  doing everyday tasks, yet they don't deserve their own repository.
+
+  A few scripts explained below by extracting the abstract using [utils_readme](https://github.com/trapd00r/utils/blob/master/utils_readme).
+
+EOF
+
+  for my $script(sort(keys(%what))) {
+    my $base = basename($script);
+    printf "* [%s](https://github.com/trapd00r/utils/blob/master/%s) - %s\n", ($base) x 2, $what{$script};
+  }
+}
