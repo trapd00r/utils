@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# html2txt
+# abstract: turn html into plain text
 # usage:
 #   html2txt foo.html
 #   html2txt < foo.html

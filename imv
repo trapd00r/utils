@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# imv - watch a dir and scp all created files therein to another host
+# abstract: watch a dir and scp all created files therein to another host
 use strict;
 use Linux::Inotify2;
 use Getopt::Long;

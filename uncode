@@ -1,10 +1,11 @@
 #!/usr/bin/perl
+# vim:ft=perl:
+# abstract: transform ascii data to unicode chars
 use vars qw($VERSION);
 my $APP  = '';
 $VERSION = '0.001';
 
 use strict;
-use encoding 'utf8';
 
 my $map = {
 

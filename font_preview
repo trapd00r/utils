@@ -1,4 +1,5 @@
 #!/bin/sh
+# abstract: preview all fonts in your terminal
 
 setty alternate
 setty ttyscroll

@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# fbft - move files to dirs compelling to actual file-type
+# abstract: move files to dirs compelling to actual file-type
 =zup?
                       12-a.mp3 => audio/mpeg
                       12-e.mp3 => audio/mpeg

@@ -1,4 +1,6 @@
 #!/usr/bin/perl
+# vim:ft=perl:
+# abstract: abuse sticky bits etc to mark a movie or show as seen
 use strict;
 use warnings FATAL => 'all';
 

@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# PIMPLA - Perl Interface for Mplayer. Just poc using fifos.
+# abstract: perl interface for mplayer using fifos
 use strict;
 my $fifo = "/home/scp1/.mplayer/fifo";
 my %commands = ('fs'    =>  'vo_fullscreen',

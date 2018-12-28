@@ -1,11 +1,16 @@
 #!/usr/bin/perl
-# hits
+# vim:ft=perl:
+# abstract: show httpd resources with most hits
 use strict;
 use Data::Dumper;
+use File::LsColor qw(ls_color);
 use Term::ExtendedColor qw(fg);
 
 
-parse_log(\@ARGV);
+my $access_log = shift // "$ENV{HOME}/pi/var/log/access.log";
+
+parse_log($access_log);
+
 pop_ips();
 pop_files();
 
@@ -60,7 +65,7 @@ sub pop_ips {
 sub pop_files {
   my $sum;
   for my $file(sort {$files{$a}<=> $files{$b}} keys(%files)) {
-    printf("% 5d %s\n", $files{$file}, $file);
+    printf("% 5d %s\n", $files{$file}, ls_color($file));
     $sum += $files{$file};
   }
   printf("%5s requests\n", fg('orange2', fg('bold', $sum)));

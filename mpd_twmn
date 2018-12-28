@@ -1,4 +1,5 @@
 #!/bin/sh
+# abstract: mpd notifications in a tiling wm
 
 if [ $@ ]; then
   mpc next

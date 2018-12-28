@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Example script that shows how one can use Mplayer::NowPlaying
+# abstract: mplayer now-playing using Mplayer::NowPlaying
 
 use strict;
 use Mplayer::NowPlaying;

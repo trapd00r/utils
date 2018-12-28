@@ -1,7 +1,8 @@
 #!/usr/bin/perl
-use strict;
-# flexget parser
+# vim:ft=perl:
+# abstract: flexget parser
 
+use strict;
 my $flexlog = "$ENV{XDG_DATA_HOME}/flexget/flexget.log";
 
 open(LOG,$flexlog) || die "$flexlog does not exist?!\n";

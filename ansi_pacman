@@ -1,6 +1,5 @@
 #!/bin/bash
-#
-# pacman, ansi colors
+# abstract: pacman with ansi colors
 
 f=3 b=4
 for j in f b; do

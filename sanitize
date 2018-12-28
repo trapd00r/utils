@@ -1,4 +1,6 @@
 #!/bin/zsh
+# vim:ft=zsh
+# abstract: sanitize filenames
 
 if [[ $1 == '-l' || $1 == '-tolower' ]]; then
   # lowercase everything

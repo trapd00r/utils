@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Prettier git diff
+# abstract: prettier git diff
 use strict;
 use Syntax::Highlight::Engine::Kate;
 use Term::ExtendedColor qw(:attributes);

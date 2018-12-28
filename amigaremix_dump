@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# dump all songs from amigaremix.com
+# abstract: rip all songs from amigaremix.com - in parallel
 
 use strict;
 use vars qw($VERSION);

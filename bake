@@ -1,5 +1,6 @@
 #!/bin/sh
 # vim: ft=sh et sw=2:
+# abstract: build perl stuff
 if [[ -f Makefile.PL ]]; then
   perl Makefile.PL  PREFIX=~ LIB=~/lib/
 elif [[ -f Build.PL ]]; then

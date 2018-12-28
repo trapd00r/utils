@@ -1,5 +1,4 @@
 #!/usr/bin/perl
-use encoding 'utf-8';
 use utf8;
 use open qw(:std :utf8);
 for(@ARGV) {

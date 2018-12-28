@@ -1,4 +1,6 @@
 #!/usr/bin/perl
+# vim:ft=perl:
+# abstract: unicode boxes
 use strict;
 use vars qw($VERSION);
 use utf8;

@@ -1,4 +1,7 @@
 #!/usr/bin/perl
+# vim:ft=perl:
+# abstract: a cat with syntax highlighting powers
+
 =scat
 A cat with syntax highlighting powers
 

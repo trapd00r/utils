@@ -1,5 +1,6 @@
 #!/usr/bin/perl
-# Converts the X11 colortable RGB Values to hexadecimal
+# vim:ft=perl:
+# abstract: converts the X11 colortable RGB values to hexadecimal
 use strict;
 my $rgbfile = "/usr/share/X11/rgb.txt";
 open(RGB,"<", $rgbfile) or die;

@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use warnings FATAL => 'all';
+no warnings 'experimental::smartmatch';
 
 use JSON::XS;
 use LWP::UserAgent;

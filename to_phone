@@ -1,5 +1,6 @@
 #!/usr/bin/perl
-# scp files to the phone and place it where I want it
+# vim:ft=perl:
+# abstract: scp files to the phone and place it where I want it
 use strict;
 
 my %target = (

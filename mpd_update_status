@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# I want to know when a database update is finished.
+# abstract: mpd update with status
 
 use Audio::MPD;
 

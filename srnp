@@ -1,5 +1,6 @@
 #!/usr/bin/perl
-# srnp - np for sveriges radio
+# vim:ft=perl:
+# abstract: now playing for sveriges radio
 use strict;
 use LWP::Simple;
 use XML::Simple;

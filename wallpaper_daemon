@@ -1,5 +1,6 @@
 #!/usr/bin/perl
-# changes background on htpc connected tv every $sleep seconds
+# vim:ft=perl:
+# abstract: changes background on htpc connected tv every $sleep seconds
 use strict;
 use warnings FATAL => 'all';
 use vars qw($VERSION);

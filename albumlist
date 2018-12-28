@@ -1,4 +1,5 @@
 #!/bin/sh
+# abstract: display all albums by artist
 
 artist="$@"
 [ -z $artist ] && artist=$(mpc --format '%artist%' | head -1)

@@ -1,10 +1,11 @@
 #!/usr/bin/perl
-# vim wrapper
+# vim:ft=perl:
+# abstract: how much time do I spend in my vim?
 
 use strict;
 use Storable;
 use Time::localtime;
-use Term::ExtendedColor;
+use Term::ExtendedColor qw(fg);
 
 #use Data::Dumper;
 #$Data::Dumper::Terse     = 1;
@@ -14,7 +15,7 @@ use Term::ExtendedColor;
 #$Data::Dumper::Quotekeys = 0;
 #$Data::Dumper::Sortkeys  = 1;
 
-my $history = "$ENV{HOME}/doc/vimtimes";
+my $history = "$ENV{XDG_DATA_HOME}/vimtimes";
 
 $\ = "\n"; # evil :)
 $|++;

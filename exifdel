@@ -1,4 +1,5 @@
 #!/bin/zsh
+# abstract: delete all exif data from photos
 
 exiftool -all= "$@"
 # kshglob doesn't allow use to do  (jpe?g|[ct]iff ...), that's why it looks like

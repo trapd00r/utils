@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # laleh-check.pl
-# check if string is present in Laleh's lyrics
+# abstract: check if string is present in Laleh's lyrics
 # 'candle' is present in Closer
 # 'and' is present in Call on Me
 # 'and' is present in Closer

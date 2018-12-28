@@ -1,5 +1,5 @@
 #!/bin/sh
-# mount bob
+# abstract: mount bob the boxeebox
 
 mkdir -p /mnt/bob
 mount -t cifs //BOXEEBOX/bob /mnt/bob \

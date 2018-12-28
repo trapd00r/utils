@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+# abstract: pacman statisticts
 open(my $pp, 'pacman -Qq|');
 chomp(my @all_pkg = <$pp>);
 close($pp);

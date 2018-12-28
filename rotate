@@ -1,6 +1,6 @@
 #!/bin/sh
-
-# rotate screen based on current rotation
+# vim:ft=sh:
+# abstract: rotate screen based on current rotation
 
 ROTATION=$(xrandr -q | head -2 | tail -1 | awk '{print $5}')
 

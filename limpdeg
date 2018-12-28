@@ -1,5 +1,6 @@
 #!/bin/zsh
 # vim: set ft=sh:
+# abstract: injects n moldy playlists in mpd
 #                  LiMPDeg
 #      injects n moldy playlists in mpd
 #   ‗‗‗‗‗‗‗‗‗‗‗‗ ‗‗‗‗‗‗ ‗‗‗‗‗‗‗‗ ‗‗‗‗‗‗‗‗‗‗‗

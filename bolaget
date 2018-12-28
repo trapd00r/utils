@@ -1,5 +1,6 @@
 #!/bin/sh
 # vim:ft=zsh:
+# abstract: is the systembolaget open today?
 printf "\033[31;1mSYSTEMBOLAGET KARLSTAD, DROTTNINGGATAN\033[m  ";
 date "+%A %Y%m%d%n"
 curl -s https://www.systembolaget.se/butiker-ombud/butik/varmlands-lan/karlstad/drottninggatan-26-28-1701 |

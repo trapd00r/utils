@@ -1,5 +1,6 @@
 #!/usr/bin/perl
-# srif - Sveriges Radio Info fetcher
+# vim:ft=perl:
+# abstract: sveriges radio info fetcher
 use XML::Simple;
 use LWP::Simple;
 use Data::Dumper;

@@ -1,5 +1,6 @@
 #!/bin/sh
 # vim: ft=sh et sw=2 smc=80 cc=:
+# abstract: what's eating all the space, take two?
 
 where="${@:-.}"
 printf '\033[?7l'

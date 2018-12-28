@@ -1,5 +1,5 @@
 #!/bin/bash
-# install missing modules automagically
+# abstract: install missing modules automagically
 
 su -c "cpanm $(
   perl "./Build.PL" 2>&1 |

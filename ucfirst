@@ -1,3 +1,4 @@
 #!/usr/bin/perl -p
 # vim: ft=perl smc&:
+# abstract: uppercase first
 s/((^\w)|(\s\w))/\U$1/g, s/([\w']+)/\u\L$1/g;

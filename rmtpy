@@ -1,6 +1,6 @@
 #!/usr/bin/perl
-# given a root directory, remove empty directories or directories one level deep
-# with only empty files in them
+# vim:ft=perl:
+# abstract: given a root directory, remove empty directories or directories one level deep with only empty files in them
 #
 # rmpty /mnt/Music_1/.new/
 

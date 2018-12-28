@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Fetch filetype information based on extensions
+# abstract: fetch filetype information based on extensions
 use strict;
 use LWP::Simple;
 use Storable;

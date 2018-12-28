@@ -1,3 +1,4 @@
 #!/bin/sh
+# abstract: show filetype info
  ack -f --show-types |
   perl -MFile::LsColor=ls_color -ln -e 'm/(.+) => (.+)/ and printf("%15.15s => %s\n", $2, ls_color($1))'

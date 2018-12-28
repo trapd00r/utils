@@ -1,3 +1,6 @@
+#!/bin/sh
+# abstract: clone all repos from $GITHUB_USER
+
 CNTX='users'; NAME=$GITHUB_USER
 
 # 189 repos as of  2018-12-18 15:34:34 

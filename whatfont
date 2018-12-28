@@ -1,6 +1,7 @@
 #!/bin/sh
-# This will query the terminal for the current font in use. It will only work
-# in xterm compatible terminals.
+# vim:ft=sh:
+# abstract: query the terminal for the current fonts in use.
+# it will only work in xterm compatible terminals.
 # urxvt note: you *must* have enabled frills *and* you must set the insecure
 # resource. xterm is 'insecure' by default.
 

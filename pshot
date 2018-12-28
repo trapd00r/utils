@@ -1,4 +1,6 @@
 #!/usr/bin/perl
+# vim: ft=perl:
+# abstract: take screenshot, transfer it to host and return url
 our $APP     = 'pshot';
 our $VERSION = '0.21';
 

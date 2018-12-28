@@ -1,5 +1,6 @@
 #!/bin/sh
 # vim: synmaxcol& ft=zsh:
+# abstract: rip all songs from amigaremix.com
 mkdir -p amigaremix && cd amigaremix;
 wget $( \
   for x in $( \

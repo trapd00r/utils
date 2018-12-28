@@ -1,3 +1,5 @@
+#!/usr/bin/perl
+# abstract: show line endings
 use strict;
 use Term::ANSIColor;
 

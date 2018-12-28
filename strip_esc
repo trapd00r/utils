@@ -1,5 +1,6 @@
 #!/usr/bin/perl
-# Strip data from escape sequences
+# vim:ft=perl:
+# abstract: strip data from escape sequences
 # \e[1m
 # \e[38;5;197m
 # \033[31;1m

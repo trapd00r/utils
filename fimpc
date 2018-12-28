@@ -1,6 +1,7 @@
 #!/usr/bin/perl
+# vim:ft=perl:
 use strict;
-# fimpc.. using fifos to control mpd using mpc. PoC.
+# abstract: use fifos to control mpd using mpc
 
 sub readFifo {
   my $FIFO = shift;

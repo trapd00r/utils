@@ -1,4 +1,6 @@
 #!/bin/sh
+# vim:ft=sh:
+# abstract: translate
 
 while true; do
   printf "translate: "

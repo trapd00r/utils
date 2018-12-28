@@ -1,6 +1,6 @@
 #!/usr/bin/perl
+# abstract: simple calculator
 use strict;
-# calc
 
 print "Expression?\n";
 while (1) {

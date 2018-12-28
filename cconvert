@@ -1,6 +1,6 @@
 #!/usr/bin/perl
+# abstract: convert to/from bin, oct, hex, dec
 use strict;
-# convert
 use Getopt::Long;
 
 usage() unless(@ARGV);

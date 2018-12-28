@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Generate a hash with colorschemes from X resources
+# abstract: generate a hash with colorschemes from X resources
 use vars qw($VERSION);
 my $APP  = '';
 $VERSION = '0.003';

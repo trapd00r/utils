@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# List packages that includes fonts
+# abstract: list packages that includes fonts
 use strict;
 use File::LsColor qw(ls_color);
 

@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # vim:ft=perl:
 # 2016-09-08 12:24:30
-# NES game launcher utilizing ratmenu
+# abstract: nes frontend using ratmenu
 use strict;
 
 my $emu     = 'nestopia';

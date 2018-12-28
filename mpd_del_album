@@ -1,6 +1,7 @@
 #!/bin/zsh
 # http://devel.japh.se/mpd_del_album/
 # 2012-05-10 18:11:36
+# abstract: remove album from mpd playlist
 
 IFS="$(printf '\n\t')"
 mpd_del_album_artist="$@"

@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 use utf8;
 use open qw(:std :utf8);
-use encoding 'utf8';
 
 for(@ARGV) {
   printf("0x%x, %d\n", (ord($_)) x 2);

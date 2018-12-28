@@ -1,6 +1,5 @@
 #!/usr/bin/perl
-# absname
-# you can't trust $PWD in linux
+# abstract: you can't trust $PWD in linux
 use strict;
 use warnings FATAL => 'all';
 #use encoding 'utf8';

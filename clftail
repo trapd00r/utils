@@ -1,9 +1,11 @@
 #!/usr/bin/perl
+# vim: ft=perl:
+# abstract: color-follow-tail for access.log
 use strict;
 use File::Tail;
 use Term::ExtendedColor qw(fg bg);
 
-my $log   = shift // '/var/log/lighttpd/japh.se/access.log';
+my $log   = shift // "$ENV{HOME}/pi/var/log/access.log";
 
 my $tail = File::Tail->new(
   name        => $log,

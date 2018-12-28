@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# np
+# abstract: mpd now playing
 use strict;
 use Audio::MPD;
 my $m = Audio::MPD->new;

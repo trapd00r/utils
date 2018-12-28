@@ -1,5 +1,6 @@
 #!/bin/sh
 # vim: ft=sh:
+# abstract: set oss4 audio levels
 
 ossmix -qd0 vmix0-channels                Multich
 ossmix -qd0 vmix0-src                     OFF

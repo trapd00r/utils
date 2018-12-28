@@ -1,3 +1,4 @@
 #!/bin/sh
+# abstract: invert the entire screen
 
 xcalib -verbose -alter -invert

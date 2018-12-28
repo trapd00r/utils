@@ -1,4 +1,6 @@
 #!/bin/sh
+# vim:ft=sh:
+# abstract: a bunch of tops in one go
 
 tmux -f $HOME/etc/tmux.conf new-session -d 'iotop -o -d2 -k' \; \
   split-window -d 'htop'              \; \

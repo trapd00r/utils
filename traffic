@@ -1,4 +1,8 @@
 #!/bin/sh
+# vim:ft=sh:
+# abstract: visualize httpd traffic
 
-tail -fq $(find /mnt/httpd -type f -iname '*access.log') \
-  | logstalgia -1680x1050 -x --paddle-mode vhost -
+LOGFILE="$HOME/pi/var/log/access.log"
+
+tail -fq $LOGFILE \
+  | logstalgia -1080x1920 -x --paddle-mode vhost -

@@ -1,6 +1,5 @@
 #!/usr/bin/perl
-# colorscheme.pl
-# The colorscheme I've been using for ~2 years
+# abstract: change ansi colorscheme to mine
 
 use strict;
 use Term::ExtendedColor::Xresources qw(set_xterm_color);

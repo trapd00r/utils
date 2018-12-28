@@ -1,5 +1,5 @@
 #!/bin/sh
-# remove songs matching PATTERN from playlist
+# abstract: remove songs matching PATTERN from mpd playlist
 
 pattern="$1"
 

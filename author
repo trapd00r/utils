@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+# abstract: print japh author
 use strict;
 
 print << 'EOF';

@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# bigrand
+# abstract: generate n random numbers
 use strict;
 
 print "num> ";

@@ -5,7 +5,7 @@ use Data::Dumper;
 
 my $color = 1;
 my $cmd = shift // 'f';
-my $log = shift // '/var/log/lighttpd/access.log';
+my $log = shift // "$ENV{HOME}/pi/var/log/access.log";
 
 my $noc  = "\033[0m";
 my $clr1 = "\033[38;5;100m";

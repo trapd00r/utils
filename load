@@ -1,4 +1,5 @@
 #!/bin/sh
+# abstract: a non-interactive top
 printf '\e[?7t'
 ps aux | sort -k3 | tail -40 |
   perl -e '

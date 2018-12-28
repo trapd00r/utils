@@ -1,3 +1,8 @@
+#!/usr/bin/perl
+# vim:ft=perl:
+# abstract: generate html from vim syntax hl
+
+
 use strict;
 use Text::VimColor;
 use Getopt::Long;

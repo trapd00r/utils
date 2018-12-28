@@ -1,6 +1,8 @@
 #!/usr/bin/perl
+# vim:ft=perl:
+# abstract: rename files downloaded with clive to something a bit more sensible
+
 use strict;
-# rename files downloaded with clive to something a bit more sensible
 
 my $where;
 if(!@ARGV) {

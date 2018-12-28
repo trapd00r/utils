@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# there's rmdir but no rmfile...
+# abstract: there's rmdir but no rmfile...
 use strict;
 use warnings FATAL => 'all';
 use File::LsColor;

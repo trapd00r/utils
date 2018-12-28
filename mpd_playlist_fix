@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # mpd_playlist_fix
-# remove invalid entries from m3u playlists
+# abstract: remove invalid entries from m3u playlists
 
 use Audio::MPD;
 use Tie::File;

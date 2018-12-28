@@ -1,5 +1,6 @@
 #!/bin/zsh
 # vim: ft=sh smc=78 cc=:
+# abstract: clean up a release dir
 setopt extendedglob nullglob nomatch
 =rm -vr (#i)**/{sample,subs,proof}(/)
 =rm -vi (#i)**/*.{rar,r[0-9][0-9],sfv,nfo,ion,ini,txt,url,htm*,exe,pdf,bak,*_Store,lnk}(.)

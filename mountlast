@@ -1,3 +1,4 @@
+#!/usr/bin/perl
 use strict;
 
 my $mount_point = shift // '/mnt/tmp';

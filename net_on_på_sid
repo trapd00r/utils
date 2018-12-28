@@ -1,3 +1,4 @@
 #!/bin/sh
+# abstract: enable ethernet on 82579V chipsets
 echo on > /sys/bus/pci/devices/0000\:00\:19.0/power/control 
 dhcpcd eno1

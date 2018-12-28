@@ -1,4 +1,5 @@
 #!/bin/sh
+# abstract: what's eating all the space?
 IFS="$(printf '\n\t')"
 du -sk $@    \
   | sort -nr \

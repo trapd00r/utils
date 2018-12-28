@@ -2,6 +2,7 @@
 "   :neverland
 "   :github
 "   :desert
+" abstract: colorscheme previews in vim
 
 "exe 'command ' . substitute(cs, '\v[^a-zA-Z0-9_]', '_', 'g')  . ' colorscheme ' . cs
 

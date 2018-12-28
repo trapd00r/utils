@@ -1,6 +1,6 @@
 #!/bin/sh
 # vim:ft=sh:
-# a rainbow in your shell!
+# abstract: a rainbow in your shell
 
 printf "\033c\033(K\033[J\033[0m\033[?25h"
 yes "$(seq 231 -1 16)" | while read i; do printf "\033[48;5;${i}m\n"; sleep .02; done

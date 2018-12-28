@@ -1,5 +1,6 @@
 #!/usr/bin/perl
-# Remove various non-file records from the vim-times db
+# vim:ft=perl:
+# abstract: remove various non-file records from the vim-times db
 use strict;
 use Storable;
 
