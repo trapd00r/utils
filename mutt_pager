@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use open qw(:utf8);
-use encoding 'utf8';
 use Term::ExtendedColor qw(:attributes);
 
 my @mail = <>;

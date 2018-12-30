@@ -18,7 +18,6 @@ use File::Path();
 use Term::ExtendedColor qw(:attributes);
 
 use open qw(:utf8);
-use encoding 'utf8';
 
 # BEGIN CONFIG
 my $path = '/mnt/Docs/Mail/mutt_dump';

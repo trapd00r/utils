@@ -2,7 +2,6 @@
 use strict;
 use open qw(:utf8);
 use utf8;
-use encoding 'utf8';
 
 use WWW::Mechanize;
 use Storable;

@@ -1,6 +1,5 @@
 #!/usr/bin/perl
 use strict;
-use encoding 'utf8';
 use Text::UpsideDown;
 
 if(@ARGV) {

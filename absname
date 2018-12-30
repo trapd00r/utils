@@ -2,7 +2,6 @@
 # abstract: you can't trust $PWD in linux
 use strict;
 use warnings FATAL => 'all';
-#use encoding 'utf8';
 use open qw(:std :utf8);
 use utf8;
 use Cwd qw(getcwd);

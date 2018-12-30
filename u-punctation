@@ -15,7 +15,6 @@ use Data::Dumper;
   $Quotekeys = 0;
 }
 
-use encoding 'utf8';
 use charnames qw(:full);
 
 

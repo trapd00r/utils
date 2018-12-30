@@ -8,7 +8,6 @@ use warnings;
 
 use utf8;
 use open qw(:std :utf8);
-use encoding 'utf8';
 
 use Getopt::Long;
 use Pod::Usage;

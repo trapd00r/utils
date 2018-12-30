@@ -4,7 +4,6 @@ my $APP  = 'ddg';
 $VERSION = '0.004';
 
 use strict;
-use encoding 'utf8';
 use Term::ExtendedColor qw(fg bg);
 use WWW::Search::DuckDuckGo qw(ddg);
 use Data::Dumper;
