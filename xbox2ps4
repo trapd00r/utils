@@ -1,0 +1,5 @@
+#!/bin/sh
+# vim:ft=sh:et:
+
+udevadm control --reload-rules; rmmod uinput; modprobe uinput
+ds4drv --hidraw --emulate-xpad
