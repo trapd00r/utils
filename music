@@ -1,0 +1,4 @@
+#!/bin/sh
+# vim:ft=sh:et:
+
+media_sort -t music $1
