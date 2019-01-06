@@ -1,0 +1,9 @@
+#!/bin/sh
+# abstract: query rtorrent for files matching PATTERN
+
+if [ $# -lt 1 ]; then
+echo "Usage: $0 PATTERN"
+exit
+fi
+
+rtcontrol -qo '{{chr(10).join([d.directory+chr(47)+x.path for x in d.files])|h.subst(chr(47)+chr(43),chr(47))}}' /$1/
