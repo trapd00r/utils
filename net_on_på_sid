@@ -1,4 +1,7 @@
 #!/bin/sh
 # abstract: enable ethernet on 82579V chipsets
 echo on > /sys/bus/pci/devices/0000\:00\:19.0/power/control 
-dhcpcd eno1
+dhcpcd -D eno1
+
+bitlbee -D
+sh /home/scp1/dev/utils/bob
