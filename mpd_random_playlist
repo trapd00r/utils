@@ -1,0 +1,12 @@
+#!/bin/sh
+# vim:ft=sh:et:
+# abstract: create a new playlist with n random tracks
+
+NO_TRACKS=100
+
+if [ $1 ]; then
+  NO_TRACKS=$1
+fi
+
+pimpd2 --clear
+pimpd2 --randomize $NO_TRACKS | pimpd2 -af
