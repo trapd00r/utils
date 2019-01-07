@@ -1,0 +1,41 @@
+#!/usr/bin/perl
+# vim:ft=perl:et:
+# abstract: copy all loved songs from the pimpd2 database to the mp3 player
+
+use strict;
+use warnings FATAL => 'all';
+
+use File::LsColor qw(ls_color get_ls_colors);
+use File::Copy::Recursive qw(rcopy fcopy);
+use File::Basename;
+use Term::ExtendedColor qw(fg);
+$File::Copy::Recursive::CPRFComp = 1;
+
+
+my $mp3_player = "/mnt/mp3";
+my $music_dir = "$ENV{HOME}/mp3";
+my $playlist  = "$ENV{HOME}/var/pimpd2/pimpd2.db";
+
+
+open(my $fh, '<', $playlist) or die $!;
+chomp(my @files = <$fh>);
+close $fh;
+
+
+@files = map { "$music_dir/$_"; } @files;
+
+
+cp($mp3_player, @files);
+
+
+sub cp {
+  my($where, @what) = @_;
+  for my $file(@what) {
+    fcopy($file, $where);
+    if($!) {
+      warn $! and next;
+    }
+    printf "%-20s\n", ls_color(basename($file))
+  }
+  printf "transferred to %s.\n", fg(30, $where);
+}
