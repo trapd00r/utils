@@ -1,0 +1,104 @@
+#!/usr/bin/perl
+# vim: ft=perl:fdm=marker:fmr=#<,#>:fen:et:sw=2:
+# abstract: list scene releases on a fs based on media type
+use strict;
+use warnings FATAL => 'all';
+use vars     qw($VERSION);
+use autodie  qw(:all);
+
+#no warnings 'experimental::smartmatch';
+
+use File::Media::Sort qw(media_sort);
+use Getopt::Long;
+use Pod::Usage;
+use File::Basename;
+use Cwd;
+use Data::Dumper;
+
+use File::PatternMatch qw(patternmatch);
+
+my $opt_type;
+GetOptions(
+  'type:s' => \$opt_type,
+  'h|help' => sub { pod2usage(verbose => 1); exit; },
+);
+
+die "Please specify a type with -t\n", unless defined $opt_type;
+my $directory = shift // getcwd();
+
+my @results = map { basename($_); } media_sort($opt_type, glob("$directory/*"));
+
+
+my $pm =  patternmatch(256, @results);
+
+
+for my $k(sort(keys(%{ $pm }))) {
+  for my $media(sort(keys(%{ $pm->{$k} }))) {
+    printf "%s [%-15s]\n", $media, $pm->{$k}->{$media};
+  }
+}
+
+
+
+__END__
+
+
+=pod
+
+=head1 NAME
+
+lsrel - list scene releases on a fs based on media type
+
+=head1 USAGE
+
+    lsrel [OPTIONS] DIRECTORY
+
+=head1 DESCRIPTION
+
+lsrel takes a list of filenames and returns a list of filenames based on type.
+Type can be:
+
+- music
+- tv
+- mvid
+
+
+=head1 OPTIONS
+
+    -t, --type    request files matching type
+
+    -v, --verbose explain what is being done
+    -h, --help    show this help and exit
+
+=head1 REPORTING BUGS
+
+Report bugs and/or feature requests on L<https://github.com/trapd00r/lsrel>,
+the repository issue tracker or directly to L<m@japh.se>
+
+=head1 AUTHOR
+
+  Magnus Woldrich
+  CPAN ID: WOLDRICH
+  m@japh.se
+  http://japh.se
+  http://github.com/trapd00r
+
+=head1 CONTRIBUTORS
+
+None required yet.
+
+=head1 COPYRIGHT
+
+Copyright 2018 B<THIS APPLICATION>s L</AUTHOR> and L</CONTRIBUTORS> as listed
+above.
+
+=head1 LICENSE
+
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=head1 SEE ALSO
+
+L<~/|http://japh.se>
+
+=cut
