@@ -1,0 +1,14 @@
+#!/bin/sh
+# vim:ft=sh:
+# abstract: create torrents
+
+
+if [ $# -lt 2 ]; then
+  echo "Usage: $0 announce-url directory/"
+  exit
+fi
+
+url=$1
+dir=$2
+
+mktorrent -a $url -n $dir -p $dir
