@@ -21,6 +21,7 @@
 * [ansic](https://github.com/trapd00r/utils/blob/master/ansic) - show defined ansi colors
 * [author](https://github.com/trapd00r/utils/blob/master/author) - print japh author
 * [bake](https://github.com/trapd00r/utils/blob/master/bake) - build perl stuff
+* [basename](https://github.com/trapd00r/utils/blob/master/basename) - grab input from stdin and basename it
 * [bigrand](https://github.com/trapd00r/utils/blob/master/bigrand) - generate n random numbers
 * [bob](https://github.com/trapd00r/utils/blob/master/bob) - mount bob the boxeebox
 * [bolaget](https://github.com/trapd00r/utils/blob/master/bolaget) - is the systembolaget open today?
@@ -35,11 +36,13 @@
 * [colorclock](https://github.com/trapd00r/utils/blob/master/colorclock) - a terminal color clock
 * [colorls](https://github.com/trapd00r/utils/blob/master/colorls) - ls with colors
 * [colorscheme](https://github.com/trapd00r/utils/blob/master/colorscheme) - change ansi colorscheme to mine
+* [colorscheme-256](https://github.com/trapd00r/utils/blob/master/colorscheme-256) - change 256 colorscheme to mine
 * [colorx](https://github.com/trapd00r/utils/blob/master/colorx) - print defined colors in an X shape
 * [crossmake](https://github.com/trapd00r/utils/blob/master/crossmake) - makes cross's in all kinds of shapes and colors
 * [cs_preview.vim](https://github.com/trapd00r/utils/blob/master/cs_preview.vim) - colorscheme previews in vim
 * [define](https://github.com/trapd00r/utils/blob/master/define) - look up words in the terminal
 * [dircolors2vim](https://github.com/trapd00r/utils/blob/master/dircolors2vim) - generate vim syntax file for defined LS_COLORS
+* [dirname](https://github.com/trapd00r/utils/blob/master/dirname) - grab input from stdin and dirname it
 * [dltrack](https://github.com/trapd00r/utils/blob/master/dltrack) - track a file while it's being downloaded
 * [dmesg-a](https://github.com/trapd00r/utils/blob/master/dmesg-a) - a colored dmesg
 * [domain_gen](https://github.com/trapd00r/utils/blob/master/domain_gen) - generate a valid domain name
@@ -82,12 +85,13 @@
 * [mpd_del_album](https://github.com/trapd00r/utils/blob/master/mpd_del_album) - remove album from mpd playlist
 * [mpd_keep](https://github.com/trapd00r/utils/blob/master/mpd_keep) - remove songs NOT matching PATTERN from mpd playlist
 * [mpd_playlist_fix](https://github.com/trapd00r/utils/blob/master/mpd_playlist_fix) - remove invalid entries from m3u playlists
+* [mpd_random_playlist](https://github.com/trapd00r/utils/blob/master/mpd_random_playlist) - create a new playlist with n random tracks
 * [mpd_twmn](https://github.com/trapd00r/utils/blob/master/mpd_twmn) - mpd notifications in a tiling wm
 * [mpd_update_status](https://github.com/trapd00r/utils/blob/master/mpd_update_status) - mpd update with status
 * [mplayer_exec](https://github.com/trapd00r/utils/blob/master/mplayer_exec) - mplayer client for mplayer daemon
 * [mplayerd](https://github.com/trapd00r/utils/blob/master/mplayerd) - mplayer as a daemon
 * [mpnp](https://github.com/trapd00r/utils/blob/master/mpnp) - mplayer now-playing using Mplayer::NowPlaying
-* [music](https://github.com/trapd00r/utils/blob/master/music) - start a music session in tmux
+* [music_session](https://github.com/trapd00r/utils/blob/master/music_session) - start a music session in tmux
 * [net_on_på_sid](https://github.com/trapd00r/utils/blob/master/net_on_på_sid) - enable ethernet on 82579V chipsets
 * [nicefind](https://github.com/trapd00r/utils/blob/master/nicefind) - a very nice find ui
 * [np](https://github.com/trapd00r/utils/blob/master/np) - mpd now playing
@@ -102,7 +106,7 @@
 * [pshot](https://github.com/trapd00r/utils/blob/master/pshot) - take screenshot, transfer it to host and return url
 * [rainbow](https://github.com/trapd00r/utils/blob/master/rainbow) - a rainbow in your shell
 * [ratrepl](https://github.com/trapd00r/utils/blob/master/ratrepl) - ratpoison repl
-* [rel](https://github.com/trapd00r/utils/blob/master/rel) - flexget parser
+* [rel_old](https://github.com/trapd00r/utils/blob/master/rel_old) - flexget parser
 * [rename-tv](https://github.com/trapd00r/utils/blob/master/rename-tv) - rename tv episodes
 * [rename_youtube](https://github.com/trapd00r/utils/blob/master/rename_youtube) - rename files downloaded with clive to something a bit more sensible
 * [rescue_chmod](https://github.com/trapd00r/utils/blob/master/rescue_chmod) - chmod -x /bin/chmod, HELP
@@ -114,6 +118,7 @@
 * [rotate](https://github.com/trapd00r/utils/blob/master/rotate) - rotate screen based on current rotation
 * [rp-groups-menu](https://github.com/trapd00r/utils/blob/master/rp-groups-menu) - ratpoison groups menu
 * [rp-runorraise](https://github.com/trapd00r/utils/blob/master/rp-runorraise) - ratpoison run OR raise (hi firefox)
+* [rt_query](https://github.com/trapd00r/utils/blob/master/rt_query) - query rtorrent for files matching PATTERN
 * [sanitize](https://github.com/trapd00r/utils/blob/master/sanitize) - sanitize filenames
 * [sascii](https://github.com/trapd00r/utils/blob/master/sascii) - interactive key inspector
 * [scat](https://github.com/trapd00r/utils/blob/master/scat) - a cat with syntax highlighting powers
@@ -127,6 +132,7 @@
 * [term_attr](https://github.com/trapd00r/utils/blob/master/term_attr) - dump all term attributes
 * [to_phone](https://github.com/trapd00r/utils/blob/master/to_phone) - scp files to the phone and place it where I want it
 * [topsi](https://github.com/trapd00r/utils/blob/master/topsi) - a bunch of tops in one go
+* [torrent](https://github.com/trapd00r/utils/blob/master/torrent) - create torrents
 * [traffic](https://github.com/trapd00r/utils/blob/master/traffic) - visualize httpd traffic
 * [translate](https://github.com/trapd00r/utils/blob/master/translate) - translate
 * [u-arrows](https://github.com/trapd00r/utils/blob/master/u-arrows) - unicode arrows
