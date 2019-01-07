@@ -1,0 +1,14 @@
+#!/usr/bin/perl
+# vim:ft=perl:et:
+# abstract: grab input from stdin and basename it
+
+use strict;
+use File::Basename;
+use File::LsColor qw(ls_color);
+
+
+while(<>) {
+  chomp;
+  my $file = basename($_);
+  printf "%s\n", ls_color($file);
+}

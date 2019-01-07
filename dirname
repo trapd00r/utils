@@ -1,0 +1,13 @@
+#!/usr/bin/perl
+# vim:ft=perl:et:
+# abstract: grab input from stdin and dirname it
+
+use strict;
+use File::Basename;
+
+
+while(<>) {
+  chomp;
+  my $dir = dirname($_);
+  printf "%s\n", $dir;
+}
