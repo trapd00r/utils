@@ -12,7 +12,7 @@ use Term::ExtendedColor qw(fg);
 $File::Copy::Recursive::CPRFComp = 1;
 
 
-my $mp3_player = "/mnt/mp3";
+my $mp3_player = "$ENV{HOME}/mp3/toburn";
 my $music_dir = "$ENV{HOME}/mp3";
 my $playlist  = "$ENV{HOME}/var/pimpd2/pimpd2.db";
 
