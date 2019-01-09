@@ -1,0 +1,10 @@
+#!/bin/sh
+# vim:ft=sh:et:
+# abstract: display all unique albums by artist
+
+ARTIST=${1:-$(mpc current --format %artist%)}
+
+mpc search artist $ARTIST \
+  | dirnamep \
+  | sort -u \
+  | colorfg 30
