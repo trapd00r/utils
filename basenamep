@@ -7,8 +7,11 @@ use File::Basename;
 use File::LsColor qw(ls_color);
 
 
+my $colored = $ARGV[0] =~ m/--?c/;
+shift @ARGV if $colored;
+
 while(<>) {
   chomp;
   my $file = basename($_);
-  printf "%s\n", ls_color($file);
+  printf "%s\n", $colored ? ls_color($file) : $file;
 }
