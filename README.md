@@ -13,6 +13,7 @@
 * [1984](https://github.com/trapd00r/utils/blob/master/1984) - fun with pv
 * [absname](https://github.com/trapd00r/utils/blob/master/absname) - you can't trust $PWD in linux
 * [albumlist](https://github.com/trapd00r/utils/blob/master/albumlist) - display all albums by artist
+* [albums_by_artist](https://github.com/trapd00r/utils/blob/master/albums_by_artist) - display all unique albums by artist
 * [alias](https://github.com/trapd00r/utils/blob/master/alias) - display zsh aliases
 * [all_unicode](https://github.com/trapd00r/utils/blob/master/all_unicode) - print all unicode chars
 * [amigaremix_dump](https://github.com/trapd00r/utils/blob/master/amigaremix_dump) - rip all songs from amigaremix.com - in parallel
@@ -21,7 +22,7 @@
 * [ansic](https://github.com/trapd00r/utils/blob/master/ansic) - show defined ansi colors
 * [author](https://github.com/trapd00r/utils/blob/master/author) - print japh author
 * [bake](https://github.com/trapd00r/utils/blob/master/bake) - build perl stuff
-* [basename](https://github.com/trapd00r/utils/blob/master/basename) - grab input from stdin and basename it
+* [basenamep](https://github.com/trapd00r/utils/blob/master/basenamep) - grab input from stdin and basename it
 * [bigrand](https://github.com/trapd00r/utils/blob/master/bigrand) - generate n random numbers
 * [bob](https://github.com/trapd00r/utils/blob/master/bob) - mount bob the boxeebox
 * [bolaget](https://github.com/trapd00r/utils/blob/master/bolaget) - is the systembolaget open today?
@@ -42,7 +43,7 @@
 * [cs_preview.vim](https://github.com/trapd00r/utils/blob/master/cs_preview.vim) - colorscheme previews in vim
 * [define](https://github.com/trapd00r/utils/blob/master/define) - look up words in the terminal
 * [dircolors2vim](https://github.com/trapd00r/utils/blob/master/dircolors2vim) - generate vim syntax file for defined LS_COLORS
-* [dirname](https://github.com/trapd00r/utils/blob/master/dirname) - grab input from stdin and dirname it
+* [dirnamep](https://github.com/trapd00r/utils/blob/master/dirnamep) - grab input from stdin and dirname it
 * [dltrack](https://github.com/trapd00r/utils/blob/master/dltrack) - track a file while it's being downloaded
 * [dmesg-a](https://github.com/trapd00r/utils/blob/master/dmesg-a) - a colored dmesg
 * [domain_gen](https://github.com/trapd00r/utils/blob/master/domain_gen) - generate a valid domain name
@@ -79,10 +80,12 @@
 * [ls2](https://github.com/trapd00r/utils/blob/master/ls2) - colored ls, again
 * [ls3](https://github.com/trapd00r/utils/blob/master/ls3) - colored ls, yet again
 * [lscolorpicker](https://github.com/trapd00r/utils/blob/master/lscolorpicker) - generate LS_COLORS interactively
+* [lsrel](https://github.com/trapd00r/utils/blob/master/lsrel) - list scene releases on a fs based on media type
 * [md2html](https://github.com/trapd00r/utils/blob/master/md2html) - convert input markdown file to html
 * [mkdr](https://github.com/trapd00r/utils/blob/master/mkdr) - given file.ext, mkdir file/ and move file.ext to file/file.ext
 * [mpd_del](https://github.com/trapd00r/utils/blob/master/mpd_del) - remove songs matching PATTERN from mpd playlist
 * [mpd_del_album](https://github.com/trapd00r/utils/blob/master/mpd_del_album) - remove album from mpd playlist
+* [mpd_fill_mp3player](https://github.com/trapd00r/utils/blob/master/mpd_fill_mp3player) - copy all loved songs from the pimpd2 database to the mp3 player
 * [mpd_keep](https://github.com/trapd00r/utils/blob/master/mpd_keep) - remove songs NOT matching PATTERN from mpd playlist
 * [mpd_playlist_fix](https://github.com/trapd00r/utils/blob/master/mpd_playlist_fix) - remove invalid entries from m3u playlists
 * [mpd_random_playlist](https://github.com/trapd00r/utils/blob/master/mpd_random_playlist) - create a new playlist with n random tracks
@@ -119,6 +122,7 @@
 * [rp-groups-menu](https://github.com/trapd00r/utils/blob/master/rp-groups-menu) - ratpoison groups menu
 * [rp-runorraise](https://github.com/trapd00r/utils/blob/master/rp-runorraise) - ratpoison run OR raise (hi firefox)
 * [rt_query](https://github.com/trapd00r/utils/blob/master/rt_query) - query rtorrent for files matching PATTERN
+* [rt_remove_torrents_by_tracker](https://github.com/trapd00r/utils/blob/master/rt_remove_torrents_by_tracker) - remove all torrents from TRACKER in rtorrent
 * [sanitize](https://github.com/trapd00r/utils/blob/master/sanitize) - sanitize filenames
 * [sascii](https://github.com/trapd00r/utils/blob/master/sascii) - interactive key inspector
 * [scat](https://github.com/trapd00r/utils/blob/master/scat) - a cat with syntax highlighting powers
