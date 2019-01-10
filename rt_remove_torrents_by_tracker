@@ -1,0 +1,16 @@
+#!/bin/sh
+# vim:ft=sh:et:
+# abstract: remove all torrents from TRACKER in rtorrent
+
+if [ $# -lt 1 ]; then
+  echo "remove all torrents from TRACKER in rtorrent"
+  echo "Usage: $0 TRACKER ID"
+  exit
+fi
+
+tracker=$1
+rtcontrol alias=$tracker --stop -o-
+rtcontrol alias=$tracker -A dupes+ -V
+rtcontrol views=rtcontrol is_open=yes -A dupes+ -V --alter remove
+rtcontrol --from rtcontrol // --cull --yes
+rtcontrol alias=$tracker --delete --yes
