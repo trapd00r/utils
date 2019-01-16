@@ -81,6 +81,7 @@
 * [ls3](https://github.com/trapd00r/utils/blob/master/ls3) - colored ls, yet again
 * [lscolorpicker](https://github.com/trapd00r/utils/blob/master/lscolorpicker) - generate LS_COLORS interactively
 * [lsrel](https://github.com/trapd00r/utils/blob/master/lsrel) - list scene releases on a fs based on media type
+* [lyrics_update](https://github.com/trapd00r/utils/blob/master/lyrics_update) - update lyrics db on github
 * [md2html](https://github.com/trapd00r/utils/blob/master/md2html) - convert input markdown file to html
 * [mkdr](https://github.com/trapd00r/utils/blob/master/mkdr) - given file.ext, mkdir file/ and move file.ext to file/file.ext
 * [mpd_del](https://github.com/trapd00r/utils/blob/master/mpd_del) - remove songs matching PATTERN from mpd playlist
