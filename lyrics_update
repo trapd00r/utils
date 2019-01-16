@@ -1,0 +1,3 @@
+#!/bin/sh
+# abstract: update lyrics db on github
+cd $HOME/dev/lyrics && git add . && git commit -m 'update lyrics' && git push
