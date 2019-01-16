@@ -1,0 +1,370 @@
+#!/usr/bin/perl
+# vim:ft=perl:et:
+
+##  Displays a progress bar + current track/album/artist for MPD in urxvt.
+##  It monitors `mpc idleloop` to detect changes in MPD status, and
+##  displays info accordingly. An external coverart script is called
+##  when a new track is detected.
+##
+##  Intended to look very similar to the progress+trackinfo for ncmpcpp.
+##  Expects to be run in a 256-color terminal like urxvt.
+
+##  ~/temp-fvwmperl/006/test6.pl
+
+use strict ;
+use warnings ;
+use v5.18 ;
+
+use POSIX qw(mkfifo) ;
+use Term::ExtendedColor qw(:all) ;      
+use Term::ExtendedColor::Xresources qw( set_xterm_color ) ;
+use Time::HiRes qw( ualarm ) ; 
+use Math::Round qw( nearest ) ;
+use Text::Unidecode ;
+use Term::ReadKey ;
+use Data::Dump qw( dump ) ;
+
+##  Debian: libterm-readkey-perl libmath-round-perl libtext-unidecode-perl
+##  Install from CPAN : Term::ExtendedColor Term::ExtendedColor::Xresources
+
+##  MPD music directory
+my $music_dir = $ENV{HOME} . "/mp3" ;
+
+##  autoflush the buffer
+$| = 1 ;  
+
+##  invisible cursor (tput civis)
+print "\x1b\x5b\x3f\x32\x35\x6c" ;
+
+##  terminal char width
+my $urxvt_width ;
+($urxvt_width, $_, $_, $_) = GetTerminalSize() ;
+
+my $coverart_exec = "$ENV{FVWM_USERDIR}/bin/coverart.sh" ;
+
+##  COLORS
+##  black(0/8) red(1/9) green(2/10) yellow(3/11) 
+##  blue(4/12) magenta(5/13)  cyan(6/14)  grey(7/15)
+
+##  Define colors for urxvt
+my $urxvt_colors = set_xterm_color({
+    0  => "181818",
+    1  => "ab4642",
+    2  => "a1b56c",
+    3  => "f7ca88",
+    4  => "6A96A6",
+    5  => "ba8baf",
+    6  => "86c1b9",
+    7  => "d8d8d8",
+    8  => "404040",
+    9  => "ab4642",
+    10 => "a1b56c",
+    11 => "f7ca88",
+    12 => "7cafc2",
+    13 => "ba8baf",
+    14 => "86c1b9",
+    15 => "8C8C8C",
+});
+
+##  Set the defined colors
+print $_ for values %{ $urxvt_colors } ;
+
+##  Progress bar.
+#my $prog_width = $urxvt_width - 2 ;
+my $prog_color_on = 4 ;
+my $prog_color_off = 8 ;
+my $bookends_color = 7 ;
+
+##  Vars that define the track info tickr.
+##  $track_info_width is target width for trackinfo, whereas
+##  $track_info_length is the raw sum of @trackinfo. 
+##  Such that if length > width, then rotation will be needed.
+
+my @trackinfo = () ;
+my ($trackinfo_length, $track_info_width, $elapsed_width) ;
+my ($first_idx, $first_offset, $last_idx, $last_offset) ;
+
+##  Format chars to display trackinfo.
+my $tup = "\x1b\x4d" ;
+my $tcel = "\x0d\x1b\x5b\x4b" ;   # \r$(tput el) 
+my $mode_color = 15 ;
+my $elapsed_color = 15 ;
+my @color = qw( 3 1 2 1 12 1 ) ;
+my @div = ( " * ", " * ", "  **  " ) ;
+
+my %mpcdata = (
+    state => "stop",
+    file_uri => "notrack",
+    title => "",
+    artist => "",
+    album => "",
+    elapsed => 0,
+    duration => 0,
+    percent => 0,
+) ;
+
+
+####  MAIN LOOP
+
+##  Setup periodic alarm for during playback.
+$SIG{ALRM} = \&polling ;
+my $pollinterval = 1000000 ;
+
+##  Using mpc idleloop to detect mpd events.
+open(MPC, "echo && mpc idleloop 2>/dev/null | ") || die "MPC failed. \n" ;
+
+LOOP: while (<MPC>)  {
+
+    ##  Get current mpd info from mpc.
+    my %newdata = ( state => "stop" ) ;
+    foreach (`mpc -f "%title%:::%artist%:::%album%:::%file%:::"`)  {
+        if ( /^(.*):::(.*):::(.*):::(.*):::$/ ) {
+            $newdata{title} = unidecode($1) ;
+            $newdata{artist} = unidecode($2) ;
+            $newdata{album} = unidecode($3) ;
+            $newdata{file_uri} = "$music_dir/$4" ;
+
+        } elsif (/^[[](\w+)[]]\s+\#[^ ]+\s+([:\d]+)\/([:\d]+)\s\((\d+)%\)\s*$/) { 
+            @newdata{"state", "elapsed"} = ($1, $2) ;
+            @newdata{"duration", "percent"} = ( $3, $4) ;
+        } 
+    }
+
+    ##  Ensure that %newdata has complete data, else goto stop mode.
+    foreach my $key (keys %mpcdata)  {
+        if (not defined $newdata{$key})  {
+            #say STDERR  "STOP" ;
+            $mpcdata{state} = "stop" ;
+            clear_bar() ;
+            next LOOP ;
+        }
+    }
+
+    ##  Stop mode
+    if ($newdata{state} eq "stop" or not -e $newdata{file_uri} ) {
+        $mpcdata{state} = "stop" ;
+        #say STDERR  "STOP" ;
+        clear_bar() ;
+        next ;
+    } 
+    
+    ##  Play or pause mode, but the file_uri is unchanged.
+    if ($newdata{file_uri} eq $mpcdata{file_uri})  {
+
+        $mpcdata{"state"} = $newdata{"state"} ;
+        if ($mpcdata{state} eq "playing")  {
+            polling() 
+        } else {
+            update_elapsed() ;
+            print_trackinfo() ;
+        }
+
+    ##  An entirely new track in play mode.
+    } else {
+        %mpcdata = %newdata ;
+        init_track_info() ;
+        polling() ;
+        system("exec $coverart_exec \"$mpcdata{file_uri}\" 2>&1 1>/dev/null  &") ;
+    }
+}
+
+####  SUBROUTINES
+
+sub polling {
+
+    if ($mpcdata{state} eq "playing")  {
+        update_elapsed() ;
+        print_trackinfo() ;
+        rotate_trackinfo() ;
+        ualarm($pollinterval) ;
+        return ;
+    } else  {
+        ualarm 0 ;
+        return ;
+    }
+}
+
+sub init_track_info  {
+
+    ##  Calc format widths for the tickr bar.
+    $elapsed_width = (length($mpcdata{duration}) * 2) + 3 ;
+    $track_info_width = $urxvt_width - $elapsed_width - 10 ;
+
+    ##  Assorted items that comprise the trackinfo tickr.
+    @trackinfo = ( 
+        $mpcdata{title}, $div[0], 
+        $mpcdata{artist}, $div[1], 
+        $mpcdata{album}, $div[2],
+    ) ;
+
+    ##  Raw summed length of assorted items that comprise @trackinfo.
+    $trackinfo_length = 0 ;
+    foreach (@trackinfo) { $trackinfo_length += length($_) }
+
+    ##  Indexes and offsets into @trackinfo used to calc its rotation.
+    $first_idx = $first_offset = 0 ;
+    $last_idx = $last_offset = 0 ;
+
+    for (my $idx = my $l = 0 ; $idx <= $#trackinfo ; $idx++)  {
+        $l += length($trackinfo[$idx]) ;
+        if ($l >= $track_info_width)  {
+            $last_idx = $idx ;
+            $last_offset = length($trackinfo[$idx]) -
+                 $l + $track_info_width ;
+            last ;
+        }
+    }
+}
+
+sub print_trackinfo  {
+
+    my $info ;
+
+    if ($trackinfo_length <= $track_info_width) {
+        for (my $idx = 0 ; $idx <= $#trackinfo ; $idx++ )  {
+            $info .= fg($color[$idx], $trackinfo[$idx]) ;
+        } 
+
+        ##  sprintf method wont work here coz of color chars
+        my $num = ($track_info_width - $trackinfo_length) ;
+        $info .= " " x $num ;
+
+    } elsif ($first_idx == $last_idx and $first_offset < $last_offset)  {
+        #my $num_chars = $last_offset - $first_offset + 1 ;
+        my $num_chars = $last_offset - $first_offset ;
+        $info .= fg( $color[$first_idx],
+            substr($trackinfo[$first_idx], $first_offset, $num_chars) 
+        )
+
+    } else {
+        $info .= fg( $color[$first_idx], 
+            substr($trackinfo[$first_idx], $first_offset)
+        ) ;
+        for ( my $idx = ($first_idx + 1)%($#trackinfo + 1) ; 
+              $idx != $last_idx ; 
+              $idx = ($idx + 1)%($#trackinfo + 1))  {
+                   $info .= fg($color[$idx], $trackinfo[$idx]) 
+        }
+        $info .= fg( $color[$last_idx], 
+            substr($trackinfo[$last_idx], 0, $last_offset)
+        ) ;
+    }
+
+    ##  Put bits of colored text together and print.
+
+    my $progress = get_progress($mpcdata{percent}) ;
+    my $mode = $mpcdata{state} eq "playing" ? "Playing:" : "[Paused]" ;
+    $mode = fg($mode_color, $mode) ;
+
+    my $time_info = "[$mpcdata{elapsed}/$mpcdata{duration}]" ;
+    my $fmt = "%${elapsed_width}.${elapsed_width}s" ;
+    $time_info = sprintf($fmt , $time_info) ;
+    $time_info = fg($elapsed_color, $time_info) ;
+
+#    my $pad = " " x ($elapsed_width - length($time_info)) ;
+#    $time_info = $pad . $time_info ;
+
+    #printf "%s\n%s\n", $progress, "$mode $info $time_info" ;
+    printf "${tup}\r%s\n\r%s", $progress, "$mode $info $time_info" ;
+}
+
+sub rotate_trackinfo  {
+
+    if (($first_offset + 1) < length($trackinfo[$first_idx]))  {
+        $first_offset++ 
+    } else {
+        $first_offset = 0 ;
+        $first_idx = ($first_idx + 1)%($#trackinfo + 1) ;
+    }
+
+    if (($last_offset + 1) < length($trackinfo[$last_idx]))  {
+        $last_offset++
+    } else {
+        $last_offset = 0 ;
+        $last_idx = ($last_idx + 1)%($#trackinfo + 1) ;
+    }
+}
+
+sub update_elapsed  {
+    foreach (`mpc status`)  {
+        if (/^[[].+#[^ ]+\s+([:\d]+)\/[:\d]+\s\((\d+)%\)\s*$/) { 
+            @mpcdata{"elapsed", "percent"} = ($1, $2) ;
+        }
+    }
+}
+
+sub get_progress  {
+    my $num_in = shift ;
+    my $prog_width = $urxvt_width ;
+    my $normal_width = nearest(1, $num_in * $prog_width / 100) ;
+
+    #my $out = fg($bookends_color, "[") ;
+    my $out = fg($prog_color_on, "■" x $normal_width) ;
+    $out .= fg($prog_color_off, "■" x ($prog_width - $normal_width)) ;
+    #$out .= fg($bookends_color, "]") ;
+    return $out ;
+}
+
+
+sub clear_bar  {
+    print $tup ;
+    say $tcel ;
+    print $tcel ;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##  sub get_progress  {
+##      my $num_in = shift ;
+##      my $prog_width = $urxvt_width - 2 ;
+##      my $normal_width = nearest(1, $num_in * $prog_width / 100) ;
+##  
+##      my $out = fg($bookends_color, "[") ;
+##      $out .= fg($prog_color_on, "━" x $normal_width) ;
+##      $out .= fg($prog_color_off, "━" x ($prog_width - $normal_width)) ;
+##      $out .= fg($bookends_color, "]") ;
+##      return $out ;
+##  }
+
+
+
+
+
+
+
+
+
