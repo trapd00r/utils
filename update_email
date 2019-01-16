@@ -1,0 +1,4 @@
+#!/bin/sh
+# vim:ft=sh:et:
+
+perl -pi -w -e 's/magnus\@trapd00r.se|trapd00r\@trapd00r.se/m\@japh.se/g;' * lib/**/*.pm
