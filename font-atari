@@ -1,0 +1,8 @@
+#!/bin/sh
+# vim:ft=sh:et:
+# abstract: set terminal font to the Atari 800XL std font
+
+printf "\033]710;%s\007" 'xft:Atari:pixelsize=16:antialias=none'  
+printf "\033]711;%s\007" 'xft:Atari:pixelsize=16:antialias=none'  
+printf "\033]712;%s\007" 'xft:Atari:pixelsize=16:antialias=none'  
+printf "\033]713;%s\007" 'xft:Atari:pixelsize=16:antialias=none'  
