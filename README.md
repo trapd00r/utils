@@ -58,6 +58,7 @@
 * [filebytype](https://github.com/trapd00r/utils/blob/master/filebytype) - move files to dirs compelling to actual file-type
 * [filter_ext_lscolor](https://github.com/trapd00r/utils/blob/master/filter_ext_lscolor) - prints filetypes matching query, colored if defined in LS_COLORS
 * [fimpc](https://github.com/trapd00r/utils/blob/master/fimpc) - use fifos to control mpd using mpc
+* [font-atari](https://github.com/trapd00r/utils/blob/master/font-atari) - set terminal font to the Atari 800XL std font
 * [font_preview](https://github.com/trapd00r/utils/blob/master/font_preview) - preview all fonts in your terminal
 * [ft](https://github.com/trapd00r/utils/blob/master/ft) - show filetype info
 * [generate_xresources](https://github.com/trapd00r/utils/blob/master/generate_xresources) - generate a hash with colorschemes from X resources
@@ -131,6 +132,7 @@
 * [setallfonts](https://github.com/trapd00r/utils/blob/master/setallfonts) - set all fonts to ARG
 * [setbg](https://github.com/trapd00r/utils/blob/master/setbg) - set terminal background
 * [shivastream](https://github.com/trapd00r/utils/blob/master/shivastream) - nokia n900 mpd streaming aid
+* [shot](https://github.com/trapd00r/utils/blob/master/shot) - take screenshot and upload to httpd
 * [srinfo](https://github.com/trapd00r/utils/blob/master/srinfo) - sveriges radio info fetcher
 * [srnp](https://github.com/trapd00r/utils/blob/master/srnp) - now playing for sveriges radio
 * [strip_esc](https://github.com/trapd00r/utils/blob/master/strip_esc) - strip data from escape sequences
