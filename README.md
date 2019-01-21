@@ -71,6 +71,7 @@
 * [html2txt](https://github.com/trapd00r/utils/blob/master/html2txt) - turn html into plain text
 * [imv](https://github.com/trapd00r/utils/blob/master/imv) - watch a dir and scp all created files therein to another host
 * [invert_screen](https://github.com/trapd00r/utils/blob/master/invert_screen) - invert the entire screen
+* [irssi-ignore_join_blob.pl](https://github.com/trapd00r/utils/blob/master/irssi-ignore_join_blob.pl) - ignore the blob of text displayed when (re)joining a channel
 * [kitty_dump_colors](https://github.com/trapd00r/utils/blob/master/kitty_dump_colors) - generate kitty colorscheme from defined term colors
 * [knnp](https://github.com/trapd00r/utils/blob/master/knnp) - now playing for knradio
 * [laleh-check](https://github.com/trapd00r/utils/blob/master/laleh-check) - check if string is present in Laleh's lyrics
@@ -142,6 +143,7 @@
 * [torrent](https://github.com/trapd00r/utils/blob/master/torrent) - create torrents
 * [traffic](https://github.com/trapd00r/utils/blob/master/traffic) - visualize httpd traffic
 * [translate](https://github.com/trapd00r/utils/blob/master/translate) - translate
+* [u-abc](https://github.com/trapd00r/utils/blob/master/u-abc) - unicode fullwidth
 * [u-arrows](https://github.com/trapd00r/utils/blob/master/u-arrows) - unicode arrows
 * [u-blocks](https://github.com/trapd00r/utils/blob/master/u-blocks) - unicode blocks
 * [u-boxdrawing](https://github.com/trapd00r/utils/blob/master/u-boxdrawing) - unicode boxes
@@ -154,6 +156,7 @@
 * [uncode](https://github.com/trapd00r/utils/blob/master/uncode) - transform ascii data to unicode chars
 * [unrarec](https://github.com/trapd00r/utils/blob/master/unrarec) - unrar stuff recursively
 * [url_find](https://github.com/trapd00r/utils/blob/master/url_find) - extracts URLs from data
+* [urlgrep](https://github.com/trapd00r/utils/blob/master/urlgrep) - grep URLs
 * [utils_readme](https://github.com/trapd00r/utils/blob/master/utils_readme) - generate README.md from utils/*
 * [vim-time-fix-db](https://github.com/trapd00r/utils/blob/master/vim-time-fix-db) - remove various non-file records from the vim-times db
 * [vim_old](https://github.com/trapd00r/utils/blob/master/vim_old) - how much time do I spend in my vim?
