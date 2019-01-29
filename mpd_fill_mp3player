@@ -33,7 +33,8 @@ sub cp {
   for my $file(@what) {
     fcopy($file, $where);
     if($!) {
-      warn $! and next;
+      print STDERR "$file doesn't exist?\n";
+      next;
     }
     printf "%-20s\n", ls_color(basename($file))
   }
