@@ -15,9 +15,11 @@ GetOptions(
 );
 
 if($opt_subject && $opt_recipient) {
-  my $tmp_body = "/tmp/$APP-$opt_subject.pl";
+  my $tmp_body = "/tmp/$APP-$opt_subject.mail";
   system("\$EDITOR $tmp_body");
   open(my $fh, '<', "$tmp_body") or die($!);
+
+  local $/ = 1; # slurp entire file
   $opt_body = <$fh>;
   close($fh);
   unlink($tmp_body) or die($!);
@@ -29,8 +31,11 @@ sub mail {
   my($subject,$body,$recipient) = @_;
   return unless($recipient);
 
+  print "body:\n$body\n";
+
   my $content = sprintf("Subject:$subject\n\n$body\n");
   system("printf \"$content\"|msmtp -a $account \"$recipient\"");
+  print "mail sent.\n" unless $?;
   exit(0);
 }
 
