@@ -1,11 +1,13 @@
 #!/usr/bin/perl
-use vars qw($VERSION);
-my $APP  = 'ddg';
-$VERSION = '0.004';
-
+# vim: ft=perl:fdm=marker:fmr=#<,#>:fen:et:sw=2:
 use strict;
-use Term::ExtendedColor qw(fg bg);
-use WWW::Search::DuckDuckGo qw(ddg);
+use warnings FATAL => 'all';
+use vars     qw($VERSION);
+use autodie  qw(:all);
+
+my $APP  = '';
+$VERSION = '0.001';
+
 use Data::Dumper;
 
 {
@@ -15,52 +17,68 @@ use Data::Dumper;
   $Quotekeys = 0;
 }
 
-my $query = shift // "perl";
-
-my $results = ddg($query);
-
+use feature qw(say);
+use LWP::Simple;
 
 
-for my $type(keys(%{$results})) {
-  if($results->{$type} ne "") {
-    printf("%s: \e[38;5;32m%s\e[0m\n", $type, $results->{$type});
-  }
-}
+my $q = shift // 'laleh';
+my $url = "https://api.duckduckgo.com/?q=${q}&format=json";
 
+use JSON::Tiny qw(decode_json);
 
+my $hash = decode_json(get($url));
 
+say $hash->{RelatedTopics}->[0]->{Text};
+exit;
 
+#for my $what(@{$hash->{RelatedTopics}}) {
+#  say $what->{Text} if defined($what->{Text});
+#}
 
-
-1;
 
 __END__
+
 
 =pod
 
 =head1 NAME
 
-ddg - duckduckgo command-line search utility
+=head1 USAGE
 
-=head1 SYNOPSIS
+=head1 DESCRIPTION
 
-  ddg [QUERY]
+=head1 OPTIONS
+
+=head1 REPORTING BUGS
+
+Report bugs and/or feature requests on rt.cpan.org, the repository issue tracker
+or directly to L<m@japh.se>
 
 =head1 AUTHOR
 
   Magnus Woldrich
   CPAN ID: WOLDRICH
-  magnus@trapd00r.se
+  m@japh.se
   http://japh.se
+  http://github.com/trapd00r
 
-=head1 REPORTING BUGS
+=head1 CONTRIBUTORS
 
-Report bugs on rt.cpan.org or to magnus@trapd00r.se
+None required yet.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2011 Magnus Woldrich. All right reserved.
+Copyright 2018- B<THIS APPLICATION>s L</AUTHOR> and L</CONTRIBUTORS> as listed
+above.
+
+=head1 LICENSE
+
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
 
+=head1 SEE ALSO
+
+L<~/|http://japh.se>
+
 =cut
+
