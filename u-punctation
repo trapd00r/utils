@@ -7,6 +7,7 @@ $VERSION = '0.001';
 
 use strict;
 use Data::Dumper;
+no warnings;
 
 {
   package Data::Dumper;

@@ -4,6 +4,9 @@
 use vars qw($VERSION);
 my $APP  = '';
 $VERSION = '0.001';
+use utf8;
+use open qw(:utf8 :std);
+
 
 use strict;
 use Data::Dumper;
