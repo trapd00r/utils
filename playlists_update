@@ -1,0 +1,7 @@
+#!/bin/sh
+# vim:ft=sh:et:
+# abstract: update playlists of loved songs (pimpd2 --love)
+cd $HOME/dev/pimpd2_playlists   &&
+  git add .                     &&
+  git commit -m 'update playlists' &&
+  git push
