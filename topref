@@ -1,0 +1,34 @@
+#!/usr/bin/perl
+# vim: ft=perl:
+# abstract: top referrals from httpd log
+use strict;
+
+my $log   = shift // $ENV{ACCESS_LOG};
+
+my %entities;
+my %referer;
+
+
+open(my $fh, '<', $log) or die $!;
+while(my $line = <$fh>) {
+  my $e = "(.+?)";
+  $line =~ /^$e $e $e \[$e:$e $e\] "$e $e $e" $e $e/;
+
+  $entities{ip}      = $1;
+  $entities{ref}     = $2;
+  $entities{name}    = $3;
+  $entities{date}    = $4;
+  $entities{time}    = $5;
+  $entities{gmt}     = $6;
+  $entities{request} = $7;
+  $entities{file}    = $8;
+  $entities{ptcl}    = $9;
+  $entities{code}    = $10;
+  $entities{size}    = $11;
+
+  $referer{$entities{ref}}++;
+}
+
+for my $k(sort { $referer{$b} <=> $referer{$a} } (keys(%referer))) {
+  printf "% 5d %s\n", $referer{$k}, $k;
+}

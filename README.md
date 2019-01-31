@@ -73,7 +73,7 @@
 * [invert_screen](https://github.com/trapd00r/utils/blob/master/invert_screen) - invert the entire screen
 * [irssi-ignore_join_blob.pl](https://github.com/trapd00r/utils/blob/master/irssi-ignore_join_blob.pl) - ignore the blob of text displayed when (re)joining a channel
 * [kitty_dump_colors](https://github.com/trapd00r/utils/blob/master/kitty_dump_colors) - generate kitty colorscheme from defined term colors
-* [knnp](https://github.com/trapd00r/utils/blob/master/knnp) - now playing for knradio
+* [knnp-sh](https://github.com/trapd00r/utils/blob/master/knnp-sh) - now playing for knradio
 * [laleh-check](https://github.com/trapd00r/utils/blob/master/laleh-check) - check if string is present in Laleh's lyrics
 * [limpdeg](https://github.com/trapd00r/utils/blob/master/limpdeg) - injects n moldy playlists in mpd
 * [lmame](https://github.com/trapd00r/utils/blob/master/lmame) - mame frontend using ratmenu
@@ -107,6 +107,7 @@
 * [pilsner](https://github.com/trapd00r/utils/blob/master/pilsner) - what later turned into ls++
 * [pimpla](https://github.com/trapd00r/utils/blob/master/pimpla) - perl interface for mplayer using fifos
 * [pkgfont](https://github.com/trapd00r/utils/blob/master/pkgfont) - list packages that includes fonts
+* [playlists_update](https://github.com/trapd00r/utils/blob/master/playlists_update) - update playlists of loved songs (pimpd2 --love)
 * [post](https://github.com/trapd00r/utils/blob/master/post) - tool to aid me in writing a new blog post using jekyll
 * [prename](https://github.com/trapd00r/utils/blob/master/prename) - rename with perl regex
 * [pshot](https://github.com/trapd00r/utils/blob/master/pshot) - take screenshot, transfer it to host and return url
@@ -139,6 +140,7 @@
 * [strip_esc](https://github.com/trapd00r/utils/blob/master/strip_esc) - strip data from escape sequences
 * [term_attr](https://github.com/trapd00r/utils/blob/master/term_attr) - dump all term attributes
 * [to_phone](https://github.com/trapd00r/utils/blob/master/to_phone) - scp files to the phone and place it where I want it
+* [topref](https://github.com/trapd00r/utils/blob/master/topref) - top referrals from httpd log
 * [topsi](https://github.com/trapd00r/utils/blob/master/topsi) - a bunch of tops in one go
 * [torrent](https://github.com/trapd00r/utils/blob/master/torrent) - create torrents
 * [traffic](https://github.com/trapd00r/utils/blob/master/traffic) - visualize httpd traffic
@@ -166,4 +168,5 @@
 * [wallpaper_daemon](https://github.com/trapd00r/utils/blob/master/wallpaper_daemon) - changes background on htpc connected tv every $sleep seconds
 * [whatfont](https://github.com/trapd00r/utils/blob/master/whatfont) - query the terminal for the current fonts in use.
 * [xdgdirs](https://github.com/trapd00r/utils/blob/master/xdgdirs) - check that XDG_* dirs are defined
+* [xfiles.sh](https://github.com/trapd00r/utils/blob/master/xfiles.sh) - the x-files theme!
 * [♫](https://github.com/trapd00r/utils/blob/master/♫) - set oss4 audio levels
