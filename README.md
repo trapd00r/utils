@@ -40,6 +40,7 @@
 * [colorscheme](https://github.com/trapd00r/utils/blob/master/colorscheme) - change ansi colorscheme to mine
 * [colorscheme-256](https://github.com/trapd00r/utils/blob/master/colorscheme-256) - change 256 colorscheme to mine
 * [colorx](https://github.com/trapd00r/utils/blob/master/colorx) - print defined colors in an X shape
+* [cpan-regulars](https://github.com/trapd00r/utils/blob/master/cpan-regulars) - cpan regular releasers
 * [crossmake](https://github.com/trapd00r/utils/blob/master/crossmake) - makes cross's in all kinds of shapes and colors
 * [cs_preview.vim](https://github.com/trapd00r/utils/blob/master/cs_preview.vim) - colorscheme previews in vim
 * [define](https://github.com/trapd00r/utils/blob/master/define) - look up words in the terminal
@@ -77,6 +78,7 @@
 * [knnp-sh](https://github.com/trapd00r/utils/blob/master/knnp-sh) - now playing for knradio
 * [laleh-check](https://github.com/trapd00r/utils/blob/master/laleh-check) - check if string is present in Laleh's lyrics
 * [limpdeg](https://github.com/trapd00r/utils/blob/master/limpdeg) - injects n moldy playlists in mpd
+* [linenr](https://github.com/trapd00r/utils/blob/master/linenr) - add linenr to input
 * [lmame](https://github.com/trapd00r/utils/blob/master/lmame) - mame frontend using ratmenu
 * [lnes](https://github.com/trapd00r/utils/blob/master/lnes) - nes frontend using ratmenu
 * [load](https://github.com/trapd00r/utils/blob/master/load) - a non-interactive top
