@@ -1,0 +1,30 @@
+#!/usr/bin/perl
+# abstract: extract abstract from given file(s)
+# vim: ft=perl:fdm=marker:fmr=#<,#>:fen:et:sw=2:
+use strict;
+use warnings FATAL => 'all';
+use vars     qw($VERSION);
+use autodie  qw(:all);
+
+my $APP  = 'abstract';
+$VERSION = '0.001';
+
+use File::LsColor qw(ls_color);
+
+
+print usage() unless @ARGV;
+
+for my $file ( grep{-f $_ && $_} @ARGV) {
+  open(my $fh, '<', $file) or die $!;
+  while(<$fh>) {
+    if($_ =~ m/abstract: (.+)$/) {
+      printf "%s %s\n", ls_color(sprintf("%20s", $file)), $1;
+      last;
+    }
+  }
+}
+
+sub usage {
+  print "usage: abstract [FILEs]\n";
+  exit;
+}
