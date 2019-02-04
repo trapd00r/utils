@@ -12,6 +12,7 @@
 
 * [1984](https://github.com/trapd00r/utils/blob/master/1984) - fun with pv
 * [absname](https://github.com/trapd00r/utils/blob/master/absname) - you can't trust $PWD in linux
+* [abstract](https://github.com/trapd00r/utils/blob/master/abstract) - extract abstract from given file(s)
 * [albumlist](https://github.com/trapd00r/utils/blob/master/albumlist) - display all albums by artist
 * [albums_by_artist](https://github.com/trapd00r/utils/blob/master/albums_by_artist) - display all unique albums by artist
 * [alias](https://github.com/trapd00r/utils/blob/master/alias) - display zsh aliases
