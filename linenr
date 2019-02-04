@@ -1,0 +1,23 @@
+#!/usr/bin/perl
+# abstract: add linenr to input
+# vim: ft=perl:fdm=marker:fmr=#<,#>:fen:et:sw=2:
+use strict;
+use warnings FATAL => 'all';
+use vars     qw($VERSION);
+use autodie  qw(:all);
+
+my $APP  = '';
+$VERSION = '0.001';
+
+use Data::Dumper;
+
+{
+  package Data::Dumper;
+  no strict 'vars';
+  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
+  $Quotekeys = 0;
+}
+
+while(<>) {
+  printf "% 3d %s", $., $_;
+}
