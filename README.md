@@ -104,6 +104,7 @@
 * [pacstat](https://github.com/trapd00r/utils/blob/master/pacstat) - pacman statisticts
 * [passwd_gen](https://github.com/trapd00r/utils/blob/master/passwd_gen) - generate a safe password
 * [peak](https://github.com/trapd00r/utils/blob/master/peak) - return human readable strings from bins
+* [periodic](https://github.com/trapd00r/utils/blob/master/periodic) - modify fg, bg and cursor color nicely
 * [pilsner](https://github.com/trapd00r/utils/blob/master/pilsner) - what later turned into ls++
 * [pimpla](https://github.com/trapd00r/utils/blob/master/pimpla) - perl interface for mplayer using fifos
 * [pkgfont](https://github.com/trapd00r/utils/blob/master/pkgfont) - list packages that includes fonts
@@ -140,6 +141,7 @@
 * [strip_esc](https://github.com/trapd00r/utils/blob/master/strip_esc) - strip data from escape sequences
 * [term_attr](https://github.com/trapd00r/utils/blob/master/term_attr) - dump all term attributes
 * [to_phone](https://github.com/trapd00r/utils/blob/master/to_phone) - scp files to the phone and place it where I want it
+* [topip](https://github.com/trapd00r/utils/blob/master/topip) - top ip numbers from httpd log
 * [topref](https://github.com/trapd00r/utils/blob/master/topref) - top referrals from httpd log
 * [topsi](https://github.com/trapd00r/utils/blob/master/topsi) - a bunch of tops in one go
 * [torrent](https://github.com/trapd00r/utils/blob/master/torrent) - create torrents

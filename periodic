@@ -1,0 +1,4 @@
+#!/usr/bin/perl
+# abstract: modify fg, bg and cursor color nicely
+printf "\e]10;#%06x\a\e]12;#%06x\a\e]11;#%06x\a",
+  int rand 256**3, 255*255*int rand 255, (12, 16, 20, 32, 48)[int rand 5]
