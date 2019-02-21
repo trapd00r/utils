@@ -1,0 +1,83 @@
+#!/usr/bin/perl
+#    what: pwc - perl weather client (thingy)
+# created: 2010-04-03
+# updated: 2012-06-04
+#  trivia: this was the first Perl script I wrote.
+
+use strict;
+use Weather::Google;
+use String::Utils 'longest';
+
+END {
+  print "\n";
+}
+
+my @towns;
+if(!@ARGV) {
+  push(@ARGV, qw(
+    norrkoping
+    linkoping
+    norsholm
+    soderkoping
+    finspang
+    jokkmokk
+    malmo
+    lund
+    oslo
+    ystad
+    ), 'Los Angeles', qw(
+    belgrad
+    miami
+    washington
+    ),
+  );
+}
+
+@towns = @ARGV;
+
+my @gobjects;
+
+my %data;
+for my $town(@towns) {
+  push(@{$data{$town}},
+    Weather::Google->new($town)->current(
+      'temp_c',
+      'condition',
+      'humidity',
+      'wind_condition',
+    )
+  );
+}
+
+
+my @data = ();
+my $town = undef;
+
+for my $town(sort(keys(%data))) {
+  @data = @{$data{$town}};
+  for(@data) {
+    $_ = 'undef' if(!defined($_));
+  }
+}
+
+
+my $len = longest(@towns);
+
+if(-t 1) {
+  my $index;
+  for(@towns) {
+    printf(" \e[38;5;%s%${len}s\e[m %3d°C, %s\n",
+      ++$index . 'm',
+      ucfirst $_, $data{$_}->[0], $data{$_}->[1], $data{$_}->[2],
+    );
+  }
+}
+else {
+  my $i;
+  for(@towns) {
+    printf("%${len}s %d°C %s",
+      ucfirst $_, $data{$_}->[0], ($i != 0 and $i % 2) ? "\n" : ' ',
+    );
+    $i++;
+  }
+}
