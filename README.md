@@ -171,6 +171,7 @@
 * [vim-time-fix-db](https://github.com/trapd00r/utils/blob/master/vim-time-fix-db) - remove various non-file records from the vim-times db
 * [vim_old](https://github.com/trapd00r/utils/blob/master/vim_old) - how much time do I spend in my vim?
 * [vimcolors](https://github.com/trapd00r/utils/blob/master/vimcolors) - dump vim colors to terminal
+* [viml](https://github.com/trapd00r/utils/blob/master/viml) - open the most recently edited file in vim
 * [vimsyntax](https://github.com/trapd00r/utils/blob/master/vimsyntax) - generate html from vim syntax hl
 * [vw](https://github.com/trapd00r/utils/blob/master/vw) - format text properly and send it to vim
 * [wallpaper_daemon](https://github.com/trapd00r/utils/blob/master/wallpaper_daemon) - changes background on htpc connected tv every $sleep seconds

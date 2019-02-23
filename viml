@@ -1,4 +1,4 @@
 #!/bin/sh
-# open the most recently edited file in vim
+# abstract: open the most recently edited file in vim
 
 vim -c "normal '0"
