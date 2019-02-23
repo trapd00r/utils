@@ -1,0 +1,28 @@
+#!/usr/bin/perl
+# vim:ft=perl:et:
+# abstract: use Data::Dumper to dump data from stdin
+#
+# $ mpc search artist laleh | ls_color | dirnamep | sort -u | dumper
+#  "\e[38;5;137mmusic2/_artists/Laleh/laleh-bjuro_klubb_live_sommarkvall-se-2009-knark\n"
+#  "\e[38;5;137mmusic2/_artists/Laleh/Laleh-Kristaller-2016-ERP\n"
+#  "\e[38;5;137mmusic2/_artists/Laleh/Laleh-Laleh 2005\n"
+#  "\e[38;5;137mmusic2/_artists/Laleh/laleh_-_laleh-cda-2005-sms\n"
+#  "\e[38;5;137mmusic2/_artists/Laleh/Laleh-Laleh-CDA-2005-SMS\n"
+#  "\e[38;5;137mmusic2/_artists/Laleh/Laleh--Live_at_Lisebergshallen-SE-CABLE-03-22-2009-OMA\n"
+#  "\e[38;5;137mmusic2/_artists/Laleh/Laleh--Live_at_Radiohuset_Stockholm-SE-CABLE-02-11-2009-OMA\n"
+
+use strict;
+
+use Data::Dumper;
+$Data::Dumper::Terse     = 1;
+$Data::Dumper::Indent    = 1;
+$Data::Dumper::Useqq     = 1;
+$Data::Dumper::Deparse   = 1;
+$Data::Dumper::Quotekeys = 0;
+$Data::Dumper::Sortkeys  = 1;
+
+
+
+while(<>) {
+  printf "%s", Dumper $_;
+}

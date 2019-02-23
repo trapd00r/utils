@@ -50,6 +50,7 @@
 * [dmesg-a](https://github.com/trapd00r/utils/blob/master/dmesg-a) - a colored dmesg
 * [domain_gen](https://github.com/trapd00r/utils/blob/master/domain_gen) - generate a valid domain name
 * [domain_snatch](https://github.com/trapd00r/utils/blob/master/domain_snatch) - generate a valid domain name and snatch it
+* [dumper](https://github.com/trapd00r/utils/blob/master/dumper) - use Data::Dumper to dump data from stdin
 * [dupe_tv_by_episode](https://github.com/trapd00r/utils/blob/master/dupe_tv_by_episode) - only keep the best quality tv show
 * [dusch](https://github.com/trapd00r/utils/blob/master/dusch) - what's eating all the space?
 * [duschiamej](https://github.com/trapd00r/utils/blob/master/duschiamej) - what's eating all the space, take two?
@@ -66,6 +67,7 @@
 * [generate_xresources](https://github.com/trapd00r/utils/blob/master/generate_xresources) - generate a hash with colorschemes from X resources
 * [generate_zsh_completion](https://github.com/trapd00r/utils/blob/master/generate_zsh_completion) - generate zsh completion
 * [get_ls_colors](https://github.com/trapd00r/utils/blob/master/get_ls_colors) - print all defined LS_COLORS
+* [gh_clone_all_gists](https://github.com/trapd00r/utils/blob/master/gh_clone_all_gists) - clone all gists of username given on the command line
 * [gh_clone_all_user_repos.sh](https://github.com/trapd00r/utils/blob/master/gh_clone_all_user_repos.sh) - clone all repos from $GITHUB_USER
 * [git-diff-syntaxhl](https://github.com/trapd00r/utils/blob/master/git-diff-syntaxhl) - prettier git diff
 * [git-rec](https://github.com/trapd00r/utils/blob/master/git-rec) - perform git actions recursively
@@ -115,6 +117,7 @@
 * [post](https://github.com/trapd00r/utils/blob/master/post) - tool to aid me in writing a new blog post using jekyll
 * [prename](https://github.com/trapd00r/utils/blob/master/prename) - rename with perl regex
 * [pshot](https://github.com/trapd00r/utils/blob/master/pshot) - take screenshot, transfer it to host and return url
+* [pwc](https://github.com/trapd00r/utils/blob/master/pwc) - perl weather client
 * [rainbow](https://github.com/trapd00r/utils/blob/master/rainbow) - a rainbow in your shell
 * [ratrepl](https://github.com/trapd00r/utils/blob/master/ratrepl) - ratpoison repl
 * [rel_old](https://github.com/trapd00r/utils/blob/master/rel_old) - flexget parser
