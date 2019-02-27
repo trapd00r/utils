@@ -1,0 +1,51 @@
+#!/usr/bin/perl
+# vim: ft=perl:fdm=marker:fmr=#<,#>:fen:et:sw=2:
+# abstract: rename (copy) recovered jpgs to something sensible
+use strict;
+use warnings FATAL => 'all';
+use vars     qw($VERSION);
+use autodie  qw(:all);
+
+my $APP  = 'exifrename';
+$VERSION = '0.001';
+
+#<
+use Data::Dumper;
+
+{
+  package Data::Dumper;
+  no strict 'vars';
+  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
+  $Quotekeys = 0;
+}
+#>
+
+
+my $dir = '/mnt/music4/_former_usb_hdd/by_date';
+
+use POSIX                 qw(strftime);
+use Image::ExifTool       qw(:Public);
+use Digest::MD5           qw(md5_hex);
+use File::Copy::Recursive qw(fcopy);
+use File::LsColor         qw(ls_color);
+
+my @files = @ARGV or die "need files to operate on\n";
+
+for my $file(@files) {
+  my $exif = ImageInfo($file);
+  my $create_date = $exif->{CreateDate}
+    || 'MISSING_DATE';
+
+  $create_date =~ s/:|\s+/-/g;
+
+
+  my $new_filename = sprintf "%s-%s-%s.jpg",
+     $exif->{ImageSize}, $create_date, md5_hex($file);
+
+  if(fcopy($file, "$dir/$new_filename")) {
+    printf "'%s' -> '%s'\n", ls_color($new_filename), $dir;
+  }
+  else {
+    warn "$!\n";
+  }
+}

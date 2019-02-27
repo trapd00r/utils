@@ -56,6 +56,7 @@
 * [duschiamej](https://github.com/trapd00r/utils/blob/master/duschiamej) - what's eating all the space, take two?
 * [everywhere](https://github.com/trapd00r/utils/blob/master/everywhere) - run cmd everywhere
 * [exifdel](https://github.com/trapd00r/utils/blob/master/exifdel) - delete all exif data from photos
+* [exifrename](https://github.com/trapd00r/utils/blob/master/exifrename) - rename (copy) recovered jpgs to something sensible
 * [facebook_url_count](https://github.com/trapd00r/utils/blob/master/facebook_url_count) - how many times have $url been shared on facebook?
 * [facebook_user_info](https://github.com/trapd00r/utils/blob/master/facebook_user_info) - print information for $user on facebook
 * [filebytype](https://github.com/trapd00r/utils/blob/master/filebytype) - move files to dirs compelling to actual file-type
