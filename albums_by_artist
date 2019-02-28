@@ -4,7 +4,7 @@
 
 ARTIST=${1:-$(mpc current --format %artist%)}
 
-mpc search artist $ARTIST \
+mpc search artist "$ARTIST" \
   | ls_color \
   | dirnamep \
   | sort -u \
