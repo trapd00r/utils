@@ -1,0 +1,4 @@
+#!/bin/sh
+# abstract: rip audio from youtube
+
+youtube-dl -i --extract-audio --audio-format flac $1
