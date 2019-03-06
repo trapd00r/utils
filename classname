@@ -3,6 +3,6 @@ use strict;
 use LWP::Simple;
 use feature 'say';
 
-get('http://www.classnamer.com/') =~ m{classname">(.+)</}
+get('http://www.classnamer.org/') =~ m{classname">(.+)</}
   ? ( say $1 and exit )
   : next;
