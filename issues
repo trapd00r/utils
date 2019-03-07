@@ -1,0 +1,3 @@
+#!/bin/sh
+
+PAGER="" ghi list -g -s open
