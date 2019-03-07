@@ -1,3 +1,8 @@
 #!/bin/sh
+# vim:ft=sh:et:
+# abstract: list all issues relevant for me cause the github ui is worthless
 
-PAGER="" ghi list -g -s open
+PAGER="" ghi list -g -s open \
+       | /bin/grep -vP 'dots|Advent|sharpsaw|^# ' \
+       | sort -k1 \
+       | perl -pe 's{(LS_COLORS)}{\e[38;5;220m$1\e[m}g'

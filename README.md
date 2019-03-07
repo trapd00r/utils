@@ -77,6 +77,7 @@
 * [imv](https://github.com/trapd00r/utils/blob/master/imv) - watch a dir and scp all created files therein to another host
 * [invert_screen](https://github.com/trapd00r/utils/blob/master/invert_screen) - invert the entire screen
 * [irssi-ignore_join_blob.pl](https://github.com/trapd00r/utils/blob/master/irssi-ignore_join_blob.pl) - ignore the blob of text displayed when (re)joining a channel
+* [issues](https://github.com/trapd00r/utils/blob/master/issues) - list all issues relevant for me cause the github ui is worthless
 * [kitty_dump_colors](https://github.com/trapd00r/utils/blob/master/kitty_dump_colors) - generate kitty colorscheme from defined term colors
 * [knnp-sh](https://github.com/trapd00r/utils/blob/master/knnp-sh) - now playing for knradio
 * [laleh-check](https://github.com/trapd00r/utils/blob/master/laleh-check) - check if string is present in Laleh's lyrics
@@ -179,4 +180,5 @@
 * [whatfont](https://github.com/trapd00r/utils/blob/master/whatfont) - query the terminal for the current fonts in use.
 * [xdgdirs](https://github.com/trapd00r/utils/blob/master/xdgdirs) - check that XDG_* dirs are defined
 * [xfiles.sh](https://github.com/trapd00r/utils/blob/master/xfiles.sh) - the x-files theme!
+* [youtube2mp3](https://github.com/trapd00r/utils/blob/master/youtube2mp3) - rip audio from youtube
 * [♫](https://github.com/trapd00r/utils/blob/master/♫) - set oss4 audio levels
