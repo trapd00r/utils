@@ -8,11 +8,11 @@ use warnings FATAL => 'all';
 use File::LsColor qw(ls_color get_ls_colors);
 use File::Copy::Recursive qw(rcopy fcopy);
 use File::Basename;
-use Term::ExtendedColor qw(fg);
+use Term::ExtendedColor qw(fg bg);
 $File::Copy::Recursive::CPRFComp = 1;
 
 
-my $mp3_player = "$ENV{HOME}/mp3/toburn";
+my $mp3_player = "$ENV{HOME}/mp3/_fav";
 my $music_dir = "$ENV{HOME}/mp3";
 my $playlist  = "$ENV{HOME}/var/pimpd2/pimpd2.db";
 
@@ -33,7 +33,7 @@ sub cp {
   for my $file(@what) {
     fcopy($file, $where);
     if($!) {
-      print STDERR "$file doesn't exist?\n";
+      printf "%s: %s\n", bg(196, 'EFILENOEXIST'), $file;
       next;
     }
     printf "%-20s\n", ls_color(basename($file))
