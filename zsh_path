@@ -5,6 +5,8 @@
 use strict;
 use Term::ExtendedColor 'fg';
 
+use open qw(:utf8 :std);
+
 chomp(my $pwd = `pwd`);
 
 my @chars = split//, $pwd;
