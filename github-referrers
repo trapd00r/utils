@@ -1,0 +1,21 @@
+#!/bin/sh
+## vim:ft=sh:
+## abstract: get referrer urls for all github repos
+## this is messy but it works
+
+CNTX='users';
+## a maximum of 100 repos per page
+START_URL="https://api.github.com/repos"
+END_URL="traffic/popular/referrers"
+
+END_PAGE=3
+
+for REPO in $(
+  for PAGE in {1..$END_PAGE}; do
+    curl -s "https://api.github.com/$CNTX/${GITHUB_USER}/repos?page=$PAGE&per_page=100" |
+      grep '"name":' | perl -pe 's/.+"(.+)",/$1/'
+  done
+  ); do printf "> \e[1;4m$REPO\e[m\n"
+        curl -s -u $GITHUB_USER:$GITHUB_TOKEN  "$START_URL/$GITHUB_USER/$REPO/$END_URL" |
+          grep referrer | grep -vP '(?:documentation_url|github.com)' | perl -pe 's/".+": "(.+)",/$1/'; done
+
