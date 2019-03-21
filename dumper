@@ -22,7 +22,9 @@ use Data::Dumper;
   $Quotekeys = 0;
 }
 
+print Dumper $_ while readline;
 
-while(<>) {
-  printf "%s", Dumper $_;
-}
+
+#while(<>) {
+#  printf "%s", Dumper $_;
+#}
