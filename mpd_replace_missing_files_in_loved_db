@@ -1,0 +1,43 @@
+#!/usr/bin/perl
+# vim:ft=perl:et:
+# abstract: replace missing files from pimpd2 loved db with their new location
+#           if possible
+#
+# usage: mpd_replace_missing_files_in_loved_db | xclip;
+#        vim ~/var/pimpd2/pimpd2.db
+#        :g/music2/d
+#        shift+insert
+#        gg^vGS
+
+
+use strict;
+use warnings FATAL => 'all';
+
+use File::Basename;
+use Audio::MPD;
+
+
+my $music_dir = "$ENV{HOME}/mp3";
+my $playlist  = "$ENV{HOME}/var/pimpd2/pimpd2.db";
+
+
+my $mpd = Audio::MPD->new;
+
+
+open(my $fh, '<', $playlist) or die $!;
+chomp(my @files = <$fh>);
+close $fh;
+
+
+my @missing_files = grep{ ! /^$/ } map { ! -e "$music_dir/$_" && basename($_) } @files;
+
+my @mpd_paths = $mpd->collection->all_pathes;
+
+my @found;
+for my $missing(@missing_files) {
+  push(@found, $mpd->collection->songs_with_filename_partial($missing));
+}
+
+my @new_paths = map { sprintf "%s/%s", $music_dir, $_->file } @found;
+
+print "$_\n" for @new_paths;

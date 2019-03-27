@@ -72,6 +72,7 @@
 * [gh_clone_all_user_repos.sh](https://github.com/trapd00r/utils/blob/master/gh_clone_all_user_repos.sh) - clone all repos from $GITHUB_USER
 * [git-diff-syntaxhl](https://github.com/trapd00r/utils/blob/master/git-diff-syntaxhl) - prettier git diff
 * [git-rec](https://github.com/trapd00r/utils/blob/master/git-rec) - perform git actions recursively
+* [github-referrers](https://github.com/trapd00r/utils/blob/master/github-referrers) - get referrer urls for all github repos
 * [hits](https://github.com/trapd00r/utils/blob/master/hits) - show httpd resources with most hits
 * [html2txt](https://github.com/trapd00r/utils/blob/master/html2txt) - turn html into plain text
 * [imv](https://github.com/trapd00r/utils/blob/master/imv) - watch a dir and scp all created files therein to another host
@@ -99,6 +100,7 @@
 * [mpd_keep](https://github.com/trapd00r/utils/blob/master/mpd_keep) - remove songs NOT matching PATTERN from mpd playlist
 * [mpd_playlist_fix](https://github.com/trapd00r/utils/blob/master/mpd_playlist_fix) - remove invalid entries from m3u playlists
 * [mpd_random_playlist](https://github.com/trapd00r/utils/blob/master/mpd_random_playlist) - create a new playlist with n random tracks
+* [mpd_replace_missing_files_in_loved_db](https://github.com/trapd00r/utils/blob/master/mpd_replace_missing_files_in_loved_db) - replace missing files from pimpd2 loved db with their new location
 * [mpd_twmn](https://github.com/trapd00r/utils/blob/master/mpd_twmn) - mpd notifications in a tiling wm
 * [mpd_update_status](https://github.com/trapd00r/utils/blob/master/mpd_update_status) - mpd update with status
 * [mplayer_exec](https://github.com/trapd00r/utils/blob/master/mplayer_exec) - mplayer client for mplayer daemon
