@@ -1,0 +1,10 @@
+#!/bin/sh
+# abstract: stats on what I did do today
+
+git today
+hr -c ╍ -fg 196 --pre 2 --post 2
+cpan-regulars
+hr -c ╍ -fg 196 --pre 2 --post 2
+time-spent-in-vim -t | head
+hr -c ╍ -fg 196 --pre 2 --post 2
+vim-writes-a-day
