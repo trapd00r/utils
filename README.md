@@ -151,6 +151,7 @@
 * [strip_esc](https://github.com/trapd00r/utils/blob/master/strip_esc) - strip data from escape sequences
 * [term_attr](https://github.com/trapd00r/utils/blob/master/term_attr) - dump all term attributes
 * [to_phone](https://github.com/trapd00r/utils/blob/master/to_phone) - scp files to the phone and place it where I want it
+* [today](https://github.com/trapd00r/utils/blob/master/today) - stats on what I did do today
 * [topip](https://github.com/trapd00r/utils/blob/master/topip) - top ip numbers from httpd log
 * [topref](https://github.com/trapd00r/utils/blob/master/topref) - top referrals from httpd log
 * [topsi](https://github.com/trapd00r/utils/blob/master/topsi) - a bunch of tops in one go
@@ -173,6 +174,7 @@
 * [urlgrep](https://github.com/trapd00r/utils/blob/master/urlgrep) - grep URLs
 * [utils_readme](https://github.com/trapd00r/utils/blob/master/utils_readme) - generate README.md from utils/*
 * [vim-time-fix-db](https://github.com/trapd00r/utils/blob/master/vim-time-fix-db) - remove various non-file records from the vim-times db
+* [vim-writes-a-day](https://github.com/trapd00r/utils/blob/master/vim-writes-a-day) - how many times a day do I type :w in vim?
 * [vim_old](https://github.com/trapd00r/utils/blob/master/vim_old) - how much time do I spend in my vim?
 * [vimcolors](https://github.com/trapd00r/utils/blob/master/vimcolors) - dump vim colors to terminal
 * [viml](https://github.com/trapd00r/utils/blob/master/viml) - open the most recently edited file in vim

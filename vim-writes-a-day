@@ -1,0 +1,20 @@
+#!/usr/bin/perl
+# abstract: how many times a day do I type :w in vim?
+use strict;
+
+use POSIX qw(strftime);
+use Data::Dumper;
+
+my $writes_db = "$ENV{HOME}/vim_writes";
+my $today     = strftime "%Y-%m-%d", localtime;
+
+my %writes;
+
+open(my $fh, '<', $writes_db) or die $!;
+
+while(<$fh>) {
+  chomp;
+  $writes{$_}++;
+}
+
+printf "I have smashed :w %d times today.\n", $writes{$today};
