@@ -1,11 +1,30 @@
 #!/usr/bin/perl
 use strict;
 use feature 'say';
-use Lyrics::Fetcher::LyricWiki;
+use Audio::MPD;
 
-chomp(my $artist = `mpc -h shiva --format "%artist%"|head -1`);
-chomp(my $title  = `mpc -h shiva --format "%title%"|head -1`);
+use Term::ExtendedColor qw(fg);
+
+my $mpd = Audio::MPD->new;
+
+my $artist = $mpd->current->artist;
+my $title  = $mpd->current->title;
+
+my $lyrics_dir = "$ENV{HOME}/dev/lyrics/lyrics";
+
+my $lyrics = "$lyrics_dir/$artist - $title.txt";
+
+if(-f $lyrics) {
+  printf "\n \t%s - %s\n", fg('38;5;208', $artist), fg('38;5;208;1', $title);
+  open(my $fh, '<', $lyrics) or die $!;
+  while(<$fh>) {
+    $_ =~ s{\[(.+)\]}{\e[1m[\e[m\e[38;5;37;1m$1\e[m\e[1m]\e[m};
+    print "$_";
+  }
+  say;
+}
+else {
+  print "No lyrics found for $artist - $title\n";
+}
 
 
-print Lyrics::Fetcher::LyricWiki->fetch($artist, $title);
-say "$artist - $title";
