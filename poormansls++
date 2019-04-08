@@ -1,0 +1,6 @@
+#!/bin/sh
+# vim:ft=sh:
+# abstract: poor mans ls++, demonstrate ls_color from File::LsColor
+DELIMITER="\033[38;5;240m|\033[m"
+find "$@" -printf "\033[33m%M\033[m $DELIMITER \033[38;5;38m%TY-%Tm-%Td\033[m $DELIMITER %d%y %f\n" \
+  | ls_color -k6
