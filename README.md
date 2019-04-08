@@ -11,6 +11,7 @@
   A few scripts explained below by extracting the abstract using [utils_readme](https://github.com/trapd00r/utils/blob/master/utils_readme).
 
 * [1984](https://github.com/trapd00r/utils/blob/master/1984) - fun with pv
+* [:w](https://github.com/trapd00r/utils/blob/master/:w) - how many times a day do I type :w in vim?
 * [absname](https://github.com/trapd00r/utils/blob/master/absname) - you can't trust $PWD in linux
 * [abstract](https://github.com/trapd00r/utils/blob/master/abstract) - extract abstract from given file(s)
 * [albumlist](https://github.com/trapd00r/utils/blob/master/albumlist) - display all albums by artist
@@ -118,6 +119,7 @@
 * [pimpla](https://github.com/trapd00r/utils/blob/master/pimpla) - perl interface for mplayer using fifos
 * [pkgfont](https://github.com/trapd00r/utils/blob/master/pkgfont) - list packages that includes fonts
 * [playlists_update](https://github.com/trapd00r/utils/blob/master/playlists_update) - update playlists of loved songs (pimpd2 --love)
+* [poormansls++](https://github.com/trapd00r/utils/blob/master/poormansls++) - poor mans ls++, demonstrate ls_color from File::LsColor
 * [post](https://github.com/trapd00r/utils/blob/master/post) - tool to aid me in writing a new blog post using jekyll
 * [prename](https://github.com/trapd00r/utils/blob/master/prename) - rename with perl regex
 * [pshot](https://github.com/trapd00r/utils/blob/master/pshot) - take screenshot, transfer it to host and return url
