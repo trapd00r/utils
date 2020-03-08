@@ -1,0 +1,35 @@
+#!/usr/bin/perl
+# vim: ft=perl:fdm=marker:fmr=#<,#>:fen:et:sw=2:
+# simple version of mpd_cp
+use strict;
+use warnings FATAL => 'all';
+use vars     qw($VERSION);
+use autodie  qw(:all);
+
+use utf8;
+use open qw(:std :utf8);
+
+use Audio::MPD;
+use File::Copy;
+use Cwd;
+use File::Basename;
+use File::LsColor qw(ls_color);
+
+my $mpd = Audio::MPD->new;
+
+my $base_dir = "$ENV{HOME}/mp3/";
+my $target   = getcwd();
+
+my $file = $mpd->current->file;
+
+my $full_path = "$base_dir" . $file;
+
+my $basename = basename($file);
+
+
+if(copy($full_path, $target)) {
+  printf("%s -> %s\n", ls_color($basename), $target);
+}
+else {
+  die("cp failed: $!\n");
+}
