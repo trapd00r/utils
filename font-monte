@@ -13,7 +13,7 @@ printf '\033]710;%s\a' \
 printf '\033]711;%s\a' \
   'xft:Bok MonteCarlo:style=Sans Bold:pixelsize=10:antialias=0:hinting=0:hintstyle=0'
 printf '\033]712;%s\a' \
-  'xft:Anonymous Pro:style=Regular:pixelsize=10:antialias=0:hinting=0:hintstyle=0'
+  'xft:ProFont:style=Bold:pixelsize=10:antialias=0:hinting=0:hintstyle=0'
 printf '\033]713;%s\a' \
   'xft:ProFont:style=Regular:pixelsize=10:antialias=0:hinting=0:hintstyle=0'
 
