@@ -1,3 +1,6 @@
 #!/bin/sh
-killall NetworkManager
-dhcpcd; ip link set wlo1 up; NetworkManager
+#killall NetworkManager
+#dhcpcd; ip link set wlo1 up; NetworkManager
+
+wpa_supplicant -i wlo1 -c /etc/wpa_supplicant/wpa_supplicant.conf
+NetworkManager
