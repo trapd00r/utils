@@ -1,0 +1,2 @@
+#!/bin/sh
+curl -s  https://corona-stats.online/Sweden
