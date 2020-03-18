@@ -1,0 +1,4 @@
+#!/bin/sh
+# vim:ft=sh:
+IFS=$'\n'
+for x in $(mpc search artist "$1" | dirnamep | sort -u); do ln -s "/mnt/${x}"; done
