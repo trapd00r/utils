@@ -1,9 +1,3 @@
-#!/bin/bash
+#!/bin/sh
 
-target=/mnt/Backup
-
-mkdir -p /mnt/Backup/{bin,dev,etc,http/japh.se,var}
-
-cp -r /home/scp1/{dev,etc} -t $target
-cp -r /home/scp1/http/japh.se/{blog,devel,doc,paste,scrots} \
-  -t "$target/http/japh.se/"
+rclone sync -P /mnt/music8/Eminem drive:2020-music_backup/Eminem
