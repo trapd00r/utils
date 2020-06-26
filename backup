@@ -1,3 +1,10 @@
 #!/bin/sh
+# vim:ft=zsh:
 
-rclone sync -P /mnt/music8/Eminem drive:2020-music_backup/Eminem
+#rclone copy -P /home/scp1/_ drive:_
+#rclone copy -P /mnt/music8/_artists/Eminem drive:2020-music_backup/Eminem
+#rclone copy -P "/mnt/music8/_artists/1200 Micrograms" drive:"2020-music_backup/1200 Micrograms"
+#rclone copy -P "/mnt/music8/_artists/Madonna" drive:"2020-music_backup/Madonna"
+#rclone copy -P "/mnt/music8/_artists/Alanis Morrisette" drive:"2020-music_backup/Alanis Morrisette"
+
+rclone copy -P "/mnt/music8/_artists/" drive:"2020-music_backup/"
