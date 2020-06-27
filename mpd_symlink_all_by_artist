@@ -1,0 +1,8 @@
+#!/bin/sh
+# vim:ft=sh:
+
+# find all albums by artist in mpd database, symlink the dirs in ., for
+# ease of copying/moving/etc
+
+IFS=$'\n'
+for x in $(mpc search artist "$1" | dirnamep | sort -u); do ln -s "/mnt/${x}"; done
