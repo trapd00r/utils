@@ -1,0 +1,8 @@
+#!/bin/sh
+# vim:ft=zsh:
+# sort subdirectories in . by size, and open in vidir
+
+du -h --max-depth=1 "$@"     \
+  | sort -k 1,1hr -k 2,2f    \
+  | awk -F '\t' '{print $2}' \
+  | vidir -
