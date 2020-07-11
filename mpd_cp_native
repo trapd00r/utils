@@ -1,6 +1,8 @@
 #!/usr/bin/perl
 # vim: ft=perl:fdm=marker:fmr=#<,#>:fen:et:sw=2:
 # simple version of mpd_cp
+#
+# copy now playing song to destination: given argument or cwd
 use strict;
 use warnings FATAL => 'all';
 use vars     qw($VERSION);
@@ -18,7 +20,7 @@ use File::LsColor qw(ls_color);
 my $mpd = Audio::MPD->new;
 
 my $base_dir = "$ENV{HOME}/mp3/";
-my $target   = getcwd();
+my $target   = -d $ARGV[0] ? $ARGV[0] : getcwd();
 
 my $file = $mpd->current->file;
 
