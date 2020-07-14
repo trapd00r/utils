@@ -1,0 +1,29 @@
+#!/usr/bin/perl
+# vim: ft=perl:fdm=marker:fmr=#<,#>:fen:et:sw=2:
+#
+#
+### strip extension 
+#   $ for x in *(.); do mkdir "$x"(:r); done
+###
+###
+use strict;
+use warnings FATAL => 'all';
+use vars     qw($VERSION);
+use autodie  qw(:all);
+
+use utf8;
+use open qw(:std :utf8);
+
+my $APP  = '';
+$VERSION = '0.001';
+
+use File::Glob; 
+
+my @videos = grep { -f $_ } glob('*');
+
+
+for my $new_dir(@videos) {
+  $new_dir =~ s/^(.+)\s+-\s+.+$/$1/;
+
+  mkdir($new_dir) unless -d $new_dir;
+}
