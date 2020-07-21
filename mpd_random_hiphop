@@ -1,0 +1,11 @@
+#!/bin/sh
+# vim:ft=sh:
+
+mpc clear > /dev/null
+mpc search genre hip-hop \
+  | dirnamep \
+  | sort -u  \
+  | sort -R  \
+  | head -10 \
+  | mpc add
+mpc play
