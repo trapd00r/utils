@@ -1,0 +1,20 @@
+#!/bin/sh
+# vim:ft=sh:
+# toggle side panels in [][ ][] monitor setup
+
+WIDTH=$(xrandr|grep -Po 'current.+, '|perl -pe 's/\w+\s(\d+) x.+$/$1/')
+
+ MONITOR_LEFT='--off'
+MONITOR_RIGHT='--off'
+
+if [ $WIDTH -eq 1920 ]; # side panels disabled
+  then
+     MONITOR_LEFT='--rotate left --right-of DP-4 --auto'
+    MONITOR_RIGHT='--rotate right --left-of DP-4 --auto'
+  else # disable side panels
+     MONITOR_LEFT='--off'
+    MONITOR_RIGHT='--off'
+fi
+
+xrandr  --output HDMI-0 $MONITOR_LEFT --output DP-2 $MONITOR_RIGHT
+catpoison -c restart
