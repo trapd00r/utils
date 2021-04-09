@@ -11,9 +11,11 @@ if [ $WIDTH -eq 1920 ]; # side panels disabled
   then
      MONITOR_LEFT='--rotate left --right-of DP-4 --auto'
     MONITOR_RIGHT='--rotate right --left-of DP-4 --auto'
+    xscreensaver -no-splash &
   else # disable side panels
      MONITOR_LEFT='--off'
     MONITOR_RIGHT='--off'
+    killall xscreensaver
 fi
 
 xrandr  --output HDMI-0 $MONITOR_LEFT --output DP-2 $MONITOR_RIGHT
