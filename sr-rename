@@ -1,0 +1,38 @@
+#!/usr/bin/perl
+# vim: ft=perl:fdm=marker:fmr=#<,#>:fen:et:sw=2:
+# abstract: a little tool to clean up episodes downloaded from Sveriges Radio.
+use strict;
+use warnings FATAL => 'all';
+use vars     qw($VERSION);
+use autodie  qw(:all);
+
+use utf8;
+use open qw(:std :utf8);
+
+my $APP  = 'sr-rename';
+$VERSION = '0.001';
+
+use MP3::Info;
+use File::Copy::Recursive qw(fcopy);
+
+my @files = @ARGV;
+
+for my $file(@files) {
+  my $tags = MP3::Info->new($file);
+
+  my ($artist, $title, $album, $year) = ($tags->{ARTIST},
+                                         $tags->{ALBUM},
+                                         $tags->{TITLE},
+                                         $tags->{YEAR},
+                                        );
+
+  my $new_name = sprintf("%s [%s] %s.mp3", $artist, $year, $album);
+
+  if(fcopy($file, $new_name)) {
+    printf "'%s'\n", ls_color($new_name);
+    unlink($file);
+  }
+  else {
+    warn "$!\n";
+  }
+}
