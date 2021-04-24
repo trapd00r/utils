@@ -14,6 +14,7 @@ $VERSION = '0.001';
 
 use MP3::Info;
 use File::Copy::Recursive qw(fcopy);
+use File::LsColor qw(ls_color);
 
 my @files = @ARGV;
 
