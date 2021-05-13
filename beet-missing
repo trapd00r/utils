@@ -1,0 +1,10 @@
+#!/bin/sh
+# vim:ft=sh:
+
+#  2 MISSING /mnt/music8/beets_test/Sophie Zelmani/Sophie Zelmani [2005] A Decade of Dreams (MP3)
+#  1 MISSING /mnt/music8/beets_test/test2/Sophie_Zelmani-Live_in_Gothenburg_25.02.02
+
+
+beet missing -c -f '"$path"' \
+  | ls_color --ifs '"' -k2   \
+  | perl -pe 's/"(.+)": (\d+)$/sprintf("% 2d \e[31mMISSING\e[m", $2) . $1/e'
