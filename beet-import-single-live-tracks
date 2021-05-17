@@ -1,0 +1,5 @@
+#!/bin/sh
+# vim:ft=sh:
+
+
+beet import -AsW "$@"
