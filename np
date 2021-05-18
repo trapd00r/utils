@@ -2,6 +2,8 @@
 # abstract: mpd now playing
 use strict;
 use Audio::MPD;
+
+binmode STDOUT, ':utf8';
 my $m = Audio::MPD->new;
 my $c = $m->current;
 my $out;
