@@ -1,0 +1,9 @@
+#!/bin/sh
+# vim:ft=sh:
+
+echo "
+rewrite:
+  artist .*Britney Spears.*: Britney Spears
+
+beet move 'Britney Spears'
+"
