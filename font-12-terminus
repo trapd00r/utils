@@ -1,7 +1,7 @@
 #!/bin/sh
 
 printf '\033]710;%s\007' \
-  'xft:xos4 Terminus:style=Regular:pixelsize=12:antialias=1:hinting=1'
+  '-xos4-terminus-bold-r-normal--12-120-72-72-c-60-iso10646-1'
 printf '\033]711;%s\007' \
   'xft:xos4 Terminus:style=Bold:pixelsize=12:antialias=1:hinting=1'
 printf '\033]712;%s\007' \

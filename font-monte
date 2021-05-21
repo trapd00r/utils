@@ -1,21 +1,26 @@
 #!/bin/sh
-#printf '\033]710;%s\a' \
+printf '\033]710;%s\a' \
+  '-*-montecarlo-medium-r-normal--12-120-*-*-*-*-*-*'
 #  -windows-montecarlo-medium-r-normal--11-110-72-72-c-60-microsoft-cp1252
-#printf '\033]711;%s\a' \
-#  -windows-montecarlo-bold-r-normal--11-110-72-72-c-60-microsoft-cp1252
-#printf '\033]712;%s\a' \
-#  'xft:Anonymous Pro:style=Regular:pixelsize=10:antialias=1:hinting=1:hintstyle=3'
-#printf '\033]713;%s\a' \
+printf '\033]711;%s\a' \
+  '-*-montecarlo-bold-*-*-*-12-*-*-*-*-*-*-*'
+#-windows-montecarlo-bold-r-normal--11-110-72-72-c-60-microsoft-cp1252
+printf '\033]712;%s\a' \
+  'xft:Anonymous Pro:style=Regular:pixelsize=10:antialias=1:hinting=1:hintstyle=3'
+printf '\033]713;%s\a' \
+  '-schumacher-clean-medium-r-normal--12-120-75-75-c-60-iso8859-13'
+#  '-misc-fixed-bold-r-semicondensed--0-0-75-75-c-0-iso8859-7'
+#  '-misc-fixed-medium-r-semicondensed--12-110-75-75-c-60-iso8859-1'
 #  -nil-profont-medium-r-normal--10-100-72-72-c-50-iso8859-1
 
-printf '\033]710;%s\a' \
-  'xft:Bok MonteCarlo:style=Sans:pixelsize=10:antialias=0:hinting=0:hintstyle=0'
-printf '\033]711;%s\a' \
-  'xft:Bok MonteCarlo:style=Sans Bold:pixelsize=10:antialias=0:hinting=0:hintstyle=0'
-printf '\033]712;%s\a' \
-  'xft:ProFont:style=Bold:pixelsize=10:antialias=0:hinting=0:hintstyle=0'
-printf '\033]713;%s\a' \
-  'xft:ProFont:style=Regular:pixelsize=10:antialias=0:hinting=0:hintstyle=0'
+#printf '\033]710;%s\a' \
+#  'xft:Bok MonteCarlo:style=Sans:pixelsize=10:antialias=0:hinting=0:hintstyle=0'
+#printf '\033]711;%s\a' \
+#  'xft:Bok MonteCarlo:style=Sans Bold:pixelsize=10:antialias=0:hinting=0:hintstyle=0'
+#printf '\033]712;%s\a' \
+#  'xft:ProFont:style=Bold:pixelsize=10:antialias=0:hinting=0:hintstyle=0'
+#printf '\033]713;%s\a' \
+#  'xft:ProFont:style=Regular:pixelsize=10:antialias=0:hinting=0:hintstyle=0'
 
 
 

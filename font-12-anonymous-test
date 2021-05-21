@@ -4,9 +4,7 @@ printf '\033]710;%s\007' \
   'xft:Anonymous Pro:style=Regular:pixelsize=12:antialias=1:hinting=1:hintstyle=3'
 printf '\033]711;%s\007' \
   'xft:Anonymous Pro:style=Bold:pixelsize=12:antialias=1:hinting=1:hintstyle=3'
-
 printf '\033]712;%s\007' \
-   'xft:ProFontWindows Nerd Font:style=Book:pixelsize=12:antialias=none'
-
+  'xft:Anonymous Pro:style=Italic:pixelsize=11:antialias=1:hinting=1:hintstyle=3'
 printf '\033]713;%s\007' \
-  'xft:Anonymous Pro:style=Regular:pixelsize=11:antialias=1:hinting=1:hintstyle=3'
+  'xft:Anonymous Pro:style=Regular:pixelsize=10:antialias=1:hinting=1:hintstyle=3'

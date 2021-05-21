@@ -1,0 +1,8 @@
+#!/bin/sh
+# vim:ft=sh:
+
+
+
+printf  "\033]712;%s\007" \
+          "xft:ProFontWindows Nerd Font:style=Book:pixelsize=12:antialias=none"
+
