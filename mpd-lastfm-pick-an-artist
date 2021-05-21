@@ -1,0 +1,53 @@
+#!/usr/bin/perl
+# adopted from https://github.com/davorg/pickanartist/blob/main/pickanartist
+
+use strict;
+use warnings;
+
+use HTML::TreeBuilder;
+
+use Audio::MPD;
+use Term::ExtendedColor qw(fg);
+use App::Pimpd::Collection::Search qw(search_db_artist);
+
+my $mpd = Audio::MPD->new;
+
+my $artist = last_fm_get_artist();
+my @songs  = search_db_artist($artist);
+
+if(scalar(@songs) > 0) {
+  $mpd->playlist->clear;
+  printf "Adding %d songs by %s.\n", scalar(@songs), fg(118, $artist);
+  $mpd->playlist->add(@songs);
+  $mpd->play;
+}
+else {
+  printf "Can't find any songs with artist %s.\n", fg(196, $artist);
+}
+
+
+
+sub last_fm_get_artist {
+  my $username = shift || 'betbot';
+  my $url = "https://www.last.fm/user/$username/library/artists";
+
+  my $tree = HTML::TreeBuilder->new_from_url($url);
+
+  my ($table) =  $tree->look_down(
+    class => qr/\bchartlist\b/,
+  );
+
+  my @artists;
+
+  my @rows = $table->look_down(_tag => 'tr', class => qr/chartlist-row/);
+  for (@rows) {
+    my $name = $_->look_down(_tag => 'td', class => qr/chartlist-name/);
+    my $count = $_->look_down(_tag => 'span', class => qw/chartlist-count-bar-value/);
+    my $x = $count->content->[0] =~ s/,//gr;
+
+    next if $x >= 1000 or $x <= 500;
+
+    push @artists, $name->look_down(_tag => 'a')->content->[0];
+  }
+  return $artists[ rand @artists ];
+}
