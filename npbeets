@@ -1,0 +1,4 @@
+#!/bin/sh
+# vim:ft=sh:
+
+beet info "$XDG_MUSIC_DIR/$(mpc --format %file%|head -1)" 2> /dev/null
