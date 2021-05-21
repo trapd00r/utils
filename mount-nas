@@ -3,12 +3,14 @@
 
 # mount pi
 
-sshfs root@192.168.1.4:/recalbox ~/pi
+#sshfs root@192.168.1.4:/recalbox ~/pi
 
 # or, autmount -v as root for pure nfs mount
 # mount nas backup
 
-sshfs root@192.168.1.6:/var/media/extra2tb ~/nas2tb
+#sshfs root@192.168.1.6:/var/media/extra2tb ~/nas2tb
 
 # mount nas media
-sshfs root@192.168.1.6:/nfs/japh/ ~/nas
+#sshfs root@192.168.1.6:/nfs/japh/ ~/nas
+
+mount WDMyCloud:/nfs /home/scp1/nas
