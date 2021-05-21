@@ -1,0 +1,9 @@
+#!/bin/sh
+# vim:ft=sh:
+# abstract: lyrics for currently playing song in mpd
+# lyrics taken from the lyrics tag, populated by beets
+
+beet info -i 'lyrics' "$XDG_MUSIC_DIR/$(mpc --format %file%|head -1)" \
+       2> /dev/null \
+       | perl -pe 's/^lyrics:\s+/\n/' \
+       | ls_color
