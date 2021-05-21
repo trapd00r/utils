@@ -25,5 +25,7 @@ my @videos = grep { -f $_ } glob('*');
 for my $new_dir(@videos) {
   $new_dir =~ s/^(.+)\s+-\s+.+$/$1/;
 
-  mkdir($new_dir) unless -d $new_dir;
+  -d $new_dir
+    ? next
+    : mkdir($new_dir);
 }
