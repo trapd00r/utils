@@ -19,7 +19,7 @@ use File::LsColor qw(ls_color);
 
 my $mpd = Audio::MPD->new;
 
-my $base_dir = "$ENV{HOME}/mp3/";
+my $base_dir = "$ENV{XDG_MUSIC_DIR}/";
 my $target   = -d $ARGV[0] ? $ARGV[0] : getcwd();
 
 my $file = $mpd->current->file;
