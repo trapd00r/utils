@@ -1,0 +1,33 @@
+#!/usr/bin/perl
+# vim: ft=perl:fdm=marker:fmr=#<,#>:fen:et:sw=2:
+# abstract: goto to root directory of currently playing album
+use strict;
+use warnings FATAL => 'all';
+use vars     qw($VERSION);
+use autodie  qw(:all);
+
+use utf8;
+use open qw(:std :utf8);
+
+my $APP  = 'gotoalbum';
+$VERSION = '0.001';
+
+
+use Audio::MPD;
+use File::Basename;
+
+
+my $base_dir = "$ENV{XDG_MUSIC_DIR}";
+my $mpd = Audio::MPD->new;
+
+my $current = $mpd->current;
+
+my $album_dir = sprintf("%s/%s", $base_dir, dirname($current->file));
+
+if(-d $album_dir) {
+  chdir($album_dir);
+  system($ENV{SHELL});
+}
+else {
+  die("$album_dir doesn't exist: $!\n");
+}
