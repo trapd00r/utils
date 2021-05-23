@@ -1,0 +1,10 @@
+#!/bin/sh
+# vim:ft=sh:
+# abstract: list paths of albums matching query in beets database
+
+beet ls "$@" \
+  | dirnamep \
+  | sort -u  \
+  | ls_color \
+  | perl -pe 's/MP3/\033[38;5;137mMP3\033[m/' \
+  | perl -pe 's/FLAC/\033[38;5;204mFLAC\033[m/' \
