@@ -1,0 +1,10 @@
+#!/bin/sh
+# vim:ft=sh:
+# abstract: list albums by artist and show record label, helper for
+# https://www.japh.se/2021/05/23/custom-beet-path-rules-for-record-labels.html
+
+beet ls "$@"  -f '·$label· $path' \
+  | dirnamep                      \
+  | sort -u                       \
+  | ls_color --ifs · -k3          \
+  | perl -pe 's/·//g'
