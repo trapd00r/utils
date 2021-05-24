@@ -45,7 +45,7 @@ sub last_fm_get_artist {
     my $count = $_->look_down(_tag => 'span', class => qw/chartlist-count-bar-value/);
     my $x = $count->content->[0] =~ s/,//gr;
 
-    next if $x >= 1000 or $x <= 500;
+    next if $x >= 1000 or $x <= 300;
 
     push @artists, $name->look_down(_tag => 'a')->content->[0];
   }
