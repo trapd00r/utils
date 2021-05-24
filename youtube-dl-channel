@@ -1,5 +1,5 @@
 #!/bin/sh
 # created for mirroring Rosa Mannen
 
-youtube-dl --download-archive downloaded.txt -i -o "%(uploader)s/%(upload_date)s - %(title)s - (%(duration)ss) [%(resolution)s].%(ext)s" -f bestvideo[ext=mp4]+bestaudio
+youtube-dl --download-archive downloaded.txt -i -o "%(uploader)s/%(upload_date)s - %(title)s - (%(duration)ss) [%(resolution)s].%(ext)s" -f bestvideo[ext=mp4]+bestaudio "$@"
 
