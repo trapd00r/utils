@@ -11,7 +11,6 @@
   A few scripts explained below by extracting the abstract using [utils_readme](https://github.com/trapd00r/utils/blob/master/utils_readme).
 
 * [1984](https://github.com/trapd00r/utils/blob/master/1984) - fun with pv
-* [:w](https://github.com/trapd00r/utils/blob/master/:w) - how many times a day do I type :w in vim?
 * [absname](https://github.com/trapd00r/utils/blob/master/absname) - you can't trust $PWD in linux
 * [abstract](https://github.com/trapd00r/utils/blob/master/abstract) - extract abstract from given file(s)
 * [albumlist](https://github.com/trapd00r/utils/blob/master/albumlist) - display all albums by artist
@@ -25,6 +24,9 @@
 * [author](https://github.com/trapd00r/utils/blob/master/author) - print japh author
 * [bake](https://github.com/trapd00r/utils/blob/master/bake) - build perl stuff
 * [basenamep](https://github.com/trapd00r/utils/blob/master/basenamep) - grab input from stdin and basename it
+* [beet-ls-albums](https://github.com/trapd00r/utils/blob/master/beet-ls-albums) - list paths of albums matching query in beets database
+* [beet-ls-albums-by-label](https://github.com/trapd00r/utils/blob/master/beet-ls-albums-by-label) - list albums by artist and show record label, helper for
+* [beet-to-mpd](https://github.com/trapd00r/utils/blob/master/beet-to-mpd) - query beet and add the results to mpd
 * [bigrand](https://github.com/trapd00r/utils/blob/master/bigrand) - generate n random numbers
 * [bob](https://github.com/trapd00r/utils/blob/master/bob) - mount bob the boxeebox
 * [bolaget](https://github.com/trapd00r/utils/blob/master/bolaget) - is the systembolaget open today?
@@ -74,6 +76,7 @@
 * [git-diff-syntaxhl](https://github.com/trapd00r/utils/blob/master/git-diff-syntaxhl) - prettier git diff
 * [git-rec](https://github.com/trapd00r/utils/blob/master/git-rec) - perform git actions recursively
 * [github-referrers](https://github.com/trapd00r/utils/blob/master/github-referrers) - get referrer urls for all github repos
+* [gotoalbum](https://github.com/trapd00r/utils/blob/master/gotoalbum) - goto to root directory of currently playing album
 * [hits](https://github.com/trapd00r/utils/blob/master/hits) - show httpd resources with most hits
 * [html2txt](https://github.com/trapd00r/utils/blob/master/html2txt) - turn html into plain text
 * [imv](https://github.com/trapd00r/utils/blob/master/imv) - watch a dir and scp all created files therein to another host
@@ -91,6 +94,7 @@
 * [ls2](https://github.com/trapd00r/utils/blob/master/ls2) - colored ls, again
 * [ls3](https://github.com/trapd00r/utils/blob/master/ls3) - colored ls, yet again
 * [lscolorpicker](https://github.com/trapd00r/utils/blob/master/lscolorpicker) - generate LS_COLORS interactively
+* [lsgrep](https://github.com/trapd00r/utils/blob/master/lsgrep) - list content of grepped directories
 * [lsrel](https://github.com/trapd00r/utils/blob/master/lsrel) - list scene releases on a fs based on media type
 * [lyrics_update](https://github.com/trapd00r/utils/blob/master/lyrics_update) - update lyrics db on github
 * [md2html](https://github.com/trapd00r/utils/blob/master/md2html) - convert input markdown file to html
@@ -111,6 +115,7 @@
 * [net_on_på_sid](https://github.com/trapd00r/utils/blob/master/net_on_på_sid) - enable ethernet on 82579V chipsets
 * [nicefind](https://github.com/trapd00r/utils/blob/master/nicefind) - a very nice find ui
 * [np](https://github.com/trapd00r/utils/blob/master/np) - mpd now playing
+* [np-lyrics](https://github.com/trapd00r/utils/blob/master/np-lyrics) - lyrics for currently playing song in mpd
 * [pacstat](https://github.com/trapd00r/utils/blob/master/pacstat) - pacman statisticts
 * [passwd_gen](https://github.com/trapd00r/utils/blob/master/passwd_gen) - generate a safe password
 * [peak](https://github.com/trapd00r/utils/blob/master/peak) - return human readable strings from bins
@@ -148,6 +153,7 @@
 * [setbg](https://github.com/trapd00r/utils/blob/master/setbg) - set terminal background
 * [shivastream](https://github.com/trapd00r/utils/blob/master/shivastream) - nokia n900 mpd streaming aid
 * [shot](https://github.com/trapd00r/utils/blob/master/shot) - take screenshot and upload to httpd
+* [sr-rename](https://github.com/trapd00r/utils/blob/master/sr-rename) - a little tool to clean up episodes downloaded from Sveriges Radio.
 * [srinfo](https://github.com/trapd00r/utils/blob/master/srinfo) - sveriges radio info fetcher
 * [srnp](https://github.com/trapd00r/utils/blob/master/srnp) - now playing for sveriges radio
 * [strip_esc](https://github.com/trapd00r/utils/blob/master/strip_esc) - strip data from escape sequences
@@ -160,7 +166,6 @@
 * [torrent](https://github.com/trapd00r/utils/blob/master/torrent) - create torrents
 * [traffic](https://github.com/trapd00r/utils/blob/master/traffic) - visualize httpd traffic
 * [translate](https://github.com/trapd00r/utils/blob/master/translate) - translate
-* [u-abc](https://github.com/trapd00r/utils/blob/master/u-abc) - unicode fullwidth
 * [u-arrows](https://github.com/trapd00r/utils/blob/master/u-arrows) - unicode arrows
 * [u-blocks](https://github.com/trapd00r/utils/blob/master/u-blocks) - unicode blocks
 * [u-boxdrawing](https://github.com/trapd00r/utils/blob/master/u-boxdrawing) - unicode boxes
@@ -173,7 +178,6 @@
 * [uncode](https://github.com/trapd00r/utils/blob/master/uncode) - transform ascii data to unicode chars
 * [unrarec](https://github.com/trapd00r/utils/blob/master/unrarec) - unrar stuff recursively
 * [url_find](https://github.com/trapd00r/utils/blob/master/url_find) - extracts URLs from data
-* [urlgrep](https://github.com/trapd00r/utils/blob/master/urlgrep) - grep URLs
 * [utils_readme](https://github.com/trapd00r/utils/blob/master/utils_readme) - generate README.md from utils/*
 * [vim-time-fix-db](https://github.com/trapd00r/utils/blob/master/vim-time-fix-db) - remove various non-file records from the vim-times db
 * [vim-writes-a-day](https://github.com/trapd00r/utils/blob/master/vim-writes-a-day) - how many times a day do I type :w in vim?

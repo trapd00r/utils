@@ -1,0 +1,7 @@
+#!/bin/sh
+# vim:ft=sh:
+# abstract: query beet and add the results to mpd
+
+beet ls "$@" \
+  | perl -pe "s|^.+[+]TAGGED/||e"  \
+  | mpc add
