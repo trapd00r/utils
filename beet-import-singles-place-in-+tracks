@@ -1,6 +1,0 @@
-#!/bin/sh
-# vim:ft=sh:
-
-printf "importing \033[38;5;197;3;1mSINGLE\033[m tracks\n"
-printf "placing them in +tracks/\n"
-beet import -sA "$@"
