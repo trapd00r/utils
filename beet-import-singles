@@ -9,10 +9,10 @@ printf "placing them in +tracks/\n"
 printf "\033[38;5;220;1martist\033[m: "
 read  ARTIST
 
-printf "> running beet import -Sa --set artist='$ARTIST' *.{mp3,flac}. OK?\n"
+printf "> running beet import -Sa --set artist='$ARTIST' *(.) OK?\n"
 
 read foo
 
 # -s singleton mode
 # -A noautotag
-beet import -sA --set artist="$ARTIST" *.{mp3,flac} "$@"
+beet import -sA --set artist="$ARTIST" *(.) "$@"
