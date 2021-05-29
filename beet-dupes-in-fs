@@ -1,0 +1,6 @@
+#!/bin/sh
+# vim:ft=sh:
+# abstract: find dupes created by beets in filesystem
+
+find . -type f -regextype awk \
+  -iregex '.+[.][0-9][.](mp3|flac|jpg|jpeg|png|bmp)' "$@"
