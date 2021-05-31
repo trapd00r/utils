@@ -1,0 +1,9 @@
+#!/bin/zsh
+# vim:ft:zsh:
+# abstract: how many artists in each top level directory?
+
+for x in ${XDG_MUSIC_DIR}/*; \
+  do printf "% 10s: %s artists\n" $(basename $x) $(ls $x|wc -l); \
+done | sort  -gk2 
+
+
