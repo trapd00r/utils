@@ -15,4 +15,5 @@ read foo
 
 # -s singleton mode
 # -A noautotag
-beet import -sA --set artist="$ARTIST" *(.) "$@"
+# -W no write
+beet import -sAW --set artist="$ARTIST" "$@"
