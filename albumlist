@@ -6,4 +6,4 @@ artist="$@"
 mpc search artist "$artist" \
   | perl -pe 's{(.+)/.+$}{$1}' \
   | sort -u \
-  | perl -pe 's{^}{/mnt/Music_1/}'
+  | perl -pe "s!^!\$ENV{XDG_MUSIC_DIR}!e"
