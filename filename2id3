@@ -25,13 +25,13 @@ use File::LsColor qw(ls_color);
 use Term::ExtendedColor qw(fg bg);
 
 die "No files specified!\n" unless grep { -f $_ } @ARGV;
-my @files = grep { m/[.]mp3$/ } @ARGV;
+my @files = grep { m/[.]mp3$/i } @ARGV;
 
 
 for my $file(@files) {
   my $tag = get_mp3tag($file);
 
-  if(! defined($tag)) {
+  if( (!defined $tag) or ($tag->{ARTIST} eq '' or $tag->{TITLE} eq '') ) {
 DO_IT_ANYWAY:
     my($artist, $title) = $file  =~ m/(.+)\s+-\s+(.+)[.]mp3/;
 
