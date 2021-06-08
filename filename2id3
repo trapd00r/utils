@@ -31,22 +31,35 @@ my @files = grep { m/[.]mp3$/i } @ARGV;
 for my $file(@files) {
   my $tag = get_mp3tag($file);
 
-  if( (!defined $tag) or ($tag->{ARTIST} eq '' or $tag->{TITLE} eq '') ) {
-DO_IT_ANYWAY:
-    my($artist, $title) = $file  =~ m/(.+)\s+-\s+(.+)[.]mp3/;
-
-    printf "artist: $artist\ntitle: $title\n";
-    set_mp3tag($file,
-    {
-     ARTIST => $artist,
-     TITLE  => $title,
-    });
-  }
-  else {
+  if(defined $tag and $tag->{ARTIST} ne '' and $tag->{TITLE} ne '') {
     printf "%s\n", bg(160, 'TAG EXISTS!');
     printf "%s\n artist: %s\n  title: %s\n",
       ls_color($file), $tag->{ARTIST}, $tag->{TITLE};
+
+    printf "retag anyway? [Y/n] ";
+    chomp(my $answer = <STDIN>);
+    filename2id3($file) if lc($answer) eq 'y';
   }
+  else {
+    filename2id3($file);
+  }
+}
+
+sub filename2id3 {
+  my $f = shift;
+  my($artist, $title) = $f  =~ m/(.+)\s+-\s+(.+)[.]mp3/;
+
+  # grab first, "primary" artist
+  # https://www.japh.se/2021/06/01/capture-primary-artist-as-a-separate-field-in-beets.html
+  $artist =~ s/(.+)\s*(?:,|feat|featuring|ft|vs)[.]?.*/$1/;
+  $artist =~ s/\s+$//;
+
+  printf "%s\n", fg(142, "setting ARTIST to '$artist'");
+  set_mp3tag($f,
+  {
+   ARTIST => $artist,
+   TITLE  => $title,
+  });
 }
 
 
