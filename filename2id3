@@ -1,5 +1,10 @@
 #!/usr/bin/perl
 # vim: ft=perl:fdm=marker:fmr=#<,#>:fen:et:sw=2:
+# abstract: grab artist and title from filename and tag it for import in beets
+#
+# only understands a naming scheme like
+#   artist - title.mp3
+# for now
 use strict;
 use warnings FATAL => 'all';
 use vars     qw($VERSION);
@@ -8,7 +13,7 @@ use autodie  qw(:all);
 use utf8;
 use open qw(:std :utf8);
 
-my $APP  = '';
+my $APP  = 'filename2id3';
 $VERSION = '0.001';
 
 use Data::Dumper;
@@ -32,13 +37,25 @@ for my $file(@files) {
   my $tag = get_mp3tag($file);
 
   if(defined $tag and $tag->{ARTIST} ne '' and $tag->{TITLE} ne '') {
-    printf "%s\n", bg(160, 'TAG EXISTS!');
-    printf "%s\n artist: %s\n  title: %s\n",
-      ls_color($file), $tag->{ARTIST}, $tag->{TITLE};
+    printf "%s\n", bg(160, 'TAG EXISTS: ');
+    printf "%s\n existing artist: %s\n  existing title: %s\n",
+      ls_color($file), bg(124, $tag->{ARTIST}), bg(124, $tag->{TITLE});
 
-    printf "retag anyway? [Y/n] ";
-    chomp(my $answer = <STDIN>);
-    filename2id3($file) if lc($answer) eq 'y';
+    my ($new_artist, $new_title) = filename2id3($file);
+    printf "%s\n", fg(244, '-' x 31);
+    printf "      new artist: %s\n       new title: %s\n",
+      bg(64, $new_artist), bg(64, $new_title);
+    printf "retag from filename? [Y/n] ";
+
+    my $answer = 'y'; # default
+
+    chomp($answer = <STDIN>);
+    set_mp3tag($file,
+      {
+        ARTIST => $new_artist,
+        TITLE  => $new_title,
+      }
+    ) if lc($answer) eq 'y';
   }
   else {
     filename2id3($file);
@@ -47,78 +64,12 @@ for my $file(@files) {
 
 sub filename2id3 {
   my $f = shift;
-  my($artist, $title) = $f  =~ m/(.+)\s+-\s+(.+)[.]mp3/;
+  my($artist, $title) = $f  =~ m/(?:[0-9]+[.]?)?\s*(.+)\s+-\s+(.+)[.]mp3/;
 
   # grab first, "primary" artist
   # https://www.japh.se/2021/06/01/capture-primary-artist-as-a-separate-field-in-beets.html
   $artist =~ s/(.+)\s*(?:,|feat|featuring|ft|vs)[.]?.*/$1/;
   $artist =~ s/\s+$//;
 
-  printf "%s\n", fg(142, "setting ARTIST to '$artist'");
-  set_mp3tag($f,
-  {
-   ARTIST => $artist,
-   TITLE  => $title,
-  });
+  return($artist, $title);
 }
-
-
-=begin comment
-
-
-Here goes inline comments that won't show up in pod doc
-
-=end comment
-
-
-=cut
-
-
-
-
-__END__
-
-
-=pod
-
-=head1 NAME
-
-=head1 USAGE
-
-=head1 DESCRIPTION
-
-=head1 OPTIONS
-
-=head1 REPORTING BUGS
-
-Report bugs and/or feature requests on rt.cpan.org, the repository issue tracker
-or directly to L<m@japh.se>
-
-=head1 AUTHOR
-
-  Magnus Woldrich
-  CPAN ID: WOLDRICH
-  m@japh.se
-  L<~/|http://japh.se>
-  L<git|http://github.com/trapd00r>
-
-=head1 CONTRIBUTORS
-
-None required yet.
-
-=head1 COPYRIGHT
-
-Copyright 2019- B<THIS APPLICATION>s L</AUTHOR> and L</CONTRIBUTORS> as listed
-above.
-
-=head1 LICENSE
-
-This program is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
-
-=head1 SEE ALSO
-
-L<~/|http://japh.se>
-
-=cut
-
