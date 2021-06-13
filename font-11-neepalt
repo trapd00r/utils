@@ -1,11 +1,10 @@
 #!/bin/sh
 
 printf '\033]710;%s\007' \
-  'xft:Neep Alt:style=SemiCondensed:pixelsize=11'
+  '-jmk-neep-medium-r-normal--11-100-75-75-c-60-iso8859-1'
 printf '\033]711;%s\007' \
-  'xft:Neep Alt:style=Bold SemiCondensed:pixelsize=11'
+  '-jmk-neep-bold-r-normal--11-100-75-75-c-60-iso8859-1'
 printf '\033]712;%s\007' \
-  '-misc-fixed-medium-r-normal--9-90-75-75-c-60-iso8859-1'
+  '-jmk-neep-medium-r-semicondensed--11-100-75-75-c-50-iso8859-1'
 printf '\033]713;%s\007' \
-  '-misc-fixed-medium-r-normal--7-70-75-75-c-50-koi8'
-  #'-nil-profont-medium-r-normal--11-110-72-72-c-60-iso8859-1'
+  '-jmk-neep-bold-r-semicondensed--11-100-75-75-c-50-iso8859-1'
