@@ -21,9 +21,14 @@
 * [amigaremix_dump_noprereq](https://github.com/trapd00r/utils/blob/master/amigaremix_dump_noprereq) - rip all songs from amigaremix.com
 * [ansi_pacman](https://github.com/trapd00r/utils/blob/master/ansi_pacman) - pacman with ansi colors
 * [ansic](https://github.com/trapd00r/utils/blob/master/ansic) - show defined ansi colors
+* [artists-by-letter](https://github.com/trapd00r/utils/blob/master/artists-by-letter) - how many artists in each top level directory?
 * [author](https://github.com/trapd00r/utils/blob/master/author) - print japh author
 * [bake](https://github.com/trapd00r/utils/blob/master/bake) - build perl stuff
 * [basenamep](https://github.com/trapd00r/utils/blob/master/basenamep) - grab input from stdin and basename it
+* [beet-dupes-in-fs](https://github.com/trapd00r/utils/blob/master/beet-dupes-in-fs) - find dupes created by beets in filesystem
+* [beet-import-singles](https://github.com/trapd00r/utils/blob/master/beet-import-singles) - importing single tracks and placing them where they belong
+* [beet-import-singles-to-label](https://github.com/trapd00r/utils/blob/master/beet-import-singles-to-label) - importing single tracks and placing according to label
+* [beet-import-singles-to-tag](https://github.com/trapd00r/utils/blob/master/beet-import-singles-to-tag) - importing single tracks and placing according to tag
 * [beet-ls-albums](https://github.com/trapd00r/utils/blob/master/beet-ls-albums) - list paths of albums matching query in beets database
 * [beet-ls-albums-by-label](https://github.com/trapd00r/utils/blob/master/beet-ls-albums-by-label) - list albums by artist and show record label, helper for
 * [beet-to-mpd](https://github.com/trapd00r/utils/blob/master/beet-to-mpd) - query beet and add the results to mpd
@@ -63,6 +68,7 @@
 * [facebook_url_count](https://github.com/trapd00r/utils/blob/master/facebook_url_count) - how many times have $url been shared on facebook?
 * [facebook_user_info](https://github.com/trapd00r/utils/blob/master/facebook_user_info) - print information for $user on facebook
 * [filebytype](https://github.com/trapd00r/utils/blob/master/filebytype) - move files to dirs compelling to actual file-type
+* [filename2id3](https://github.com/trapd00r/utils/blob/master/filename2id3) - grab artist and title from filename and tag it for import in beets
 * [filter_ext_lscolor](https://github.com/trapd00r/utils/blob/master/filter_ext_lscolor) - prints filetypes matching query, colored if defined in LS_COLORS
 * [fimpc](https://github.com/trapd00r/utils/blob/master/fimpc) - use fifos to control mpd using mpc
 * [font-atari](https://github.com/trapd00r/utils/blob/master/font-atari) - set terminal font to the Atari 800XL std font
@@ -91,6 +97,7 @@
 * [lmame](https://github.com/trapd00r/utils/blob/master/lmame) - mame frontend using ratmenu
 * [lnes](https://github.com/trapd00r/utils/blob/master/lnes) - nes frontend using ratmenu
 * [load](https://github.com/trapd00r/utils/blob/master/load) - a non-interactive top
+* [love](https://github.com/trapd00r/utils/blob/master/love) - love the currently playing song in mpd
 * [ls2](https://github.com/trapd00r/utils/blob/master/ls2) - colored ls, again
 * [ls3](https://github.com/trapd00r/utils/blob/master/ls3) - colored ls, yet again
 * [lscolorpicker](https://github.com/trapd00r/utils/blob/master/lscolorpicker) - generate LS_COLORS interactively
@@ -156,6 +163,7 @@
 * [sr-rename](https://github.com/trapd00r/utils/blob/master/sr-rename) - a little tool to clean up episodes downloaded from Sveriges Radio.
 * [srinfo](https://github.com/trapd00r/utils/blob/master/srinfo) - sveriges radio info fetcher
 * [srnp](https://github.com/trapd00r/utils/blob/master/srnp) - now playing for sveriges radio
+* [ssh](https://github.com/trapd00r/utils/blob/master/ssh) - change and restore bg/fg colors based on ssh host
 * [strip_esc](https://github.com/trapd00r/utils/blob/master/strip_esc) - strip data from escape sequences
 * [term_attr](https://github.com/trapd00r/utils/blob/master/term_attr) - dump all term attributes
 * [to_phone](https://github.com/trapd00r/utils/blob/master/to_phone) - scp files to the phone and place it where I want it
