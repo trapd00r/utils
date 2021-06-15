@@ -1,6 +1,7 @@
 #!/bin/sh
 # vim:ft=zsh:
 # abstract: change and restore bg/fg colors based on ssh host
+# $ export GIT_SSH=/bin/ssh
 
 # defaults
 BG_COLOR='000'
