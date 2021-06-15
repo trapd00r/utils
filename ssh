@@ -1,0 +1,34 @@
+#!/bin/sh
+# vim:ft=zsh:
+# abstract: change and restore bg/fg colors based on ssh host
+
+# defaults
+BG_COLOR='000'
+FG_COLOR='fff'
+
+# no host specified, set default color
+if [ $# -eq 0 ]; then
+  printf '\e]11;#%s\a' $BG_COLOR
+  printf '\e]10;#%s\a' $FG_COLOR
+  exit 1
+fi
+
+HOST=$1
+
+if [ "$HOST" == 'lid' ]; then
+  BG_COLOR='272727'
+  FG_COLOR='fff'
+  shift
+elif [ "$HOST" == 'pi' ]; then
+  BG_COLOR='0f0f21'
+  FG_COLOR='cdd5d8'
+  shift
+fi
+
+printf "\e]11;#%s\a" $BG_COLOR
+printf "\e]10;#%s\a" $FG_COLOR
+
+/bin/ssh "$@" $HOST
+
+printf '\e]11;#000%s\a'
+printf '\e]10;#fff%s\a'
