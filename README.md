@@ -31,7 +31,8 @@
 * [beet-import-singles-to-tag](https://github.com/trapd00r/utils/blob/master/beet-import-singles-to-tag) - importing single tracks and placing according to tag
 * [beet-ls-albums](https://github.com/trapd00r/utils/blob/master/beet-ls-albums) - list paths of albums matching query in beets database
 * [beet-ls-albums-by-label](https://github.com/trapd00r/utils/blob/master/beet-ls-albums-by-label) - list albums by artist and show record label, helper for
-* [beet-to-mpd](https://github.com/trapd00r/utils/blob/master/beet-to-mpd) - query beet and add the results to mpd
+* [beet-mpd](https://github.com/trapd00r/utils/blob/master/beet-mpd) - add results from a beet query to the mpd playlist
+* [beet-selfripped](https://github.com/trapd00r/utils/blob/master/beet-selfripped) - list albums I've ripped myself
 * [bigrand](https://github.com/trapd00r/utils/blob/master/bigrand) - generate n random numbers
 * [bob](https://github.com/trapd00r/utils/blob/master/bob) - mount bob the boxeebox
 * [bolaget](https://github.com/trapd00r/utils/blob/master/bolaget) - is the systembolaget open today?
@@ -119,7 +120,7 @@
 * [mplayerd](https://github.com/trapd00r/utils/blob/master/mplayerd) - mplayer as a daemon
 * [mpnp](https://github.com/trapd00r/utils/blob/master/mpnp) - mplayer now-playing using Mplayer::NowPlaying
 * [music_session](https://github.com/trapd00r/utils/blob/master/music_session) - start a music session in tmux
-* [net_on_på_sid](https://github.com/trapd00r/utils/blob/master/net_on_på_sid) - enable ethernet on 82579V chipsets
+* [net_on_pÃ¥_sid](https://github.com/trapd00r/utils/blob/master/net_on_pÃ¥_sid) - enable ethernet on 82579V chipsets
 * [nicefind](https://github.com/trapd00r/utils/blob/master/nicefind) - a very nice find ui
 * [np](https://github.com/trapd00r/utils/blob/master/np) - mpd now playing
 * [np-lyrics](https://github.com/trapd00r/utils/blob/master/np-lyrics) - lyrics for currently playing song in mpd
@@ -199,4 +200,4 @@
 * [xdgdirs](https://github.com/trapd00r/utils/blob/master/xdgdirs) - check that XDG_* dirs are defined
 * [xfiles.sh](https://github.com/trapd00r/utils/blob/master/xfiles.sh) - the x-files theme!
 * [youtube2mp3](https://github.com/trapd00r/utils/blob/master/youtube2mp3) - rip audio from youtube
-* [♫](https://github.com/trapd00r/utils/blob/master/♫) - set oss4 audio levels
+* [â«](https://github.com/trapd00r/utils/blob/master/â«) - set oss4 audio levels

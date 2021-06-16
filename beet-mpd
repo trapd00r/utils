@@ -1,0 +1,39 @@
+#!/usr/bin/perl
+# abstract: add results from a beet query to the mpd playlist
+use strict;
+use warnings FATAL => 'all';
+use utf8;
+use open qw(:std :utf8);
+use IPC::Cmd qw(run);
+use Audio::MPD;
+use Term::ExtendedColor qw(fg bold underline);
+use Encode;
+
+my $mpd = Audio::MPD->new;
+
+my $q = shift // 'comments:knarkmacka';
+
+my @tracks = map { $_ =~ s|\Q$ENV{XDG_MUSIC_DIR}\E||; $_} beet_ls($q);
+
+printf "> adding %s songs matching query '%s'\n",
+  fg(208, bold(scalar @tracks)), fg(137, underline($q));
+
+$mpd->playlist->add(@tracks);
+
+
+sub beet_ls {
+  my $query = shift;
+
+  my $buffer;
+  my %info;
+
+  if(scalar run(
+    command => "beet ls '$query'",
+    verbose => 0,
+    buffer  => \$buffer,
+    timeout => 20,
+  )) {
+    my @results = split(/\n/, decode_utf8($buffer));
+    return @results;
+  }
+}
