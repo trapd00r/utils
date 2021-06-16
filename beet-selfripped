@@ -1,0 +1,6 @@
+#!/bin/zsh
+# vim:ft=zsh:
+# abstract: list albums I've ripped myself
+
+while read d; do tree --noreport $d; done <<(beet ls comments:KNARKMACKA|dirnamep|sort -u)
+
