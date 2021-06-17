@@ -3,17 +3,19 @@
 # abstract: importing single tracks and placing them where they belong
 # -> Artist/+tracks/
 
-printf "importing \033[38;5;197;3;1mSINGLE\033[m tracks\n"
-printf "placing them in +tracks/\n"
+# -- new version
 
-printf "\033[38;5;220;1martist\033[m: "
-read  ARTIST
+# first, run vidir and clean up the filenames to a %artist - %title
+# template
 
-printf "> running beet import -Sa --set artist='$ARTIST' *(.) OK?\n"
+# clear all tags
+id3shit -s *(.)
 
-read foo
+# read artist and title from filename after a vidir cleanup
+lltag --yes -F '%a - %t' *(.)
 
-# -s singleton mode
-# -A noautotag
-# -W no write
-beet import -sAW --set artist="$ARTIST" "$@"
+# import to beets
+#   -s singleton mode
+#   -A noautotag
+#   -W no write
+; beet import -sAW *(.) "$@"
