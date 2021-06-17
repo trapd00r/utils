@@ -1,13 +1,19 @@
 #!/usr/bin/perl
 # abstract: add results from a beet query to the mpd playlist
+# keep in mind that beet and mpd need to be in sync, or else:
+# {add} No such directory at /home/scp1/lib/perl5/Audio/MPD.pm line 156
+#   '--> error handling below
+
 use strict;
 use warnings FATAL => 'all';
 use utf8;
 use open qw(:std :utf8);
 use IPC::Cmd qw(run);
 use Audio::MPD;
+use File::LsColor qw(ls_color);
 use Term::ExtendedColor qw(fg bold underline);
 use Encode;
+use Try::Tiny;
 
 my $mpd = Audio::MPD->new;
 
@@ -18,7 +24,16 @@ my @tracks = map { $_ =~ s|\Q$ENV{XDG_MUSIC_DIR}\E||; $_} beet_ls($q);
 printf "> adding %s songs matching query '%s'\n",
   fg(208, bold(scalar @tracks)), fg(137, underline($q));
 
-$mpd->playlist->add(@tracks);
+for my $track(@tracks) {
+  try {
+    $mpd->playlist->add($track);
+  }
+  catch {
+    chomp $_;
+    $_ =~ m/No such directory/
+      and printf "No such directory: %s\n", ls_color($track), ;
+  }
+}
 
 
 sub beet_ls {
@@ -27,13 +42,12 @@ sub beet_ls {
   my $buffer;
   my %info;
 
-  if(scalar run(
+  scalar run(
     command => "beet ls '$query'",
     verbose => 0,
     buffer  => \$buffer,
     timeout => 20,
-  )) {
-    my @results = split(/\n/, decode_utf8($buffer));
-    return @results;
-  }
+  );
+  my @results = split(/\n/, decode_utf8($buffer));
+  return @results;
 }
