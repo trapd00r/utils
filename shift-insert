@@ -1,0 +1,6 @@
+#!/bin/sh
+# vim:ft=sh:
+# abstract: shift+insert
+# xte is part of the xautomation package
+#
+xte 'keydown Shift_R' 'key Insert' 'keyup Shift_R'
