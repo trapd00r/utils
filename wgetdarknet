@@ -1,0 +1,5 @@
+#!/bin/sh
+# vim:ft=zsh:
+# abstract: rip directory listing on darknet
+
+torsocks wget -r --no-parent "$@"
