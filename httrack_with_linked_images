@@ -1,0 +1,3 @@
+#!/bin/sh
+# abstract: rip entire blog + linked external images
+httrack -O "./$1" -v -s0  --depth=2 -n "$1"
