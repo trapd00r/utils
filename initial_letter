@@ -1,0 +1,9 @@
+#!/usr/bin/perl
+# abstract: print initial letter of given word(s)
+use strict;
+
+my $line = shift;
+chomp($line = <>) unless defined $line;
+
+my @words = ($line =~ m/(\S+)/g);
+printf "%s\n", $_ for map { uc(substr($_, 0, 1)) } @words;
