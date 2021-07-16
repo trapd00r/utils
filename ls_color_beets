@@ -1,0 +1,53 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use lib '../lib';
+use vars qw($VERSION);
+
+$VERSION = '0.001';
+
+use Getopt::Long;
+use File::LsColor qw(ls_color);
+use File::Basename;
+
+Getopt::Long::Configure qw(bundling auto_version);
+
+my %option;
+
+$option{IFS} = '/';
+
+GetOptions(
+  'k:i'    => \$option{key},
+  'ifs:s'  => \$option{IFS},
+#  'h|help' => sub { pod2usage(verbose => 1); exit },
+);
+
+my $filename = shift;
+my ($basename, $dirname, $top_dir);
+
+$basename = basename($filename);
+$dirname  = dirname($filename) . '/';
+($top_dir)  = $dirname =~ m|.*/(.+)/|;
+
+my $ls_color_str = sprintf "%s%s", ls_color($top_dir . '/'), ls_color($basename);
+
+print bold('NEW') . ': ' . $ls_color_str, "\n";
+
+
+# TODO make use of this with beets
+sub by_key {
+  my $line = shift;
+  my $filename;
+
+  my ($delimiter) = $line =~ m/($option{IFS})/;
+
+  my @line_parts = split(/$option{IFS}/, $line);
+
+  # -k2 equals array index 1
+  my $requested_column = $line_parts[$option{key} - 1];
+
+  $line_parts[$option{key} -1] = ls_color($requested_column);
+
+
+  return join($delimiter, @line_parts);
+}
