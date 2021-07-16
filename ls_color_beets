@@ -4,7 +4,10 @@ use warnings;
 use lib '../lib';
 use vars qw($VERSION);
 
-$VERSION = '0.001';
+# adds LS_COLORS to beets import
+# https://www.japh.se/assets/beets_lscolors_import.png
+
+$VERSION = '0.002';
 
 use Getopt::Long;
 use File::LsColor qw(ls_color);
@@ -24,13 +27,17 @@ GetOptions(
 );
 
 my $filename = shift;
-my ($basename, $dirname, $top_dir);
+my ($basename, $dirname, $top_dir, $albumtype);
 
 $basename = basename($filename);
 $dirname  = dirname($filename) . '/';
-($top_dir)  = $dirname =~ m|.*/(.+)/|;
+# +remix/Jennifer Lopez │2002│ J to Tha L‐O! The Remixes [Remix, CD, AAC]
+($albumtype, $top_dir)  = $dirname =~ m|.*/([+].+)/(.+)/|;
 
-my $ls_color_str = sprintf "%s%s", ls_color($top_dir . '/'), ls_color($basename);
+my $ls_color_str = sprintf "%s%s%s",
+   bold(ls_color($albumtype . '/')),
+   ls_color($top_dir . '/'),
+   ls_color($basename);
 
 print bold('NEW') . ': ' . $ls_color_str, "\n";
 
