@@ -9,6 +9,7 @@ $VERSION = '0.001';
 use Getopt::Long;
 use File::LsColor qw(ls_color);
 use File::Basename;
+use Term::ExtendedColor qw(bold);
 
 Getopt::Long::Configure qw(bundling auto_version);
 
