@@ -1,0 +1,15 @@
+#!/usr/bin/perl
+# abstract: underline input
+
+use strict;
+use Term::ExtendedColor qw(:attributes);
+
+if(!(@ARGV)) {
+  while(<>) {
+    chomp;
+    printf "%s\n", underline($_);
+  }
+}
+else {
+  printf "%s\n", underline("@ARGV");
+}

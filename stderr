@@ -1,0 +1,15 @@
+#!/usr/bin/perl
+# abstract: print input to stderr
+
+use strict;
+
+select STDERR;
+if(!(@ARGV)) {
+  while(<>) {
+    chomp;
+    printf "%s\n", $_;
+  }
+}
+else {
+  printf "%s\n", "@ARGV";
+}

@@ -1,0 +1,15 @@
+#!/usr/bin/perl
+# abstract: inverse input
+
+use strict;
+use Term::ExtendedColor qw(:attributes);
+
+if(!(@ARGV)) {
+  while(<>) {
+    chomp;
+    printf "%s\n", inverse($_);
+  }
+}
+else {
+  printf "%s\n", inverse("@ARGV");
+}
