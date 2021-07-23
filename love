@@ -5,4 +5,4 @@ pimpd2 --love
 mpd_cp_native /mnt/music8/_fav/_$(date +%Y)
 
 yes \
-  | beet modify loved=1 "${XDG_MUSIC_DIR}/$(mpc current --format %file% |head -1)"
+  | ~/dev/beets/beet modify loved=1 "${XDG_MUSIC_DIR}/$(mpc current --format %file% |head -1)"
