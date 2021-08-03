@@ -12,7 +12,7 @@ $VERSION = '0.002';
 use Getopt::Long;
 use File::LsColor qw(ls_color);
 use File::Basename;
-use Term::ExtendedColor qw(bold);
+use Term::ExtendedColor qw(:attributes);
 
 Getopt::Long::Configure qw(bundling auto_version);
 
@@ -35,7 +35,7 @@ $dirname  = dirname($filename) . '/';
 ($albumtype, $top_dir)  = $dirname =~ m|.*/([+].+)/(.+)/|;
 
 my $ls_color_str = sprintf "%s%s%s",
-   bold(ls_color($albumtype . '/')),
+   bold(fg(37, $albumtype)) . fg(30, '/'),
    ls_color($top_dir . '/'),
    ls_color($basename);
 
