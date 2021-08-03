@@ -1,0 +1,4 @@
+#!/bin/sh
+# fix repeating keys on vortex pok3r rgb
+
+kbdrate -r 25 -d 500
