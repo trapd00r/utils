@@ -1,0 +1,26 @@
+#!/bin/sh
+# abstract: turn off autorepeat for all keys but some
+# vim:ft=zsh:
+
+# 22 = backspace
+# 36 = enter
+# 44 = j
+# 45 = k
+
+# 65 = space
+
+for x in {10..21}; do
+  xset -r $x
+done
+
+for x in {23..35}; do
+  xset -r $x
+done
+
+for x in {37..43}; do
+  xset -r $x
+done
+
+for x in {46..105}; do
+  xset -r $x
+done
