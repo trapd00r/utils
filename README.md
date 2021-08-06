@@ -23,6 +23,7 @@
 * [ansic](https://github.com/trapd00r/utils/blob/master/ansic) - show defined ansi colors
 * [artists-by-letter](https://github.com/trapd00r/utils/blob/master/artists-by-letter) - how many artists in each top level directory?
 * [author](https://github.com/trapd00r/utils/blob/master/author) - print japh author
+* [autorepeat_some](https://github.com/trapd00r/utils/blob/master/autorepeat_some) - turn off autorepeat for all keys but some
 * [bake](https://github.com/trapd00r/utils/blob/master/bake) - build perl stuff
 * [basenamep](https://github.com/trapd00r/utils/blob/master/basenamep) - grab input from stdin and basename it
 * [beet-dupes-in-fs](https://github.com/trapd00r/utils/blob/master/beet-dupes-in-fs) - find dupes created by beets in filesystem
@@ -36,6 +37,7 @@
 * [bigrand](https://github.com/trapd00r/utils/blob/master/bigrand) - generate n random numbers
 * [bob](https://github.com/trapd00r/utils/blob/master/bob) - mount bob the boxeebox
 * [bolaget](https://github.com/trapd00r/utils/blob/master/bolaget) - is the systembolaget open today?
+* [bold](https://github.com/trapd00r/utils/blob/master/bold) - bold input
 * [build](https://github.com/trapd00r/utils/blob/master/build) - install missing modules automagically
 * [by_extension](https://github.com/trapd00r/utils/blob/master/by_extension) - fetch filetype information based on extensions
 * [c256-grey-colorscheme](https://github.com/trapd00r/utils/blob/master/c256-grey-colorscheme) - generate a grey 256 color colorscheme
@@ -63,13 +65,13 @@
 * [dupe_tv_by_episode](https://github.com/trapd00r/utils/blob/master/dupe_tv_by_episode) - only keep the best quality tv show
 * [dusch](https://github.com/trapd00r/utils/blob/master/dusch) - what's eating all the space?
 * [duschiamej](https://github.com/trapd00r/utils/blob/master/duschiamej) - what's eating all the space, take two?
+* [e](https://github.com/trapd00r/utils/blob/master/e) - grep eminem release
 * [everywhere](https://github.com/trapd00r/utils/blob/master/everywhere) - run cmd everywhere
 * [exifdel](https://github.com/trapd00r/utils/blob/master/exifdel) - delete all exif data from photos
 * [exifrename](https://github.com/trapd00r/utils/blob/master/exifrename) - rename (copy) recovered jpgs to something sensible
 * [facebook_url_count](https://github.com/trapd00r/utils/blob/master/facebook_url_count) - how many times have $url been shared on facebook?
 * [facebook_user_info](https://github.com/trapd00r/utils/blob/master/facebook_user_info) - print information for $user on facebook
 * [filebytype](https://github.com/trapd00r/utils/blob/master/filebytype) - move files to dirs compelling to actual file-type
-* [filename2id3](https://github.com/trapd00r/utils/blob/master/filename2id3) - grab artist and title from filename and tag it for import in beets
 * [filter_ext_lscolor](https://github.com/trapd00r/utils/blob/master/filter_ext_lscolor) - prints filetypes matching query, colored if defined in LS_COLORS
 * [fimpc](https://github.com/trapd00r/utils/blob/master/fimpc) - use fifos to control mpd using mpc
 * [font-atari](https://github.com/trapd00r/utils/blob/master/font-atari) - set terminal font to the Atari 800XL std font
@@ -86,10 +88,14 @@
 * [gotoalbum](https://github.com/trapd00r/utils/blob/master/gotoalbum) - goto to root directory of currently playing album
 * [hits](https://github.com/trapd00r/utils/blob/master/hits) - show httpd resources with most hits
 * [html2txt](https://github.com/trapd00r/utils/blob/master/html2txt) - turn html into plain text
+* [httrack_with_linked_images](https://github.com/trapd00r/utils/blob/master/httrack_with_linked_images) - rip entire blog + linked external images
 * [imv](https://github.com/trapd00r/utils/blob/master/imv) - watch a dir and scp all created files therein to another host
+* [initial_letter](https://github.com/trapd00r/utils/blob/master/initial_letter) - print initial letter of given word(s)
+* [inverse](https://github.com/trapd00r/utils/blob/master/inverse) - inverse input
 * [invert_screen](https://github.com/trapd00r/utils/blob/master/invert_screen) - invert the entire screen
 * [irssi-ignore_join_blob.pl](https://github.com/trapd00r/utils/blob/master/irssi-ignore_join_blob.pl) - ignore the blob of text displayed when (re)joining a channel
 * [issues](https://github.com/trapd00r/utils/blob/master/issues) - list all issues relevant for me cause the github ui is worthless
+* [italic](https://github.com/trapd00r/utils/blob/master/italic) - italic input
 * [kitty_dump_colors](https://github.com/trapd00r/utils/blob/master/kitty_dump_colors) - generate kitty colorscheme from defined term colors
 * [knnp-sh](https://github.com/trapd00r/utils/blob/master/knnp-sh) - now playing for knradio
 * [laleh-check](https://github.com/trapd00r/utils/blob/master/laleh-check) - check if string is present in Laleh's lyrics
@@ -120,7 +126,7 @@
 * [mplayerd](https://github.com/trapd00r/utils/blob/master/mplayerd) - mplayer as a daemon
 * [mpnp](https://github.com/trapd00r/utils/blob/master/mpnp) - mplayer now-playing using Mplayer::NowPlaying
 * [music_session](https://github.com/trapd00r/utils/blob/master/music_session) - start a music session in tmux
-* [net_on_pÃ¥_sid](https://github.com/trapd00r/utils/blob/master/net_on_pÃ¥_sid) - enable ethernet on 82579V chipsets
+* [net_on_på_sid](https://github.com/trapd00r/utils/blob/master/net_on_på_sid) - enable ethernet on 82579V chipsets
 * [nicefind](https://github.com/trapd00r/utils/blob/master/nicefind) - a very nice find ui
 * [np](https://github.com/trapd00r/utils/blob/master/np) - mpd now playing
 * [np-lyrics](https://github.com/trapd00r/utils/blob/master/np-lyrics) - lyrics for currently playing song in mpd
@@ -159,12 +165,14 @@
 * [seen](https://github.com/trapd00r/utils/blob/master/seen) - abuse sticky bits etc to mark a movie or show as seen
 * [setallfonts](https://github.com/trapd00r/utils/blob/master/setallfonts) - set all fonts to ARG
 * [setbg](https://github.com/trapd00r/utils/blob/master/setbg) - set terminal background
+* [shift-insert](https://github.com/trapd00r/utils/blob/master/shift-insert) - shift+insert
 * [shivastream](https://github.com/trapd00r/utils/blob/master/shivastream) - nokia n900 mpd streaming aid
 * [shot](https://github.com/trapd00r/utils/blob/master/shot) - take screenshot and upload to httpd
 * [sr-rename](https://github.com/trapd00r/utils/blob/master/sr-rename) - a little tool to clean up episodes downloaded from Sveriges Radio.
 * [srinfo](https://github.com/trapd00r/utils/blob/master/srinfo) - sveriges radio info fetcher
 * [srnp](https://github.com/trapd00r/utils/blob/master/srnp) - now playing for sveriges radio
 * [ssh](https://github.com/trapd00r/utils/blob/master/ssh) - change and restore bg/fg colors based on ssh host
+* [stderr](https://github.com/trapd00r/utils/blob/master/stderr) - print input to stderr
 * [strip_esc](https://github.com/trapd00r/utils/blob/master/strip_esc) - strip data from escape sequences
 * [term_attr](https://github.com/trapd00r/utils/blob/master/term_attr) - dump all term attributes
 * [to_phone](https://github.com/trapd00r/utils/blob/master/to_phone) - scp files to the phone and place it where I want it
@@ -185,6 +193,7 @@
 * [u-whitespace](https://github.com/trapd00r/utils/blob/master/u-whitespace) - unicode whitespace
 * [ucfirst](https://github.com/trapd00r/utils/blob/master/ucfirst) - uppercase first
 * [uncode](https://github.com/trapd00r/utils/blob/master/uncode) - transform ascii data to unicode chars
+* [underline](https://github.com/trapd00r/utils/blob/master/underline) - underline input
 * [unrarec](https://github.com/trapd00r/utils/blob/master/unrarec) - unrar stuff recursively
 * [url_find](https://github.com/trapd00r/utils/blob/master/url_find) - extracts URLs from data
 * [utils_readme](https://github.com/trapd00r/utils/blob/master/utils_readme) - generate README.md from utils/*
@@ -196,8 +205,9 @@
 * [vimsyntax](https://github.com/trapd00r/utils/blob/master/vimsyntax) - generate html from vim syntax hl
 * [vw](https://github.com/trapd00r/utils/blob/master/vw) - format text properly and send it to vim
 * [wallpaper_daemon](https://github.com/trapd00r/utils/blob/master/wallpaper_daemon) - changes background on htpc connected tv every $sleep seconds
+* [wgetdarknet](https://github.com/trapd00r/utils/blob/master/wgetdarknet) - rip directory listing on darknet
 * [whatfont](https://github.com/trapd00r/utils/blob/master/whatfont) - query the terminal for the current fonts in use.
 * [xdgdirs](https://github.com/trapd00r/utils/blob/master/xdgdirs) - check that XDG_* dirs are defined
 * [xfiles.sh](https://github.com/trapd00r/utils/blob/master/xfiles.sh) - the x-files theme!
 * [youtube2mp3](https://github.com/trapd00r/utils/blob/master/youtube2mp3) - rip audio from youtube
-* [â«](https://github.com/trapd00r/utils/blob/master/â«) - set oss4 audio levels
+* [♫](https://github.com/trapd00r/utils/blob/master/♫) - set oss4 audio levels
