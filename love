@@ -1,8 +1,16 @@
 #!/bin/sh
 # vim:ft=zsh:
 # abstract: love the currently playing song in mpd
+# add songs to mpd playlist:
+# $ beet2mpd loved:1
+# https://github.com/trapd00r/beet2mpd
+
+LOVED_DIR=/mnt/music8/_fav/_$(date +%Y)
+
 pimpd2 --love
-mpd_cp_native /mnt/music8/_fav/_$(date +%Y)
+mpd_cp_native ${LOVED_DIR}
 
 yes \
-  | ~/dev/beets/beet modify loved=1 "${XDG_MUSIC_DIR}/$(mpc current --format %file% |head -1)"
+  | ~/dev/beets/beet modify loved=1 "${XDG_MUSIC_DIR}/$(mpc current --format %file% | head -1)"
+
+perl /home/scp1/dev/ls--/ls++ --sort=time -r ${LOVED_DIR}
