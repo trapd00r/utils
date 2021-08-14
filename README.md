@@ -113,6 +113,7 @@
 * [lyrics_update](https://github.com/trapd00r/utils/blob/master/lyrics_update) - update lyrics db on github
 * [md2html](https://github.com/trapd00r/utils/blob/master/md2html) - convert input markdown file to html
 * [mkdr](https://github.com/trapd00r/utils/blob/master/mkdr) - given file.ext, mkdir file/ and move file.ext to file/file.ext
+* [mpd-goto-album-dir](https://github.com/trapd00r/utils/blob/master/mpd-goto-album-dir) - goto now playing album directory
 * [mpd_del](https://github.com/trapd00r/utils/blob/master/mpd_del) - remove songs matching PATTERN from mpd playlist
 * [mpd_del_album](https://github.com/trapd00r/utils/blob/master/mpd_del_album) - remove album from mpd playlist
 * [mpd_fill_mp3player](https://github.com/trapd00r/utils/blob/master/mpd_fill_mp3player) - copy all loved songs from the pimpd2 database to the mp3 player
@@ -162,6 +163,8 @@
 * [sanitize](https://github.com/trapd00r/utils/blob/master/sanitize) - sanitize filenames
 * [sascii](https://github.com/trapd00r/utils/blob/master/sascii) - interactive key inspector
 * [scat](https://github.com/trapd00r/utils/blob/master/scat) - a cat with syntax highlighting powers
+* [sdorfehs-bar.pl](https://github.com/trapd00r/utils/blob/master/sdorfehs-bar.pl) - feed the sdorfehs sticky bar
+* [sdorfehs-feedbar](https://github.com/trapd00r/utils/blob/master/sdorfehs-feedbar) - loop to feed the sdorfehs sticky bar
 * [seen](https://github.com/trapd00r/utils/blob/master/seen) - abuse sticky bits etc to mark a movie or show as seen
 * [setallfonts](https://github.com/trapd00r/utils/blob/master/setallfonts) - set all fonts to ARG
 * [setbg](https://github.com/trapd00r/utils/blob/master/setbg) - set terminal background
