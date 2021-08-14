@@ -42,8 +42,11 @@ sub np {
   else {
     $data->{label} = '';
   }
+  $data->{format} = lc($data->{format})  unless not defined $data->{format};
 
-  printf "%s the %s song '%s' by %s on %s released %s on %s. It's track %s/%s and the bitrate is %s kbps (%s).\n",
+  my $goto_album_dir  = sprintf "^ca(1, %s)", 'mpd-goto-album-dir';
+  my $goto_artist_dir = sprintf "^ca(1, %s)", 'mpd-goto-artist-dir';
+  printf "%s the %s song '%s' by $goto_artist_dir%s^ca() on $goto_album_dir%s^ca() released %s on %s. It's track %s/%s and the bitrate is %s kbps (%s).\n",
     fgd('#ef0e99', bold('▶')),
     white(bold(lc($data->{genre}))),
     bold(fgd('#afaf00', $data->{title})),
@@ -54,7 +57,7 @@ sub np {
     nc(defined $data->{track} ? $data->{track} : 0),
     nc(defined $data->{tracktotal} ? $data->{tracktotal} : 0),
     nc($data->{bitrate}),
-    lc($data->{format});
+    $data->{format},
 }
 
 sub white {
