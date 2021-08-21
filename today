@@ -1,10 +1,22 @@
 #!/bin/sh
+# vim:ft=zsh:
 # abstract: stats on what I did do today
 
-git today
-hr -c ╍ -fg 196 --pre 2 --post 2
-cpan-regulars
-hr -c ╍ -fg 196 --pre 2 --post 2
-time-spent-in-vim -t | head
-hr -c ╍ -fg 196 --pre 2 --post 2
-vim-writes-a-day
+printf "\033[38;5;33m╔"
+hr -c ═ -fg 33 --pre 0 --post 0
+printf "\033[38;5;33m║\033[m\033[1;3m%s\033[m\n" ' file(s) modified in the last commit:'
+git diff --name-only HEAD~1..HEAD | ls_color | perl -pe 's/^/\033[38;5;33m║\033[m \033[38;5;243m·\033[m /'
+printf "\033[38;5;33m║\033[m"
+hr -c ╌ -fg 137 --pre 16 --post 16
+printf "\033[38;5;33m║\033[m"
+
+printf "  \033[38;5;106;1;3m%40s\033[m\n" 'vim stats'
+#cpan-regulars
+printf "\033[38;5;33m║\033[m"
+hr -c ╌ -fg 137 --pre 16 --post 16
+time-spent-in-vim -t | head | perl -pe 's/^/\033[38;5;33m║\033[m/'
+printf "\033[38;5;33m║\033[m"
+echo
+vim-writes-a-day | perl -pe 's/^/\033[38;5;33m║\033[m /'
+printf "\033[38;5;33m╚"
+hr -c ═ -fg 33 --pre 0 --post 0

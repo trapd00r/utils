@@ -17,4 +17,4 @@ while(<$fh>) {
   $writes{$_}++;
 }
 
-printf "I have smashed :w %d times today.\n", $writes{$today};
+printf "I have smashed \033[38;5;196;1;3m:w\033[m \033[38;5;32;1m%d\033[m times today in vim.\n", $writes{$today};
