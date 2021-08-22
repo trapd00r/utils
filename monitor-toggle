@@ -4,21 +4,31 @@
 
 WIDTH=$(xrandr|grep -Po 'current.+, '|perl -pe 's/\w+\s(\d+) x.+$/$1/')
 
- MONITOR_LEFT='--off'
-MONITOR_RIGHT='--off'
+WM='sdorfehs'
+#WM='catpoison'
+
+    MONITOR_LEFT='--off'
+   MONITOR_RIGHT='--off'
+MONITOR_LEFTLEFT='--off'
 
 if [ $WIDTH -eq 1920 ]; # side panels disabled
   then
      MONITOR_LEFT='--rotate left --right-of DP-4 --auto'
     MONITOR_RIGHT='--rotate right --left-of DP-4 --auto'
+    MONITOR_LEFTLEFT='--left-of DP-2 --auto'
     xscreensaver -no-splash &
-    $RATPOISON -c 'echo screensaver enabled.'
+    $WM -c 'echo screensaver enabled.'
+
   else # disable side panels
      MONITOR_LEFT='--off'
     MONITOR_RIGHT='--off'
+    MONITOR_LEFTLEFT='--off'
     killall xscreensaver
-    $RATPOISON -c 'echo screensaver disabled.'
+    $WM -c 'echo screensaver disabled.'
 fi
 
-xrandr  --output HDMI-0 $MONITOR_LEFT --output DP-2 $MONITOR_RIGHT
-catpoison -c restart
+xrandr  --output DP-4 --primary        \
+        --output HDMI-0 $MONITOR_LEFT  \
+        --output DP-2   $MONITOR_RIGHT \
+        --output DVI-D-0 $MONITOR_LEFTLEFT
+$WM -c restart
