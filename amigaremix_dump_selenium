@@ -1,0 +1,80 @@
+#!/usr/bin/perl
+# vim: ft=perl:fdm=marker:fmr=#<,#>:fen:et:sw=2:
+# abstract: yet another amigaremix Dumper, this time using selenium
+use strict;
+use warnings FATAL => 'all';
+use vars     qw($VERSION);
+use autodie  qw(:all);
+
+use utf8;
+use open qw(:std :utf8);
+
+my $APP  = 'amigaremix_dump_selenium';
+$VERSION = '0.001';
+
+use Data::Dumper;
+
+{
+  package Data::Dumper;
+  no strict 'vars';
+  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
+  $Quotekeys = 0;
+}
+
+use strict;
+use warnings;
+use LWP::Simple;
+use Selenium::Chrome;
+use File::LsColor qw(ls_color);
+
+
+my $driver   = Selenium::Chrome->new;
+my $base_url = 'https://amigaremix.com';
+
+my $dl_dir   = "$ENV{HOME}/tmp/amigaremix";
+mkdir($dl_dir) unless -d $dl_dir;
+
+my %tracks;
+
+grab_amiga($base_url);
+
+sub next_page {
+  my $next = shift;
+  grab_amiga($next);
+}
+
+sub grab_amiga {
+  my $url = shift;
+  $driver->get($url);
+
+  printf "Processing %s [%s]\n", hl(32, $driver->get_current_url), hl(208, $driver->get_title);
+  my @elements = $driver->find_elements('remix', 'class');
+
+  for my $e(@elements) {
+    my $rel_url    = $e->get_attribute('href');
+    my $song_title = $e->get_text . '.mp3';
+    next if $rel_url  =~ m/remix64/;
+
+    my $full_url = sprintf("%s%s", $base_url, $rel_url);
+    $tracks{$song_title} = $full_url;
+    download($full_url, $song_title);
+  }
+  my $next_page = sprintf("%s%s", $base_url, $driver->find_element_by_link_text('Next page »')->get_attribute('href'));
+  next_page($next_page);
+}
+
+sub download {
+  my($url, $location) = @_;
+  if(getstore($url, sprintf("%s/%s", $dl_dir, $location))) {
+    printf "Downloaded %s\033[38;5;31m/\033[m%s\n", ls_color($dl_dir), ls_color($location);
+  }
+  else {
+    die "debug";
+  }
+}
+
+sub hl {
+  return sprintf "\033[1;38;5;%sm%s\033[m", shift, shift;
+}
+
+$driver->quit;
