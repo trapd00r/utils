@@ -1,7 +1,0 @@
-#!/bin/sh
-# abstract: loop to feed the sdorfehs sticky bar
-
-while true; do
-  perl ~/dev/utils/sdorfehs-bar.pl > $XDG_CONFIG_HOME/sdorfehs/bar
-  sleep 5
-done
