@@ -1,4 +1,13 @@
-#!/usr/bin/perl -p
+#!/usr/bin/perl
 # vim: ft=perl smc&:
 # abstract: uppercase first
-s/((^\w)|(\s\w))/\U$1/g, s/([\w']+)/\u\L$1/g;
+
+use strict;
+
+my $line = shift;
+chomp($line = <>) unless defined $line;
+
+my @words = ($line =~ m/(\S+)/g);
+
+printf "%s\n", $_ for map { ucfirst(lc($_)) } @words;
+
