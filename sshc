@@ -21,7 +21,7 @@ if [ "$HOST" == 'lid' ]; then
   FG_COLOR='fff'
   shift
 elif [ "$HOST" == 'pi' ]; then
-  BG_COLOR='0f0f21'
+  BG_COLOR='18130b'
   FG_COLOR='cdd5d8'
   shift
 fi
