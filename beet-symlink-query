@@ -1,0 +1,11 @@
+#!/bin/sh
+# vim:ft=zsh:
+# abstract: symlink the results of a beets query
+
+QUERY="comments:knarkmacka"
+
+while read d; do ln -s $d; done <<(beet ls comments:knarkmacka|dirnamep|sort -u)
+
+#while read d; do
+#  ln -s $d; done
+#  <<(beet ls "$QUERY"|dirnamep|sort -u)
