@@ -15,6 +15,6 @@ my $path = "$ENV{XDG_MUSIC_DIR}/" . $mpd->current->file;
 my ($album_path) = $path =~ m{^(.+)/.+[.].+$};
 
 run(
-  command => "feh -FZr '$album_path'",
+  command => "/usr/bin/feh -B black -.  -r '$album_path'",
   verbose => 0,
 );
