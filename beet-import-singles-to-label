@@ -7,11 +7,12 @@ printf "importing \033[38;5;197;3;1mSINGLE\033[m tracks\n"
 printf "\033[38;5;160;1mlabel\033[m: "
 read  LABEL
 
-printf "> running beet import -Sa --set label='$LABEL' *(.) OK?\n"
+printf "> running beet import -sAW --set label='$LABEL' *(.) OK?\n"
 
 read foo
 
 # -s singleton mode
 # -A noautotag
 # -W no write
-beet import -sAW --set label="$LABEL" "$@"
+#beet import -sAW --set label="$LABEL" "$@"
+beet import -sA --set label="$LABEL" "$@"
