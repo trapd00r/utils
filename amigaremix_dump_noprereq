@@ -4,7 +4,8 @@
 mkdir -p amigaremix && cd amigaremix;
 wget $( \
   for x in $( \
-    for d in {1..64};
+#    for d in {1..64};
+    for d in {1..2};
       do printf "http://amigaremix.com/remixes/$d\n";
     done
   ); do curl -s $x; done \
