@@ -11,7 +11,7 @@ pimpd2 --love
 mpd_cp_native ${LOVED_DIR}
 
 yes \
-  | ~/dev/beets/beet modify loved=1 "${XDG_MUSIC_DIR}/$(mpc current --format %file% | head -1)"
+  | ~/dev/beets/beet modify loved=1 "${XDG_MUSIC_DIR}$(mpc current --format %file% | head -1)"
 
 perl /home/scp1/dev/ls--/ls++ --sort=time -r ${LOVED_DIR}
 
