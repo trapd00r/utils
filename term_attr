@@ -1,8 +1,11 @@
 #!/usr/bin/perl
 # vim:ft=perl:
-# abstract: dump all term attributes
+# abstract: dump all term attributes and visualize various term settings
 use strict;
 use warnings FATAL => 'all';
+
+use File::LsColor ':all';
+use Term::ExtendedColor qw(fg);
 
 my $attr = {
   normal        => 0,
@@ -37,5 +40,13 @@ for my $t( sort { $attr->{$a} cmp $attr->{$b} } keys(%{ $attr })) {
 # https://github.com/trapd00r/stderred
 print "\nstdout\n";
 select STDERR;
-print "stderr\n";
+print "stderr\n\n";
 select STDOUT;
+
+
+printf "%s\n",   fg(10, '$File::LsColor::COLORIZE_PATH') . ' = ' . fg(33, 1);
+printf "%s\n",   ls_color('/usr/share/perl5/core_perl/Symbol.pm');
+printf "%s\n\n", ls_color('/a/path/and/file/without/extension/README');
+printf "%s\n",   fg(10, '$File::LsColor::COLORIZE_PATH') . ' = ' . fg(33, 0);
+printf "%s\n",   ls_color('/usr/share/perl5/core_perl/Symbol.pm');
+printf "%s\n",   ls_color('/a/path/and/file/without/extension/README');
