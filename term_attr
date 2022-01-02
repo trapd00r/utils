@@ -19,8 +19,18 @@ my $attr = {
 };
 
 for my $t( sort { $attr->{$a} cmp $attr->{$b} } keys(%{ $attr })) {
-#  $t =~ /^blink/ and printf("%s\e[48;5;196;38;5;233;1;3mSKIPPING: SHOULD NEVER HAVE BEEN IMPLEMENTED\e[m\n", sprintf("%-10s", $t)), next;
-  printf("\e[$attr->{$t}m$t\e[m\n");
+  $t =~ /^blink/ and printf("%s\e[48;5;196;38;5;233;1;3mSKIPPING: SHOULD NEVER HAVE BEEN IMPLEMENTED\e[m\n", sprintf("%-10s", $t)), next;
+
+# visually show if the colorUL property of urxvt is being abused for
+# underlining URLs.
+# https://www.japh.se/2019/01/23/color-urls-in-urxvt-without-abusing-underline-property.html
+
+  if($t eq 'underline') {
+    printf("\e[$attr->{$t}m$t\e[m <=> %s\n", 'https://www.japh.se');
+  }
+  else {
+    printf("\e[$attr->{$t}m$t\e[m\n");
+  }
 }
 
 # in case we're abusing LD_PRELOAD
@@ -28,3 +38,4 @@ for my $t( sort { $attr->{$a} cmp $attr->{$b} } keys(%{ $attr })) {
 print "\nstdout\n";
 select STDERR;
 print "stderr\n";
+select STDOUT;
