@@ -12,9 +12,9 @@ my $mpd = Audio::MPD->new;
 
 my $path = "$ENV{XDG_MUSIC_DIR}/" . $mpd->current->file;
 
-my ($artist_path) = $path =~ m{^(.+)/.+/.+[.].+$};
+my ($artist_path) = $path =~ m{^(.+)/.+/.+/.+[.].+$};
 
 run(
   command => "urxvt -name sid -chdir '$artist_path'",
-  verbose => 0,
+  verbose => 1,
 );
