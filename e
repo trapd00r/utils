@@ -1,6 +1,6 @@
 #!/bin/sh
 # vim:ft=zsh:
-# abstract: grep eminem release
+# abstract: grep artist release(s)
 
 # % e mock
 # /mnt/music8/+TAGGED/E/Eminem/+other/Eminem │2005│ Mockingbird [MP3]
@@ -13,8 +13,10 @@
 # -  59M, 6 file(s)
 
 
+ARTIST=$(ucfirst "$@")
+ARTIST_INITIAL=$(initial_letter $ARTIST)
 
-find '/mnt/music8/+TAGGED/E/Eminem' \
+find "/mnt/music8/+TAGGED/${ARTIST_INITIAL}/${ARTIST}" \
   -maxdepth 3 \
   -type d     \
   -iname "*${1}*" \
