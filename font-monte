@@ -4,7 +4,10 @@ printf '\033]710;%s\a' \
   '-windows-montecarlo-medium-r-normal--11-110-72-72-c-60-microsoft-cp1252'
 printf '\033]711;%s\a' \
   '-windows-montecarlo-bold-r-normal--11-110-72-72-c-60-microsoft-cp1252'
+
 printf '\033]712;%s\a' \
   'xft:Anonymous Pro:style=Regular:pixelsize=10:antialias=1:hinting=1:hintstyle=3'
+
 printf '\033]713;%s\a' \
-  '-jmk-neep-medium-r-normal--11-100-75-75-c-60-iso8859-1'
+  '6x9'
+#  '-jmk-neep-medium-r-normal--11-100-75-75-c-60-iso8859-1'
