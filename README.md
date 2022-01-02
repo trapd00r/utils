@@ -19,6 +19,7 @@
 * [all_unicode](https://github.com/trapd00r/utils/blob/master/all_unicode) - print all unicode chars
 * [amigaremix_dump](https://github.com/trapd00r/utils/blob/master/amigaremix_dump) - rip all songs from amigaremix.com - in parallel
 * [amigaremix_dump_noprereq](https://github.com/trapd00r/utils/blob/master/amigaremix_dump_noprereq) - rip all songs from amigaremix.com
+* [amigaremix_dump_selenium](https://github.com/trapd00r/utils/blob/master/amigaremix_dump_selenium) - yet another amigaremix Dumper, this time using selenium
 * [ansi_pacman](https://github.com/trapd00r/utils/blob/master/ansi_pacman) - pacman with ansi colors
 * [ansic](https://github.com/trapd00r/utils/blob/master/ansic) - show defined ansi colors
 * [artists-by-letter](https://github.com/trapd00r/utils/blob/master/artists-by-letter) - how many artists in each top level directory?
@@ -29,11 +30,11 @@
 * [beet-dupes-in-fs](https://github.com/trapd00r/utils/blob/master/beet-dupes-in-fs) - find dupes created by beets in filesystem
 * [beet-import-singles](https://github.com/trapd00r/utils/blob/master/beet-import-singles) - importing single tracks and placing them where they belong
 * [beet-import-singles-to-label](https://github.com/trapd00r/utils/blob/master/beet-import-singles-to-label) - importing single tracks and placing according to label
-* [beet-import-singles-to-tag](https://github.com/trapd00r/utils/blob/master/beet-import-singles-to-tag) - importing single tracks and placing according to tag
 * [beet-ls-albums](https://github.com/trapd00r/utils/blob/master/beet-ls-albums) - list paths of albums matching query in beets database
 * [beet-ls-albums-by-label](https://github.com/trapd00r/utils/blob/master/beet-ls-albums-by-label) - list albums by artist and show record label, helper for
-* [beet-mpd](https://github.com/trapd00r/utils/blob/master/beet-mpd) - add results from a beet query to the mpd playlist
 * [beet-selfripped](https://github.com/trapd00r/utils/blob/master/beet-selfripped) - list albums I've ripped myself
+* [beet-symlink-query](https://github.com/trapd00r/utils/blob/master/beet-symlink-query) - symlink the results of a beets query
+* [beet-update](https://github.com/trapd00r/utils/blob/master/beet-update) - beet update that will NOT change any tags, neither move files around
 * [bigrand](https://github.com/trapd00r/utils/blob/master/bigrand) - generate n random numbers
 * [bob](https://github.com/trapd00r/utils/blob/master/bob) - mount bob the boxeebox
 * [bolaget](https://github.com/trapd00r/utils/blob/master/bolaget) - is the systembolaget open today?
@@ -54,6 +55,7 @@
 * [cpan-regulars](https://github.com/trapd00r/utils/blob/master/cpan-regulars) - cpan regular releasers
 * [crossmake](https://github.com/trapd00r/utils/blob/master/crossmake) - makes cross's in all kinds of shapes and colors
 * [cs_preview.vim](https://github.com/trapd00r/utils/blob/master/cs_preview.vim) - colorscheme previews in vim
+* [ddp](https://github.com/trapd00r/utils/blob/master/ddp) - use Data::Dumper to dump data from stdin
 * [define](https://github.com/trapd00r/utils/blob/master/define) - look up words in the terminal
 * [dircolors2vim](https://github.com/trapd00r/utils/blob/master/dircolors2vim) - generate vim syntax file for defined LS_COLORS
 * [dirnamep](https://github.com/trapd00r/utils/blob/master/dirnamep) - grab input from stdin and dirname it
@@ -65,7 +67,7 @@
 * [dupe_tv_by_episode](https://github.com/trapd00r/utils/blob/master/dupe_tv_by_episode) - only keep the best quality tv show
 * [dusch](https://github.com/trapd00r/utils/blob/master/dusch) - what's eating all the space?
 * [duschiamej](https://github.com/trapd00r/utils/blob/master/duschiamej) - what's eating all the space, take two?
-* [e](https://github.com/trapd00r/utils/blob/master/e) - grep eminem release
+* [e](https://github.com/trapd00r/utils/blob/master/e) - grep artist release(s)
 * [everywhere](https://github.com/trapd00r/utils/blob/master/everywhere) - run cmd everywhere
 * [exifdel](https://github.com/trapd00r/utils/blob/master/exifdel) - delete all exif data from photos
 * [exifrename](https://github.com/trapd00r/utils/blob/master/exifrename) - rename (copy) recovered jpgs to something sensible
@@ -108,12 +110,13 @@
 * [ls2](https://github.com/trapd00r/utils/blob/master/ls2) - colored ls, again
 * [ls3](https://github.com/trapd00r/utils/blob/master/ls3) - colored ls, yet again
 * [lscolorpicker](https://github.com/trapd00r/utils/blob/master/lscolorpicker) - generate LS_COLORS interactively
-* [lsgrep](https://github.com/trapd00r/utils/blob/master/lsgrep) - list content of grepped directories
 * [lsrel](https://github.com/trapd00r/utils/blob/master/lsrel) - list scene releases on a fs based on media type
 * [lyrics_update](https://github.com/trapd00r/utils/blob/master/lyrics_update) - update lyrics db on github
 * [md2html](https://github.com/trapd00r/utils/blob/master/md2html) - convert input markdown file to html
 * [mkdr](https://github.com/trapd00r/utils/blob/master/mkdr) - given file.ext, mkdir file/ and move file.ext to file/file.ext
 * [mpd-goto-album-dir](https://github.com/trapd00r/utils/blob/master/mpd-goto-album-dir) - goto now playing album directory
+* [mpd-goto-artist-dir](https://github.com/trapd00r/utils/blob/master/mpd-goto-artist-dir) - goto now playing artist directory
+* [mpd-show-coverart](https://github.com/trapd00r/utils/blob/master/mpd-show-coverart) - display cover art for currently playing albu±:
 * [mpd_del](https://github.com/trapd00r/utils/blob/master/mpd_del) - remove songs matching PATTERN from mpd playlist
 * [mpd_del_album](https://github.com/trapd00r/utils/blob/master/mpd_del_album) - remove album from mpd playlist
 * [mpd_fill_mp3player](https://github.com/trapd00r/utils/blob/master/mpd_fill_mp3player) - copy all loved songs from the pimpd2 database to the mp3 player
@@ -163,8 +166,8 @@
 * [sanitize](https://github.com/trapd00r/utils/blob/master/sanitize) - sanitize filenames
 * [sascii](https://github.com/trapd00r/utils/blob/master/sascii) - interactive key inspector
 * [scat](https://github.com/trapd00r/utils/blob/master/scat) - a cat with syntax highlighting powers
-* [sdorfehs-bar.pl](https://github.com/trapd00r/utils/blob/master/sdorfehs-bar.pl) - feed the sdorfehs sticky bar
-* [sdorfehs-feedbar](https://github.com/trapd00r/utils/blob/master/sdorfehs-feedbar) - loop to feed the sdorfehs sticky bar
+* [sdorfehs-definekey-tops](https://github.com/trapd00r/utils/blob/master/sdorfehs-definekey-tops) - define keys for switching workspaces
+* [sdorfehs-undefinekey-tops](https://github.com/trapd00r/utils/blob/master/sdorfehs-undefinekey-tops) - undefine keys for switching workspaces
 * [seen](https://github.com/trapd00r/utils/blob/master/seen) - abuse sticky bits etc to mark a movie or show as seen
 * [setallfonts](https://github.com/trapd00r/utils/blob/master/setallfonts) - set all fonts to ARG
 * [setbg](https://github.com/trapd00r/utils/blob/master/setbg) - set terminal background
@@ -174,10 +177,10 @@
 * [sr-rename](https://github.com/trapd00r/utils/blob/master/sr-rename) - a little tool to clean up episodes downloaded from Sveriges Radio.
 * [srinfo](https://github.com/trapd00r/utils/blob/master/srinfo) - sveriges radio info fetcher
 * [srnp](https://github.com/trapd00r/utils/blob/master/srnp) - now playing for sveriges radio
-* [ssh](https://github.com/trapd00r/utils/blob/master/ssh) - change and restore bg/fg colors based on ssh host
+* [sshc](https://github.com/trapd00r/utils/blob/master/sshc) - change and restore bg/fg colors based on ssh host
 * [stderr](https://github.com/trapd00r/utils/blob/master/stderr) - print input to stderr
 * [strip_esc](https://github.com/trapd00r/utils/blob/master/strip_esc) - strip data from escape sequences
-* [term_attr](https://github.com/trapd00r/utils/blob/master/term_attr) - dump all term attributes
+* [term_attr](https://github.com/trapd00r/utils/blob/master/term_attr) - dump all term attributes and visualize various term settings
 * [to_phone](https://github.com/trapd00r/utils/blob/master/to_phone) - scp files to the phone and place it where I want it
 * [today](https://github.com/trapd00r/utils/blob/master/today) - stats on what I did do today
 * [topip](https://github.com/trapd00r/utils/blob/master/topip) - top ip numbers from httpd log
@@ -210,6 +213,7 @@
 * [wallpaper_daemon](https://github.com/trapd00r/utils/blob/master/wallpaper_daemon) - changes background on htpc connected tv every $sleep seconds
 * [wgetdarknet](https://github.com/trapd00r/utils/blob/master/wgetdarknet) - rip directory listing on darknet
 * [whatfont](https://github.com/trapd00r/utils/blob/master/whatfont) - query the terminal for the current fonts in use.
+* [whoa-netplay-ripper.pl](https://github.com/trapd00r/utils/blob/master/whoa-netplay-ripper.pl) - download all netplays from whoa.nu
 * [xdgdirs](https://github.com/trapd00r/utils/blob/master/xdgdirs) - check that XDG_* dirs are defined
 * [xfiles.sh](https://github.com/trapd00r/utils/blob/master/xfiles.sh) - the x-files theme!
 * [youtube2mp3](https://github.com/trapd00r/utils/blob/master/youtube2mp3) - rip audio from youtube
