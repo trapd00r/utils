@@ -1,0 +1,5 @@
+#!/bin/sh
+# abstract: beet update that will NOT change any tags, neither move files around
+# only update deleted/missing files to stay in sync with mpd.
+
+~/dev/beets/beet update -F field_that_isnt -M
