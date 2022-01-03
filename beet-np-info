@@ -1,0 +1,4 @@
+#!/bin/sh
+# abstract: show all available beets info for now playing song in mpd
+#
+beet info "${XDG_MUSIC_DIR}$(mpc current --format %file%)"

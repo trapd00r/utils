@@ -32,6 +32,7 @@
 * [beet-import-singles-to-label](https://github.com/trapd00r/utils/blob/master/beet-import-singles-to-label) - importing single tracks and placing according to label
 * [beet-ls-albums](https://github.com/trapd00r/utils/blob/master/beet-ls-albums) - list paths of albums matching query in beets database
 * [beet-ls-albums-by-label](https://github.com/trapd00r/utils/blob/master/beet-ls-albums-by-label) - list albums by artist and show record label, helper for
+* [beet-np-info](https://github.com/trapd00r/utils/blob/master/beet-np-info) - show all available beets info for now playing song in mpd
 * [beet-selfripped](https://github.com/trapd00r/utils/blob/master/beet-selfripped) - list albums I've ripped myself
 * [beet-symlink-query](https://github.com/trapd00r/utils/blob/master/beet-symlink-query) - symlink the results of a beets query
 * [beet-update](https://github.com/trapd00r/utils/blob/master/beet-update) - beet update that will NOT change any tags, neither move files around
