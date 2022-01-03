@@ -7,6 +7,8 @@
 
 LOVED_DIR=/mnt/music8/_fav/_$(date +%Y)
 
+mkdir -p ${LOVED_DIR}
+
 pimpd2 --love
 mpd_cp_native ${LOVED_DIR}
 
