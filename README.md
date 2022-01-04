@@ -169,6 +169,7 @@
 * [scat](https://github.com/trapd00r/utils/blob/master/scat) - a cat with syntax highlighting powers
 * [sdorfehs-definekey-tops](https://github.com/trapd00r/utils/blob/master/sdorfehs-definekey-tops) - define keys for switching workspaces
 * [sdorfehs-undefinekey-tops](https://github.com/trapd00r/utils/blob/master/sdorfehs-undefinekey-tops) - undefine keys for switching workspaces
+* [sdorfehsrepl](https://github.com/trapd00r/utils/blob/master/sdorfehsrepl) - sdorfehs  repl
 * [seen](https://github.com/trapd00r/utils/blob/master/seen) - abuse sticky bits etc to mark a movie or show as seen
 * [setallfonts](https://github.com/trapd00r/utils/blob/master/setallfonts) - set all fonts to ARG
 * [setbg](https://github.com/trapd00r/utils/blob/master/setbg) - set terminal background

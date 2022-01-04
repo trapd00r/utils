@@ -1,0 +1,25 @@
+#!/usr/bin/perl
+# vim: ft=perl et sw=2:
+# abstract: sdorfehs  repl
+use strict;
+
+sub prompt;
+prompt();
+while(my $cmd = <>) {
+  chomp $cmd;
+  if( ($cmd eq 'help') or ($cmd eq 'usage') or ($cmd eq '') ) {
+    help();
+    prompt();
+    next;
+  }
+  print do { local $/; "\e[1m" . `sdorfehs -c '$cmd'` . "\e[m" };
+  prompt();
+}
+
+sub prompt {
+  printf "\e[32msdorfehs\e[1m»\e[m ";
+}
+
+sub help {
+  print do { local $/; "\e[1m" . `sdorfehs -c help` . "\e[m\n" };
+}
