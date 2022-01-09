@@ -21,15 +21,18 @@ my $attr = {
   lookup        => 9,
 };
 
+select STDOUT;
+system("hr -fg 137 -c '-' -bi -s 80");
+
 for my $t( sort { $attr->{$a} cmp $attr->{$b} } keys(%{ $attr })) {
-  $t =~ /^blink/ and printf("%s\e[48;5;196;38;5;233;1;3mSKIPPING: SHOULD NEVER HAVE BEEN IMPLEMENTED\e[m\n", sprintf("%-10s", $t)), next;
+  $t =~ /^blink/ and printf("%s\t\t\t    \e[48;5;196;38;5;233;1;3mSKIPPING: SHOULD NEVER HAVE BEEN IMPLEMENTED\e[m\n", sprintf("%-10s", $t)), next;
 
 # visually show if the colorUL property of urxvt is being abused for
 # underlining URLs.
 # https://www.japh.se/2019/01/23/color-urls-in-urxvt-without-abusing-underline-property.html
 
   if($t eq 'underline') {
-    printf("\e[$attr->{$t}m$t\e[m <=> %s\n", 'https://www.japh.se');
+    printf("\e[$attr->{$t}m$t\e[m\n%s\n", 'https://nounderlineonlinks.se');
   }
   else {
     printf("\e[$attr->{$t}m$t\e[m\n");
@@ -45,8 +48,9 @@ select STDOUT;
 
 
 printf "%s\n",   fg(10, '$File::LsColor::COLORIZE_PATH') . ' = ' . fg(33, 1);
-printf "%s\n",   ls_color('/usr/share/perl5/core_perl/Symbol.pm');
-printf "%s\n\n", ls_color('/a/path/and/file/without/extension/README');
+printf "→ %s\n",   ls_color('/usr/share/perl5/core_perl/Symbol.pm');
+printf "→ %s\n\n", ls_color('/a/path/and/file/without/extension/README');
 printf "%s\n",   fg(10, '$File::LsColor::COLORIZE_PATH') . ' = ' . fg(33, 0);
-printf "%s\n",   ls_color('/usr/share/perl5/core_perl/Symbol.pm');
-printf "%s\n",   ls_color('/a/path/and/file/without/extension/README');
+printf "→ %s\n",   ls_color('/usr/share/perl5/core_perl/Symbol.pm');
+printf "→ %s\n",   ls_color('/a/path/and/file/without/extension/README');
+system("hr -fg 137 -c '-' -bi -s 80");
