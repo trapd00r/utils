@@ -1,0 +1,20 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+#use Data::Dumper;
+#
+#{
+#  package Data::Dumper;
+#  no strict 'vars';
+#  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
+#  $Quotekeys = 0;
+#}
+use DDP;
+
+use Music::Beets::Info qw(beet_info);
+use Audio::MPD;
+
+my $mpd = Audio::MPD->new;
+my $data = beet_info("$ENV{XDG_MUSIC_DIR}" . $mpd->current->file);
+
+p $data;
