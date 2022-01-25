@@ -1,0 +1,6 @@
+#!/bin/sh
+hr -fg 35
+echo 'opening files changed in current branch cmp upstream'
+hr -fg 35
+git-changed-files
+vim $(git-changed-files|uncolor)
