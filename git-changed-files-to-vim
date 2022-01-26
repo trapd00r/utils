@@ -1,13 +1,14 @@
 #!/bin/sh
-# abstract: open files changed in branch cmp upstream in vim
 # vim:ft=zsh:
+# abstract: open files changed in branch cmp upstream in vim
 
 GIT_TOP_LEVEL_DIR=$(git rev-parse --show-toplevel)
 GIT_CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 PREVIOUS_TOP_LEVEL_DIR=$PWD
 
 hr -fg 240 -c ─
-printf "> changing directory to \033[38;5;30m%s\033[m\n" $GIT_TOP_LEVEL_DIR
+printf "> changing directory to git top level directory \033[38;5;30m%s\033[m\n" $GIT_TOP_LEVEL_DIR
+cd $GIT_TOP_LEVEL_DIR
 printf "> opening files changed in branch \033[38;5;131m%s\033[m cmp upstream\n" $GIT_CURRENT_BRANCH
 hr -fg 240 -c ─
 git-changed-files
