@@ -6,10 +6,18 @@ GIT_TOP_LEVEL_DIR=$(git rev-parse --show-toplevel)
 GIT_CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 PREVIOUS_TOP_LEVEL_DIR=$PWD
 
+
 hr -fg 240 -c ─
 printf "> changing directory to git top level directory \033[38;5;30m%s\033[m\n" $GIT_TOP_LEVEL_DIR
 cd $GIT_TOP_LEVEL_DIR
 printf "> opening files changed in branch \033[38;5;131m%s\033[m cmp upstream\n" $GIT_CURRENT_BRANCH
+
+if [[ $ASKAS_BUTIK = 'magnusw1' ]]; then
+  printf "> current active store is \033[38;5;107m${ASKAS_BUTIK}\033[m\n"
+else
+  printf "> current active store is \033[38;5;107m${ASKAS_BUTIK} \033[38;5;160m(WARNING!)\033[m\n"
+fi
+
 hr -fg 240 -c ─
 git-changed-files
 
