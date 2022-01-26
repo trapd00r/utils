@@ -85,6 +85,7 @@
 * [get_ls_colors](https://github.com/trapd00r/utils/blob/master/get_ls_colors) - print all defined LS_COLORS
 * [gh_clone_all_gists](https://github.com/trapd00r/utils/blob/master/gh_clone_all_gists) - clone all gists of username given on the command line
 * [gh_clone_all_user_repos.sh](https://github.com/trapd00r/utils/blob/master/gh_clone_all_user_repos.sh) - clone all repos from $GITHUB_USER
+* [git-changed-files-to-vim](https://github.com/trapd00r/utils/blob/master/git-changed-files-to-vim) - open files changed in branch cmp upstream in vim
 * [git-diff-syntaxhl](https://github.com/trapd00r/utils/blob/master/git-diff-syntaxhl) - prettier git diff
 * [git-rec](https://github.com/trapd00r/utils/blob/master/git-rec) - perform git actions recursively
 * [github-referrers](https://github.com/trapd00r/utils/blob/master/github-referrers) - get referrer urls for all github repos
