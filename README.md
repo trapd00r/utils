@@ -48,6 +48,7 @@
 * [clarify](https://github.com/trapd00r/utils/blob/master/clarify) - show line endings
 * [clean](https://github.com/trapd00r/utils/blob/master/clean) - clean up a release dir
 * [clftail](https://github.com/trapd00r/utils/blob/master/clftail) - color-follow-tail for access.log
+* [clipboard-to-primary-sync](https://github.com/trapd00r/utils/blob/master/clipboard-to-primary-sync) - send data from XA_CLIPBOARD to XA_PRIMARY
 * [colorclock](https://github.com/trapd00r/utils/blob/master/colorclock) - a terminal color clock
 * [colorls](https://github.com/trapd00r/utils/blob/master/colorls) - ls with colors
 * [colorscheme](https://github.com/trapd00r/utils/blob/master/colorscheme) - change ansi colorscheme to mine
@@ -135,6 +136,7 @@
 * [net_on_på_sid](https://github.com/trapd00r/utils/blob/master/net_on_på_sid) - enable ethernet on 82579V chipsets
 * [nicefind](https://github.com/trapd00r/utils/blob/master/nicefind) - a very nice find ui
 * [np](https://github.com/trapd00r/utils/blob/master/np) - mpd now playing
+* [np-info](https://github.com/trapd00r/utils/blob/master/np-info) - dump info from beets and pimpd2 about now playing song in mpd
 * [np-lyrics](https://github.com/trapd00r/utils/blob/master/np-lyrics) - lyrics for currently playing song in mpd
 * [pacstat](https://github.com/trapd00r/utils/blob/master/pacstat) - pacman statisticts
 * [passwd_gen](https://github.com/trapd00r/utils/blob/master/passwd_gen) - generate a safe password
