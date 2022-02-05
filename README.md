@@ -117,6 +117,7 @@
 * [lyrics_update](https://github.com/trapd00r/utils/blob/master/lyrics_update) - update lyrics db on github
 * [md2html](https://github.com/trapd00r/utils/blob/master/md2html) - convert input markdown file to html
 * [mkdr](https://github.com/trapd00r/utils/blob/master/mkdr) - given file.ext, mkdir file/ and move file.ext to file/file.ext
+* [mpd-copy-path-to-clipboard](https://github.com/trapd00r/utils/blob/master/mpd-copy-path-to-clipboard) - copy now playing full path to clipboard
 * [mpd-goto-album-dir](https://github.com/trapd00r/utils/blob/master/mpd-goto-album-dir) - goto now playing album directory
 * [mpd-goto-artist-dir](https://github.com/trapd00r/utils/blob/master/mpd-goto-artist-dir) - goto now playing artist directory
 * [mpd-show-coverart](https://github.com/trapd00r/utils/blob/master/mpd-show-coverart) - display cover art for currently playing albu±:
