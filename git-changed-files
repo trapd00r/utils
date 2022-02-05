@@ -1,2 +1,3 @@
 #!/bin/sh
+# git diff --name-only master...HEAD
 git diff --name-only master...|ls_color
