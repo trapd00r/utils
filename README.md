@@ -48,6 +48,7 @@
 * [clarify](https://github.com/trapd00r/utils/blob/master/clarify) - show line endings
 * [clean](https://github.com/trapd00r/utils/blob/master/clean) - clean up a release dir
 * [clftail](https://github.com/trapd00r/utils/blob/master/clftail) - color-follow-tail for access.log
+* [clipboard-to-primary-sync](https://github.com/trapd00r/utils/blob/master/clipboard-to-primary-sync) - send data from XA_CLIPBOARD to XA_PRIMARY
 * [colorclock](https://github.com/trapd00r/utils/blob/master/colorclock) - a terminal color clock
 * [colorls](https://github.com/trapd00r/utils/blob/master/colorls) - ls with colors
 * [colorscheme](https://github.com/trapd00r/utils/blob/master/colorscheme) - change ansi colorscheme to mine
@@ -85,6 +86,7 @@
 * [get_ls_colors](https://github.com/trapd00r/utils/blob/master/get_ls_colors) - print all defined LS_COLORS
 * [gh_clone_all_gists](https://github.com/trapd00r/utils/blob/master/gh_clone_all_gists) - clone all gists of username given on the command line
 * [gh_clone_all_user_repos.sh](https://github.com/trapd00r/utils/blob/master/gh_clone_all_user_repos.sh) - clone all repos from $GITHUB_USER
+* [git-changed-files-to-vim](https://github.com/trapd00r/utils/blob/master/git-changed-files-to-vim) - open files changed in branch cmp upstream in vim
 * [git-diff-syntaxhl](https://github.com/trapd00r/utils/blob/master/git-diff-syntaxhl) - prettier git diff
 * [git-rec](https://github.com/trapd00r/utils/blob/master/git-rec) - perform git actions recursively
 * [github-referrers](https://github.com/trapd00r/utils/blob/master/github-referrers) - get referrer urls for all github repos
@@ -115,6 +117,7 @@
 * [lyrics_update](https://github.com/trapd00r/utils/blob/master/lyrics_update) - update lyrics db on github
 * [md2html](https://github.com/trapd00r/utils/blob/master/md2html) - convert input markdown file to html
 * [mkdr](https://github.com/trapd00r/utils/blob/master/mkdr) - given file.ext, mkdir file/ and move file.ext to file/file.ext
+* [mpd-copy-path-to-clipboard](https://github.com/trapd00r/utils/blob/master/mpd-copy-path-to-clipboard) - copy now playing full path to clipboard
 * [mpd-goto-album-dir](https://github.com/trapd00r/utils/blob/master/mpd-goto-album-dir) - goto now playing album directory
 * [mpd-goto-artist-dir](https://github.com/trapd00r/utils/blob/master/mpd-goto-artist-dir) - goto now playing artist directory
 * [mpd-show-coverart](https://github.com/trapd00r/utils/blob/master/mpd-show-coverart) - display cover art for currently playing albu±:
@@ -134,6 +137,7 @@
 * [net_on_på_sid](https://github.com/trapd00r/utils/blob/master/net_on_på_sid) - enable ethernet on 82579V chipsets
 * [nicefind](https://github.com/trapd00r/utils/blob/master/nicefind) - a very nice find ui
 * [np](https://github.com/trapd00r/utils/blob/master/np) - mpd now playing
+* [np-info](https://github.com/trapd00r/utils/blob/master/np-info) - dump info from beets and pimpd2 about now playing song in mpd
 * [np-lyrics](https://github.com/trapd00r/utils/blob/master/np-lyrics) - lyrics for currently playing song in mpd
 * [pacstat](https://github.com/trapd00r/utils/blob/master/pacstat) - pacman statisticts
 * [passwd_gen](https://github.com/trapd00r/utils/blob/master/passwd_gen) - generate a safe password

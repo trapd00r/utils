@@ -1,0 +1,7 @@
+#!/bin/sh
+# vim:ft=zsh:
+# abstract: copy now playing full path to clipboard
+
+FULL_PATH=${XDG_MUSIC_DIR}/$(mpc current -f %file%)
+
+echo $FULL_PATH | xclip

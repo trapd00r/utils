@@ -4,6 +4,7 @@
 #rclone copy -P /home/scp1/_ drive:_
 #rclone copy -P /mnt/music8/Eminem drive:2020-music_backup/Eminem
 rclone copy -P /mnt/music8/+TAGGED/E/Eminem drive:2021-music_backup/Eminem
+rclone copy -P ${HOME}/img drive:2022_screenshot_archive
 
 #rclone copy -P "/mnt/music8/_artists/1200 Micrograms" drive:"2020-music_backup/1200 Micrograms"
 #rclone copy -P "/mnt/music8/_artists/Madonna" drive:"2020-music_backup/Madonna"
