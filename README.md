@@ -206,6 +206,7 @@
 * [ucfirst](https://github.com/trapd00r/utils/blob/master/ucfirst) - uppercase first
 * [uncode](https://github.com/trapd00r/utils/blob/master/uncode) - transform ascii data to unicode chars
 * [underline](https://github.com/trapd00r/utils/blob/master/underline) - underline input
+* [unlove](https://github.com/trapd00r/utils/blob/master/unlove) - unlove the currently playing song in mpd
 * [unrarec](https://github.com/trapd00r/utils/blob/master/unrarec) - unrar stuff recursively
 * [url_find](https://github.com/trapd00r/utils/blob/master/url_find) - extracts URLs from data
 * [utils_readme](https://github.com/trapd00r/utils/blob/master/utils_readme) - generate README.md from utils/*

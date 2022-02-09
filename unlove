@@ -1,0 +1,6 @@
+#!/bin/sh
+# vim:ft=zsh:
+# abstract: unlove the currently playing song in mpd
+
+yes \
+  | ~/dev/beets/beet modify loved=0 "${XDG_MUSIC_DIR}$(mpc current --format %file% | head -1)"
