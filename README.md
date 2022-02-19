@@ -48,6 +48,7 @@
 * [clarify](https://github.com/trapd00r/utils/blob/master/clarify) - show line endings
 * [clean](https://github.com/trapd00r/utils/blob/master/clean) - clean up a release dir
 * [clftail](https://github.com/trapd00r/utils/blob/master/clftail) - color-follow-tail for access.log
+* [clipboard-to-primary](https://github.com/trapd00r/utils/blob/master/clipboard-to-primary) - send data from XA_CLIPBOARD to XA_PRIMARY
 * [clipboard-to-primary-sync](https://github.com/trapd00r/utils/blob/master/clipboard-to-primary-sync) - send data from XA_CLIPBOARD to XA_PRIMARY
 * [colorclock](https://github.com/trapd00r/utils/blob/master/colorclock) - a terminal color clock
 * [colorls](https://github.com/trapd00r/utils/blob/master/colorls) - ls with colors
@@ -89,6 +90,7 @@
 * [git-changed-files-to-vim](https://github.com/trapd00r/utils/blob/master/git-changed-files-to-vim) - open files changed in branch cmp upstream in vim
 * [git-diff-syntaxhl](https://github.com/trapd00r/utils/blob/master/git-diff-syntaxhl) - prettier git diff
 * [git-rec](https://github.com/trapd00r/utils/blob/master/git-rec) - perform git actions recursively
+* [git-top](https://github.com/trapd00r/utils/blob/master/git-top) - git highscore
 * [github-referrers](https://github.com/trapd00r/utils/blob/master/github-referrers) - get referrer urls for all github repos
 * [gotoalbum](https://github.com/trapd00r/utils/blob/master/gotoalbum) - goto to root directory of currently playing album
 * [hits](https://github.com/trapd00r/utils/blob/master/hits) - show httpd resources with most hits

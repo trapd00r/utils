@@ -1,0 +1,6 @@
+#!/bin/sh
+# vim:ft=zsh:
+# abstract: send data from XA_CLIPBOARD to XA_PRIMARY
+# for gui applications that doesn't behave
+xclip -o -selection clipboard | xclip 
+#xclip -o
