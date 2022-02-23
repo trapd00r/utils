@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# abstract: display a perl subs git history over time
+
+# FZF Wrapper over git to interactively search code changes inside functions
+
+readarray -t choices < <(git ls-files | fzf \
+  --prompt="Choose File: " \
+  --height 40% --reverse \
+)
+
+printf "%s\n" "$(grep -o -P '(?<=sub )(.+)' $choices)" | fzf \
+  --ansi --preview "echo {} | xargs -I{} git log --color -L :{}:$choices" \
+  --prompt="Choose function/method: " \
+  --bind 'j:down,k:up,ctrl-j:preview-down,ctrl-k:preview-up,ctrl-space:toggle-preview' --preview-window right:60% \
