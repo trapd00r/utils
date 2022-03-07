@@ -10,7 +10,15 @@ fi
 # smaller ui elements
 #  --high-dpi-support=0 --force-device-scale-factor=0.82
 # Launch
-exec /opt/google/chrome/google-chrome $CHROME_USER_FLAGS \
-	--simulate-outdated-no-au='Tue, 31 Dec 2099 23:59:59 GMT' \
-  --high-dpi-support=0 \
-  --force-device-scale-factor=0.82 "$@"
+
+if [[ $(hostname) = "sid" ]]; then
+  exec /opt/google/chrome/google-chrome $CHROME_USER_FLAGS \
+    --simulate-outdated-no-au='Tue, 31 Dec 2099 23:59:59 GMT' \
+    --high-dpi-support=0 \
+    --force-device-scale-factor=0.82 "$@"
+elif [[ $(hostname) = "tp" ]]; then
+  exec /opt/google/chrome/google-chrome $CHROME_USER_FLAGS \
+    --simulate-outdated-no-au='Tue, 31 Dec 2099 23:59:59 GMT' \
+    --high-dpi-support=1 \
+    --force-device-scale-factor=1 "$@"
+fi
