@@ -1,9 +1,9 @@
 #!/bin/sh
 printf '\033]710;%s\007' \
-  '-nil-profont-medium-r-normal--10-100-72-72-c-50-iso8859-1'
+  'xft:ProFontWindows Nerd Font Mono:style=Book:pixelsize=12:antialias=0:hinting=none:hintstyle=0'
 printf '\033]711;%s\007' \
   'xft:ProFont:style=Regular:pixelsize=10:embolden=1'
 printf '\033]712;%s\007' \
-  'xft:ProFont:style=Regular:pixelsize=10:slant=italic'
+  'xft:ProFontIIx Nerd Font Mono:style=Book:pixelsize=9:antialias=0:hinting=0:hintstyle=0'
 printf '\033]713;%s\007' \
-  'xft:DejaVu Sans Mono:style=Book:pixelsize=10:antialias=1:hinting=1:hintstyle=3'
+  '-windows-montecarlo-bold-r-normal--11-110-72-72-c-60-microsoft-cp1252'
