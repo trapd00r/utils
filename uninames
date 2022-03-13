@@ -41,7 +41,7 @@ eval 'exec perl -x -S $0 ${1+"$@"}'
 #!/usr/bin/env perl 
 ######################################################################
 
-use 5.10.1;
+#use 5.10.1;
 
 use strict;
 use warnings; #  qw[ FATAL all ];

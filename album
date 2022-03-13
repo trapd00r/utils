@@ -1,0 +1,10 @@
+#!/bin/sh
+# abstract: get a quick list of albums by name
+#
+# > album most\ wanted\ music
+# +va/Most Wanted Music 10 (1999) [FLAC]
+# +va/Most Wanted Music 6 (1998)
+
+mpc search album "$1" \
+  | dirnamep \
+  | sort -u 
