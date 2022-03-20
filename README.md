@@ -13,6 +13,7 @@
 * [1984](https://github.com/trapd00r/utils/blob/master/1984) - fun with pv
 * [absname](https://github.com/trapd00r/utils/blob/master/absname) - you can't trust $PWD in linux
 * [abstract](https://github.com/trapd00r/utils/blob/master/abstract) - extract abstract from given file(s)
+* [album](https://github.com/trapd00r/utils/blob/master/album) - get a quick list of albums by name
 * [albumlist](https://github.com/trapd00r/utils/blob/master/albumlist) - display all albums by artist
 * [albums_by_artist](https://github.com/trapd00r/utils/blob/master/albums_by_artist) - display all unique albums by artist
 * [alias](https://github.com/trapd00r/utils/blob/master/alias) - display zsh aliases
@@ -82,6 +83,7 @@
 * [font-atari](https://github.com/trapd00r/utils/blob/master/font-atari) - set terminal font to the Atari 800XL std font
 * [font_preview](https://github.com/trapd00r/utils/blob/master/font_preview) - preview all fonts in your terminal
 * [ft](https://github.com/trapd00r/utils/blob/master/ft) - show filetype info
+* [fzf-perlsub-githistory](https://github.com/trapd00r/utils/blob/master/fzf-perlsub-githistory) - display a perl subs git history over time
 * [generate_xresources](https://github.com/trapd00r/utils/blob/master/generate_xresources) - generate a hash with colorschemes from X resources
 * [generate_zsh_completion](https://github.com/trapd00r/utils/blob/master/generate_zsh_completion) - generate zsh completion
 * [get_ls_colors](https://github.com/trapd00r/utils/blob/master/get_ls_colors) - print all defined LS_COLORS
@@ -173,6 +175,7 @@
 * [sanitize](https://github.com/trapd00r/utils/blob/master/sanitize) - sanitize filenames
 * [sascii](https://github.com/trapd00r/utils/blob/master/sascii) - interactive key inspector
 * [scat](https://github.com/trapd00r/utils/blob/master/scat) - a cat with syntax highlighting powers
+* [screen-start-or-attach](https://github.com/trapd00r/utils/blob/master/screen-start-or-attach) - start screen or attach to a running session
 * [sdorfehs-definekey-tops](https://github.com/trapd00r/utils/blob/master/sdorfehs-definekey-tops) - define keys for switching workspaces
 * [sdorfehs-undefinekey-tops](https://github.com/trapd00r/utils/blob/master/sdorfehs-undefinekey-tops) - undefine keys for switching workspaces
 * [sdorfehsrepl](https://github.com/trapd00r/utils/blob/master/sdorfehsrepl) - sdorfehs  repl

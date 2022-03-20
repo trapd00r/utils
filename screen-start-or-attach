@@ -1,0 +1,11 @@
+#!/bin/sh
+# abstract: start screen or attach to a running session
+
+status="$(/usr/bin/screen -ls)"
+
+if [[ "${status}" =~ "No Sockets found" ]]; then
+  /usr/bin/screen
+else
+  sdorfehs -c 'echo attaching screen session'
+  /usr/bin/screen -x
+fi
