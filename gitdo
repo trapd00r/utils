@@ -1,0 +1,98 @@
+#!/usr/bin/env perl
+# abstract: do various things on git repos
+use strict;
+use warnings;
+
+use File::Find::Rule ();
+use IO::Prompt qw(prompt);
+use List::Util qw(any);
+use DateTime ();
+use DateTime::Format::DateParse ();
+use Time::Ago ();
+use Term::ExtendedColor qw(:attributes);
+
+my $summary = shift // 0;
+my $path = shift || $ENV{HOME} . '/dev';
+
+my @repos = File::Find::Rule
+    ->maxdepth(1)
+    ->directory
+    ->not(File::Find::Rule->new->name(qr/^\./)) # Skip .dot dirs
+    ->in($path);
+
+my $width = length scalar @repos;
+my $i = 0;
+
+my $now = DateTime->now(time_zone => 'local');
+
+REPO: for my $repo (sort @repos) {
+  chdir($repo) or die "Can't chdir $repo: $!";
+
+  $repo =~ s/^$path\///;
+
+  my @subdirs = File::Find::Rule->maxdepth(1)->directory->in('.');
+  my $bool = any { $_ eq '.git' } @subdirs;
+  next unless $bool;
+
+  my $branch = qx{ git rev-parse --abbrev-ref HEAD };
+  chomp $branch;
+
+  $i++;
+
+  if ($summary) {
+
+    my $git = qx{ git diff --stat };
+
+    printf '%0*d. %s (%s)', $width, $i, ($git ? bg(88, fg(196, $repo)) : $repo), $branch;
+    print ' - DIRTY' if $git;
+    print "\n";
+
+    $git = qx{ git log -1 --format=%cd };
+    chomp $git;
+    my $last = DateTime::Format::DateParse->parse_datetime($git, 'local');
+    my $duration = $now->subtract_datetime_absolute($last);
+    $git = Time::Ago->in_words($duration->seconds);
+    print "\tLast commit $git ago\n";
+  }
+  else {
+    print "\n", '-' x 70;
+
+    while (1) {
+      printf "\n%0*d. %s (%s)", $width, $i, $repo, $branch;
+
+      my $git = qx{ git diff --stat };
+      print $git ? " - DIRTY\n" : "\n";
+
+      my $response = prompt 'Enter=next q=quit s=status p=pull f=prune: ';
+
+      if ($response eq 'q') {
+        last REPO;
+      }
+      elsif ($response eq 's') {
+        my $git = qx{ git status --untracked-files=no };
+        $git =~ s/^On branch [\w\-\/]+//;
+        $git =~ s/\s*\(.+?\)//gm;
+        $git =~ s/\n+/\n/gm;
+        print $git;
+
+        $git = qx{ git branch -a };
+        print "\n$git";
+
+        $git = qx{ git log -1 --format=%cd };
+        print "\tLast commit on $git";
+      }
+      elsif ($response eq 'p') {
+        my $git = qx{ git pull };
+        print "\n$git";
+      }
+      elsif ($response eq 'f') {
+        my $git = qx{ git fetch --prune };
+        $git =~ s/\n+/\n/gm;
+        print $git;
+      }
+      else {
+        next REPO;
+      }
+    }
+  }
+}
