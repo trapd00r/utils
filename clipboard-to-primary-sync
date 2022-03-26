@@ -1,0 +1,7 @@
+#!/bin/sh
+# vim:ft=zsh:
+# abstract: send data from XA_CLIPBOARD to XA_PRIMARY
+while true; do
+  xclip -o -selection clipboard &>/dev/null| xclip -i;
+  sleep 2;
+done
