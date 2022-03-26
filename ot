@@ -1,0 +1,215 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use Getopt::Long qw( GetOptions );
+use Open::This qw(
+    editor_args_from_parsed_text
+    maybe_get_url_from_parsed_text
+    parse_text
+);
+use Path::Tiny qw( path );
+use Pod::Usage qw( pod2usage );
+
+pod2usage("Error: missing argument\n") unless @ARGV;
+
+my $browse;
+my $editor;
+my $print;
+
+GetOptions(
+    'browse|b'   => \$browse,
+    'editor|e=s' => \$editor,
+    'print|p'    => \$print,
+);
+
+my $parsed = parse_text(@ARGV);
+if ( !$parsed ) {
+    print "Could not locate file\n";
+    exit(1);
+}
+
+if ($browse) {
+    my $url = maybe_get_url_from_parsed_text($parsed);
+    if ( !exists $parsed->{remote_file_url} ) {
+        print "Could not find remote repository\n";
+        exit(1);
+    }
+
+    # A relative path should be inside our repository
+    if ( path( $parsed->{remote_file_url} )->is_relative ) {
+        require Browser::Open;
+        Browser::Open::open_browser( $parsed->{remote_file_url} );
+        exit(0);
+    }
+    return undef;
+}
+
+local $ENV{EDITOR} = $editor || $ENV{EDITOR};
+
+my @editor_args = editor_args_from_parsed_text($parsed);
+
+if ($print) {
+    print STDOUT join( ' ', @editor_args ), "\n";
+    exit(0);
+}
+
+$ENV{EDITOR}
+    ? exec $ENV{EDITOR}, @editor_args
+    : die('Please set your $EDITOR env var or use the --editor arg');
+
+# ABSTRACT: parse text and (hopefully) open an editor with the correct arguments
+# PODNAME: ot
+
+__END__
+
+=pod
+
+=encoding UTF-8
+
+=head1 NAME
+
+ot - parse text and (hopefully) open an editor with the correct arguments
+
+=head1 VERSION
+
+version 0.000030
+
+=head1 SYNOPSIS
+
+    ot "lib/Foo/Bar.pm line 222"
+    # Executes $ENV{EDITOR} +222 lib/Foo/Bar.pm
+
+    ot "./lib/Foo/Bar.pm:135:20: blah;"
+    # If you're using vim, opens your file at line 135 and column 20.
+    # Otherwise, executes $ENV{EDITOR} +222 lib/Foo/Bar.pm This is handy if you
+    # use, for example, ripgrep:
+    # rg --vimgrep blah
+
+    # open Foo::Bar which is in your lib, t/lib or @INC
+    ot Foo::Bar
+
+    # open Foo::Bar at the do_something() subroutine
+    ot "Foo::Bar::do_something()"
+
+    # open Foo::Bar at the do_something() subroutine
+    ot "Foo::Bar::do_something('HASH(0x25521248)')"
+
+    # open output from git-grep
+    ot lib/Open/This.pm:17
+
+    # Find a core module
+    ot Test::More
+
+    # Open a core module at a function
+    ot "Test::More::diag()"
+
+    # Open a binary which is in your $ENV{PATH}
+    ot cpanm
+
+    # Open a binary which is in your $ENV{PATH} at an arbitrary column and line
+    ot cpanm:10:3
+
+    # open Foo::Bar on the GitHub web site in your browser
+    ot -b Foo::Bar
+
+    # open a file locally, using a GitHub link.  You must be at the top level
+    # of this repository on a local checkout.
+    ot https://github.com/oalders/git-helpers/blob/master/lib/Git/Helpers.pm#L50
+
+    # open a file that was mentioned in the output of diff or
+    # git diff or git log -p, etc:
+    # (this will open foo/bar if it exists)
+    ot a/foo/bar
+
+    # open "/foo/bar.txt" as it appears in an Ansible error message
+    # (Note the quotes around the arg)
+    ot "The error appears to be in '/foo/bar.txt': line 14, column 16, but may be"
+
+    # open "/foo/bar.java:[3,5]" as it appears in Maven's test output
+    ot /foo/bar.java:[3,5]
+
+    # override $ENV{EDITOR}. [-e|--editor]
+    ot -e kate Foo::Bar
+
+    # Don't open anything. Just print to STDOUT. [-p|--print]
+    ot -p kate Foo::Bar
+
+=head1 DESCRIPTION
+
+It can be a pain to have to copy Perl module names from a stack trace or some
+other output and have to translate that into something which an editor like vim
+understands.  This module aims to take some of the pain out of this.  So far I
+have tested this only with vim, but I *think* this should also work with emacs
+and nano.
+
+The C<ot> script can parse line numbers from text so that you can open your
+files at the correct starting point.  It will also try to translate subroutine
+names into the appropriate line numbers.  It will look in a lib or t/lib
+directory relative to your current path.  If it thinks it has a Perl module
+name it will also try to require it and use %INC in order to find the module on
+disks.  All security caveats apply when requiring 3rd party modules.
+
+=head1 PARAMETERS
+
+=head2 -b|--browse
+
+Open the file on the GitHub web site using your default browser, rather than
+invoking a local editor.
+
+    ot -b Foo::Bar
+
+=head2 -e|--editor
+
+Can be used to override C<$ENV{EDITOR}>. Helpful for writing editor-specific
+plugins.
+
+    ot -e kate Foo::Bar
+
+    ot --editor kate Foo::Bar
+
+=head2 -p|--print
+
+Print the editor arguments to C<STDOUT> rather than invoking an editor. Helpful
+for writing editor-specific plugins.
+
+    ot -p Foo::Bar
+
+    ot --print Foo::Bar
+
+    ot -p -e kate Foo::Bar
+
+    ot --print --editor kate Foo::Bar
+
+=head1 ENVIRONMENT VARIABLES
+
+By default, C<ot> will search your C<lib> and C<t/lib> directories for local files.  You can override this via the C<$ENV{OPEN_THIS_LIBS}> variable.  It accepts a comma-separated list of libs.
+
+    export OPEN_THIS_LIBS=lib,t/lib,t/other-lib
+
+Or
+
+    OPEN_THIS_LIBS=lib,t/lib,t/other-lib ot Foo::Bar
+
+Probably you want to export this variable in your C<~/.bashrc> file (or some
+other appropriate place in your dot files.
+
+=head1 SUPPORTED EDITORS
+
+This code has been well tested with C<vim>.  It should also work with C<nvim>,
+C<emacs>, C<pico>, C<nano> and C<kate>.  Patches for other editors are very
+welcome.
+
+=head1 AUTHOR
+
+Olaf Alders <olaf@wundercounter.com>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2018 by Olaf Alders.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut
