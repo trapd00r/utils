@@ -1,0 +1,3 @@
+#!/bin/sh
+# abstract: git highscore
+git shortlog -sn|perl -pe 's/^/sprintf("#% 2d", $.)/e'
