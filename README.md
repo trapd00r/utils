@@ -93,6 +93,7 @@
 * [git-diff-syntaxhl](https://github.com/trapd00r/utils/blob/master/git-diff-syntaxhl) - prettier git diff
 * [git-rec](https://github.com/trapd00r/utils/blob/master/git-rec) - perform git actions recursively
 * [git-top](https://github.com/trapd00r/utils/blob/master/git-top) - git highscore
+* [gitdo](https://github.com/trapd00r/utils/blob/master/gitdo) - do various things on git repos
 * [github-referrers](https://github.com/trapd00r/utils/blob/master/github-referrers) - get referrer urls for all github repos
 * [gotoalbum](https://github.com/trapd00r/utils/blob/master/gotoalbum) - goto to root directory of currently playing album
 * [hits](https://github.com/trapd00r/utils/blob/master/hits) - show httpd resources with most hits
@@ -121,6 +122,7 @@
 * [lyrics_update](https://github.com/trapd00r/utils/blob/master/lyrics_update) - update lyrics db on github
 * [md2html](https://github.com/trapd00r/utils/blob/master/md2html) - convert input markdown file to html
 * [mkdr](https://github.com/trapd00r/utils/blob/master/mkdr) - given file.ext, mkdir file/ and move file.ext to file/file.ext
+* [mls](https://github.com/trapd00r/utils/blob/master/mls) - list music collection by artist
 * [mpd-copy-path-to-clipboard](https://github.com/trapd00r/utils/blob/master/mpd-copy-path-to-clipboard) - copy now playing full path to clipboard
 * [mpd-goto-album-dir](https://github.com/trapd00r/utils/blob/master/mpd-goto-album-dir) - goto now playing album directory
 * [mpd-goto-artist-dir](https://github.com/trapd00r/utils/blob/master/mpd-goto-artist-dir) - goto now playing artist directory
@@ -191,6 +193,7 @@
 * [sshc](https://github.com/trapd00r/utils/blob/master/sshc) - change and restore bg/fg colors based on ssh host
 * [stderr](https://github.com/trapd00r/utils/blob/master/stderr) - print input to stderr
 * [strip_esc](https://github.com/trapd00r/utils/blob/master/strip_esc) - strip data from escape sequences
+* [tailf](https://github.com/trapd00r/utils/blob/master/tailf) - color-follow-tail for access.log
 * [term_attr](https://github.com/trapd00r/utils/blob/master/term_attr) - dump all term attributes and visualize various term settings
 * [to_phone](https://github.com/trapd00r/utils/blob/master/to_phone) - scp files to the phone and place it where I want it
 * [today](https://github.com/trapd00r/utils/blob/master/today) - stats on what I did do today

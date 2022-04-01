@@ -1,0 +1,126 @@
+#!/usr/bin/perl
+# vim: ft=perl:fdm=marker:fmr=#<,#>:fen:et:sw=2:
+# abstract: list music collection by artist
+use strict;
+use warnings FATAL => 'all';
+use vars     qw($VERSION);
+use autodie  qw(:all);
+
+use utf8;
+use open qw(:std :utf8);
+
+my $APP  = 'mls';
+$VERSION = '0.001';
+
+use DDP;
+use v5.30;
+
+use Encode;
+use File::Spec;
+
+my $base_dir = $ENV{XDG_MUSIC_DIR};
+my $artist = shift // 'laleh';
+
+# like beets does it
+$artist = join(' ', map { ucfirst($_) } split(/\s+/, $artist));
+
+# first char in artist name
+my $base_chr = substr($artist, 0, 1);
+
+# /mnt/music8/+TAGGED/L/Laleh
+my $path_to_artist_root = sprintf "%s%s/%s",
+   $base_dir, $base_chr, $artist;
+
+
+my $music =  _readdir($path_to_artist_root);
+
+# p $music;
+
+_list($music);
+
+sub _list {
+  my ($collection) = @_;
+
+  for my $albumtype(sort(keys(%{ $collection }))) { # albums, singles, demos
+    my $count = scalar keys %{ $collection->{$albumtype} }; # 15 albums, 4 singles...
+
+
+    my ($first, $last) = (sort{ $collection->{$albumtype}->{$a}->{year} cmp $collection->{$albumtype}->{$b}->{year} } keys(%{ $collection->{$albumtype} }))[0, -1];
+
+
+    my($first_release_year) = $first =~ m/ │(\d+)│ /;
+    my($last_release_year)  = $last  =~ m/ │(\d+)│ /;
+
+    my $timespan = $last_release_year - $first_release_year;
+
+    printf "\033[48;5;108;38;5;234;1;3m % 5s\033[m\033[48;5;30;38;5;232;1;3m%-74s\033[48;5;108;38;5;234;1;3m %-2d release%s\033[m\n", ($timespan > 1 ? "${timespan}yr " : ''), " $albumtype", $count, ($count > 1 ? 's ' : '  ');
+
+    for my $album(sort{ $collection->{$albumtype}->{$a}->{year} cmp $collection->{$albumtype}->{$b}->{year} } keys(%{ $collection->{$albumtype} })) { # actual release
+      my $colored_album = _color('DI', $album);
+
+      my ($cleaned_album) = $colored_album =~ s{\[[A-Z0-9, ]+\]}{}ir;
+      printf "% 4s %s\n",
+        _color($collection->{$albumtype}->{$album}->{format}), $cleaned_album;
+    }
+  }
+}
+
+sub _readdir {
+  my $path = shift;
+  print " Found '$path'\n";
+
+  my $collection;
+
+  opendir(my $dh, $path) or die $!;
+
+  # processes a structure like this
+  # pushing releases into their according albumtypes
+  # ---
+  # +albums
+  # +eps
+  # +live
+  # +other
+  # +radio
+  # +remixes
+  # +singles
+  # +tracks
+
+
+  while(my $file = readdir($dh)) {
+    next if $file =~ m/^[.]{1,2}$/;
+    if($file =~ m/^[+](.+)$/) {
+      my $albumtype = $1;
+      next if $albumtype eq 'tracks';
+
+      my $albumtype_dir = sprintf "%s/%s", $path, $file;
+      opendir(my $dh2, $albumtype_dir) or die $!;
+
+      my $first_release_year = 0;
+      while(my $album = Encode::decode('utf-8', readdir($dh2))) {
+        next if $album =~ m/^[.]{1,2}$/;
+        next if $album eq '+tracks';
+
+        $collection->{$albumtype}->{$album}->{absname}    = File::Spec->rel2abs($albumtype_dir . "/$album");
+        $collection->{$albumtype}->{$album}->{artist}     = $artist;
+        $collection->{$albumtype}->{$album}->{albumtype}  = $albumtype;
+
+        my $release_year = $album =~ m/│(\d+)│/ ? $1 : 0; 
+
+        $collection->{$albumtype}->{$album}->{year}       = $release_year;
+
+        $collection->{$albumtype}->{$album}->{format}     = $album =~ m/(mp3|flac|opus)]$/i ? $1 : '';
+
+        $collection->{$albumtype}->{$album}->{last}       = $album =~ m/(mp3|flac|opus)]$/i ? $1 : '';
+
+      }
+    }
+  }
+  return $collection;
+}
+
+sub _color {
+  $_[0] =~ m/FLAC/ && return sprintf "\033[38;5;204m% 4s\033[m", @_;
+  $_[0] =~ m/MP3/  && return sprintf "\033[38;5;137m% 4s\033[m", @_;
+  $_[0] =~ m/DI/   && shift and return sprintf "\033[38;5;30m %s\033[m", @_;
+}
+
