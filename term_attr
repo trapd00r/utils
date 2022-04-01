@@ -51,6 +51,7 @@ printf "%s\n",   fg(10, '$File::LsColor::COLORIZE_PATH') . ' = ' . fg(33, 1);
 printf "→ %s\n",   ls_color('/usr/share/perl5/core_perl/Symbol.pm');
 printf "→ %s\n\n", ls_color('/a/path/and/file/without/extension/README');
 printf "%s\n",   fg(10, '$File::LsColor::COLORIZE_PATH') . ' = ' . fg(33, 0);
+$File::LsColor::COLORIZE_PATH = 0;
 printf "→ %s\n",   ls_color('/usr/share/perl5/core_perl/Symbol.pm');
 printf "→ %s\n",   ls_color('/a/path/and/file/without/extension/README');
 system("hr -fg 137 -c '-' -bi -s 80");
