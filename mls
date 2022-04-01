@@ -19,7 +19,7 @@ use Encode;
 use File::Spec;
 
 my $base_dir = $ENV{XDG_MUSIC_DIR};
-my $artist = "@ARGV" // 'laleh';
+my $artist = @ARGV ? "@ARGV" : 'laleh';
 
 # like beets does it
 $artist = join(' ', map { ucfirst($_) } split(/\s+/, $artist));
@@ -47,9 +47,10 @@ sub _list {
 
     my ($first, $last) = (sort{ $collection->{$albumtype}->{$a}->{year} cmp $collection->{$albumtype}->{$b}->{year} } keys(%{ $collection->{$albumtype} }))[0, -1];
 
+    my($first_release_year, $last_release_year) = 0;
 
-    my($first_release_year) = $first =~ m/ │(\d+)│ /;
-    my($last_release_year)  = $last  =~ m/ │(\d+)│ /;
+    ($first_release_year) = $first =~ m/ │(\d+)│ /;
+    ($last_release_year)  = $last  =~ m/ │(\d+)│ /;
 
     my $timespan = $last_release_year - $first_release_year;
 
