@@ -19,7 +19,7 @@ use Encode;
 use File::Spec;
 
 my $base_dir = $ENV{XDG_MUSIC_DIR};
-my $artist = shift // 'laleh';
+my $artist = "@ARGV" // 'laleh';
 
 # like beets does it
 $artist = join(' ', map { ucfirst($_) } split(/\s+/, $artist));
