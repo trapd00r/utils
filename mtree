@@ -1,0 +1,127 @@
+#!/usr/bin/perl
+# vim: ft=perl:fdm=marker:fmr=#<,#>:fen:et:sw=2:
+# abstract: build a tree of music releases by given artist
+use strict;
+use warnings FATAL => 'all';
+use vars     qw($VERSION);
+use autodie  qw(:all);
+
+my $APP  = 'mtree';
+$VERSION = '0.001';
+
+use DDP;
+use v5.30;
+
+use Encode;
+
+use File::Basename;
+use File::Find::Rule;
+use File::LsColor       qw(ls_color can_ls_color);
+use Term::ExtendedColor qw(:attributes);
+use Text::FileTree;
+
+use Getopt::Long;
+Getopt::Long::Configure qw(bundling auto_version);
+
+my $opt = {
+  verbose   => 0,  # incrementable
+  artist    => [], # strings
+  dirs_only => 0,  # directories only? (tree -d)
+};
+
+
+GetOptions(
+  'd|dir!' =>  \$opt->{dirs_only},
+
+  # This handles what's not considering an option
+  '<>'         => sub { push(@{ $opt->{artist}},  @_) },
+
+  'h|help'     => sub {
+    say "@{[basename($0)]} $VERSION";
+    say "Usage:";
+    say "  -d, --dir      list directories only";
+
+    say "  -v, --version  show version info and exit";
+    say "  -h, --help     show this help and exit";
+
+    exit;
+  },
+  'version'    => sub { printf "%s v%s\n", $0, $VERSION; exit },
+);
+
+
+# 'Anna Ternheim'
+my $artist = join(' ', @{ $opt->{artist} });
+
+# /mnt/music8/+TAGGED/
+my $base_dir = $ENV{XDG_MUSIC_DIR};
+
+# uppercase the artist name like beets does it
+$artist = Encode::decode('utf-8', join(' ', map { ucfirst($_) } split(/\s+/, $artist)));
+
+# first char in artist name
+my $base_chr = substr($artist, 0, 1);
+
+# /mnt/music8/+TAGGED/L/Laleh
+my $path_to_artist_root = sprintf "%s%s/%s",
+   $base_dir, $base_chr, $artist;
+
+my $tree = Text::FileTree->new;
+my $artist_tree = $tree->parse(_readdir($path_to_artist_root));
+
+my $artist_root = _resolve_tree($artist_tree);
+
+# color dirs according to LS_COLORS even though they aren't real dirs
+my $dir_attribute = can_ls_color('di');
+
+# build the tree presentation
+for my $albumtype(sort {  sort_by_albumtype($b) <=> sort_by_albumtype($a) } keys(%{ $artist_root })) {
+  printf "@{[fg(240, '├')]} %s\n", fg($dir_attribute, bold(italic($albumtype)));
+
+  for my $album(sort { sort_by_year($a) <=> sort_by_year($b) } keys(%{ $artist_root->{$albumtype} })) {
+    printf "@{[fg(240, '├──')]} %s\n", ($album =~ m{(.+)[.]\S+$}) ? ls_color($album) : fg($dir_attribute, $album)
+  }
+}
+
+# sort the releases by year
+sub sort_by_year {
+  my $str = shift;
+  return $1 if $str =~ m/│(\d+)│/;
+  return 0;
+}
+
+# custom sorting by albumtype
+# albums, singles, eps most important
+sub sort_by_albumtype {
+  my $str = shift;
+  return 5 if $str =~ m/[+]albums/;
+  return 4 if $str =~ m/[+]eps/;
+  return 3 if $str =~ m/[+]singles/;
+  return 2 if $str =~ m/[+]demos/;
+  return 1 if $str =~ m/[+]live/;
+  return 0;
+}
+
+sub _readdir {
+  my $path = shift;
+
+  if($opt->{dirs_only}) {
+    return File::Find::Rule->directory->in($path);
+  }
+
+  return File::Find::Rule->file->in($path);
+}
+
+sub _resolve_tree {
+  my $t = shift;
+
+  my @keys = _path_elements_to_hash_keys($path_to_artist_root);
+
+  my $artist_collection_tree = $t->{$keys[0]}->{$keys[1]}->{$keys[2]}->{$keys[3]}->{$keys[4]}->{$keys[5]};
+  return $artist_collection_tree;
+}
+
+sub _path_elements_to_hash_keys {
+  return split('/', shift);
+}
+
