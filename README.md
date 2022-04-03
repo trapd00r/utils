@@ -139,6 +139,7 @@
 * [mplayer_exec](https://github.com/trapd00r/utils/blob/master/mplayer_exec) - mplayer client for mplayer daemon
 * [mplayerd](https://github.com/trapd00r/utils/blob/master/mplayerd) - mplayer as a daemon
 * [mpnp](https://github.com/trapd00r/utils/blob/master/mpnp) - mplayer now-playing using Mplayer::NowPlaying
+* [mtree](https://github.com/trapd00r/utils/blob/master/mtree) - build a tree of music releases by given artist
 * [music_session](https://github.com/trapd00r/utils/blob/master/music_session) - start a music session in tmux
 * [net_on_på_sid](https://github.com/trapd00r/utils/blob/master/net_on_på_sid) - enable ethernet on 82579V chipsets
 * [nicefind](https://github.com/trapd00r/utils/blob/master/nicefind) - a very nice find ui
