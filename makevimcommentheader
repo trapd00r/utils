@@ -1,0 +1,23 @@
+#!/usr/bin/perl
+# abstract: create vim comment headers
+use strict;
+use warnings FATAL => 'all';
+use vars     qw($VERSION);
+use autodie  qw(:all);
+
+use utf8;
+
+my $header_title = join(' ', @ARGV);
+
+my $comment = '"';
+my $header_char = '=';
+my $pre_header_len = 10;
+
+my $available_len = (54 - length($comment . $header_title)) - $pre_header_len;
+
+my $final_header = sprintf "%s %s %s %s",
+   $comment, $header_char x $pre_header_len, uc($header_title), $header_char x $available_len;
+
+printf "%s\n", $final_header;
+
+system("echo '$final_header'|xclip");
