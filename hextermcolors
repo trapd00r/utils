@@ -6,9 +6,11 @@ use warnings FATAL => 'all';
 use Term::ExtendedColor qw(fg);
 use Term::ExtendedColor::Xresources qw(get_xterm_colors);
 
+my $single_index = shift;
+
 my $colors = get_xterm_colors(
   {
-    index => [0..255],
+    index => [$single_index ? $single_index : 0..255],
     type  => 'hex',
   },
 );
