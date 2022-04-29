@@ -1,0 +1,18 @@
+#!/usr/bin/perl
+# abstract: display hex values of defined terminal colors in color
+use strict;
+use warnings FATAL => 'all';
+
+use Term::ExtendedColor qw(fg);
+use Term::ExtendedColor::Xresources qw(get_xterm_colors);
+
+my $colors = get_xterm_colors(
+  {
+    index => [0..255],
+    type  => 'hex',
+  },
+);
+
+for my $index(sort { $colors->{$a} <=> $colors->{$b} } keys %{ $colors }) {
+  printf "% 3d: %s\n", $index, fg($index, $colors->{$index}->{rgb})
+}

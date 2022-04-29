@@ -35,6 +35,7 @@
 * [beet-ls-albums-by-label](https://github.com/trapd00r/utils/blob/master/beet-ls-albums-by-label) - list albums by artist and show record label, helper for
 * [beet-np-info](https://github.com/trapd00r/utils/blob/master/beet-np-info) - show all available beets info for now playing song in mpd
 * [beet-selfripped](https://github.com/trapd00r/utils/blob/master/beet-selfripped) - list albums I've ripped myself
+* [beet-smart-import.pl](https://github.com/trapd00r/utils/blob/master/beet-smart-import.pl) - auto-specify albumtype if possible on beet import
 * [beet-symlink-query](https://github.com/trapd00r/utils/blob/master/beet-symlink-query) - symlink the results of a beets query
 * [beet-update](https://github.com/trapd00r/utils/blob/master/beet-update) - beet update that will NOT change any tags, neither move files around
 * [bigrand](https://github.com/trapd00r/utils/blob/master/bigrand) - generate n random numbers
@@ -96,6 +97,7 @@
 * [gitdo](https://github.com/trapd00r/utils/blob/master/gitdo) - do various things on git repos
 * [github-referrers](https://github.com/trapd00r/utils/blob/master/github-referrers) - get referrer urls for all github repos
 * [gotoalbum](https://github.com/trapd00r/utils/blob/master/gotoalbum) - goto to root directory of currently playing album
+* [hextermcolors](https://github.com/trapd00r/utils/blob/master/hextermcolors) - display hex values of defined terminal colors in color
 * [hits](https://github.com/trapd00r/utils/blob/master/hits) - show httpd resources with most hits
 * [html2txt](https://github.com/trapd00r/utils/blob/master/html2txt) - turn html into plain text
 * [httrack_with_linked_images](https://github.com/trapd00r/utils/blob/master/httrack_with_linked_images) - rip entire blog + linked external images
@@ -120,6 +122,8 @@
 * [lscolorpicker](https://github.com/trapd00r/utils/blob/master/lscolorpicker) - generate LS_COLORS interactively
 * [lsrel](https://github.com/trapd00r/utils/blob/master/lsrel) - list scene releases on a fs based on media type
 * [lyrics_update](https://github.com/trapd00r/utils/blob/master/lyrics_update) - update lyrics db on github
+* [m](https://github.com/trapd00r/utils/blob/master/m) - send now playing artist to mtree
+* [makevimcommentheader](https://github.com/trapd00r/utils/blob/master/makevimcommentheader) - create vim comment headers
 * [md2html](https://github.com/trapd00r/utils/blob/master/md2html) - convert input markdown file to html
 * [mkdr](https://github.com/trapd00r/utils/blob/master/mkdr) - given file.ext, mkdir file/ and move file.ext to file/file.ext
 * [mls](https://github.com/trapd00r/utils/blob/master/mls) - list music collection by artist
