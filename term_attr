@@ -39,12 +39,20 @@ for my $t( sort { $attr->{$a} cmp $attr->{$b} } keys(%{ $attr })) {
   }
 }
 
+system("hr -fg 137 -c '-' -bi -s 40");
+
 # in case we're abusing LD_PRELOAD
 # https://github.com/trapd00r/stderred
-print "\nstdout\n";
+print "stdout\n";
 select STDERR;
-print "stderr\n\n";
+print "stderr\n";
 select STDOUT;
+system("hr -fg 137 -c '-' -bi -s 40");
+
+for my $unicode(qw(🌎)) {
+  printf "\033[38;5;225m%s\033[m\033[38;5;39m%s\033[m\n",$unicode, $unicode;
+}
+print "\n";
 
 
 printf "%s\n",   fg(10, '$File::LsColor::COLORIZE_PATH') . ' = ' . fg(33, 1);
