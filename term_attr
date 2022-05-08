@@ -6,6 +6,14 @@ use warnings FATAL => 'all';
 
 use File::LsColor ':all';
 use Term::ExtendedColor qw(fg);
+use Term::hr {
+  fg     => 137,
+  char   => '-',
+  bold   => 1,
+  italic => 1,
+  width  => 40,
+  crlf   => 1,
+};
 
 my $attr = {
   normal        => 0,
@@ -22,7 +30,9 @@ my $attr = {
 };
 
 select STDOUT;
-system("hr -fg 137 -c '-' -bi -s 80");
+
+my $hr = hr();
+print $hr;
 
 for my $t( sort { $attr->{$a} cmp $attr->{$b} } keys(%{ $attr })) {
   $t =~ /^blink/ and printf("%s\t\t\t    \e[48;5;196;38;5;233;1;3mSKIPPING: SHOULD NEVER HAVE BEEN IMPLEMENTED\e[m\n", sprintf("%-10s", $t)), next;
@@ -39,7 +49,6 @@ for my $t( sort { $attr->{$a} cmp $attr->{$b} } keys(%{ $attr })) {
   }
 }
 
-system("hr -fg 137 -c '-' -bi -s 40");
 
 # in case we're abusing LD_PRELOAD
 # https://github.com/trapd00r/stderred
@@ -47,7 +56,7 @@ print "stdout\n";
 select STDERR;
 print "stderr\n";
 select STDOUT;
-system("hr -fg 137 -c '-' -bi -s 40");
+print $hr;
 
 for my $unicode(qw(🌎)) {
   printf "\033[38;5;225m%s\033[m\033[38;5;39m%s\033[m\n",$unicode, $unicode;
@@ -62,4 +71,4 @@ printf "%s\n",   fg(10, '$File::LsColor::COLORIZE_PATH') . ' = ' . fg(33, 0);
 $File::LsColor::COLORIZE_PATH = 0;
 printf "→ %s\n",   ls_color('/usr/share/perl5/core_perl/Symbol.pm');
 printf "→ %s\n",   ls_color('/a/path/and/file/without/extension/README');
-system("hr -fg 137 -c '-' -bi -s 80");
+print $hr;
