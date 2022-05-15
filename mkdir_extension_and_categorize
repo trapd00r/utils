@@ -1,0 +1,102 @@
+#!/usr/bin/perl
+# abstract: quickly sort content in dl dir into categories
+# beware, no error handling
+#
+# $ magnusw1]> mkdir_extension_and_categorize {h,i}*
+#
+# `hilightcmd.pl' -> `code/hilightcmd.pl'
+# `hilightwin.pl' -> `code/hilightwin.pl'
+# `hotplug.json' -> `code/hotplug.json'
+# `hotplug-preinit.json' -> `code/hotplug-preinit.json'
+# `idoler.gif' -> `img/idoler.gif'
+# `image01.jpeg' -> `img/image01.jpeg'
+# `image02.jpeg' -> `img/image02.jpeg'
+# `image03.jpeg' -> `img/image03.jpeg'
+# `index.html' -> `code/index.html'
+# `ipcalc.sh' -> `code/ipcalc.sh'
+use strict;
+use warnings FATAL => 'all';
+use File::Copy;
+use File::Path          qw(make_path);
+use File::LsColor qw(ls_color_internal);
+
+*ls_color = *ls_color_internal;
+
+my %categorize = (
+  '7z' => 'archive',
+  gz   => 'archive',
+  tar  => 'archive',
+  zip  => 'archive',
+  lha  => 'archive',
+  xz   => 'archive',
+  m3u  => 'audio',
+  pls  => 'audio',
+  mp3  => 'audio',
+  flac => 'audio',
+  ogg  => 'audio',
+  wav  => 'audio',
+  bin  => 'bin',
+  exe  => 'bin',
+  pl   => 'code',
+  pm   => 'code',
+  sh   => 'code',
+  vim  => 'code',
+  js   => 'code',
+  html => 'code',
+  css  => 'code',
+  csv  => 'code',
+  php  => 'code',
+  json => 'code',
+  tt   => 'code',
+  xs   => 'code',
+  py   => 'code',
+  c    => 'code',
+  h    => 'code',
+  adf  => 'game',
+  nes  => 'game',
+  spc  => 'game',
+  gb   => 'game',
+  gbc  => 'game',
+  gba  => 'game',
+  doc  => 'doc',
+  docx => 'doc',
+  pdf  => 'doc',
+  jpg  => 'img',
+  jpeg => 'img',
+  gif  => 'img',
+  png  => 'img',
+  ico  => 'img',
+  svg  => 'img',
+  webp => 'img',
+  ttf  => 'font',
+  otf  => 'font',
+  otb  => 'font',
+  txt  => 'text',
+  conf => 'conf',
+  rc   => 'conf',
+);
+
+_mkdir(@ARGV);
+
+sub _mkdir {
+  for my $file(@_) {
+    if(-f $file) {
+      if($file =~ m|(.+)[.](.+)$|) {
+        my $new_dir = exists($categorize{lc($2)})
+          ? $categorize{lc($2)} # archive
+          : $2;                 # swf
+
+        if(! -d $new_dir) {
+          make_path($new_dir)
+        }
+        if(File::Copy::move($file, $new_dir)) {
+          printf "`%s' -> `%s/%s'\n",
+            ls_color($file), ls_color($new_dir), ls_color($file);
+        }
+        else {
+          print STDERR "$file: $@\n";
+        }
+      }
+    }
+  }
+}

@@ -125,6 +125,7 @@
 * [m](https://github.com/trapd00r/utils/blob/master/m) - send now playing artist to mtree
 * [makevimcommentheader](https://github.com/trapd00r/utils/blob/master/makevimcommentheader) - create vim comment headers
 * [md2html](https://github.com/trapd00r/utils/blob/master/md2html) - convert input markdown file to html
+* [mkdir_extension_and_categorize](https://github.com/trapd00r/utils/blob/master/mkdir_extension_and_categorize) - quickly sort content in dl dir into categories
 * [mkdr](https://github.com/trapd00r/utils/blob/master/mkdr) - given file.ext, mkdir file/ and move file.ext to file/file.ext
 * [mls](https://github.com/trapd00r/utils/blob/master/mls) - list music collection by artist
 * [mpd-copy-path-to-clipboard](https://github.com/trapd00r/utils/blob/master/mpd-copy-path-to-clipboard) - copy now playing full path to clipboard
