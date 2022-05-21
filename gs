@@ -12,5 +12,7 @@
 #    '
 #echo
 #git-awesome-status
-git status --short "$@"
-builtin print -P ' '${vcs_info_msg_0_}
+#git status --short "$@"
+#builtin print -P ' '${vcs_info_msg_0_}
+
+git status --short --show-stash --column=column
