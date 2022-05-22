@@ -1,0 +1,11 @@
+#!/usr/bin/perl
+# abstract: cat images to the terminal
+use strict;
+use warnings;
+
+use Image::Term256Color;
+use v5.30;
+
+say "Provide an image!" and exit unless @ARGV;
+print Image::Term256Color::convert( shift , { scale_ratio => .5 } ) . "\n";
+

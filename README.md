@@ -46,6 +46,7 @@
 * [by_extension](https://github.com/trapd00r/utils/blob/master/by_extension) - fetch filetype information based on extensions
 * [c256-grey-colorscheme](https://github.com/trapd00r/utils/blob/master/c256-grey-colorscheme) - generate a grey 256 color colorscheme
 * [calc](https://github.com/trapd00r/utils/blob/master/calc) - simple calculator
+* [catimg](https://github.com/trapd00r/utils/blob/master/catimg) - cat images to the terminal
 * [cconvert](https://github.com/trapd00r/utils/blob/master/cconvert) - convert to/from bin, oct, hex, dec
 * [clarify](https://github.com/trapd00r/utils/blob/master/clarify) - show line endings
 * [clean](https://github.com/trapd00r/utils/blob/master/clean) - clean up a release dir
@@ -85,6 +86,7 @@
 * [font_preview](https://github.com/trapd00r/utils/blob/master/font_preview) - preview all fonts in your terminal
 * [ft](https://github.com/trapd00r/utils/blob/master/ft) - show filetype info
 * [fzf-perlsub-githistory](https://github.com/trapd00r/utils/blob/master/fzf-perlsub-githistory) - display a perl subs git history over time
+* [generate-tags.sh](https://github.com/trapd00r/utils/blob/master/generate-tags.sh) - generate tags for vim
 * [generate_xresources](https://github.com/trapd00r/utils/blob/master/generate_xresources) - generate a hash with colorschemes from X resources
 * [generate_zsh_completion](https://github.com/trapd00r/utils/blob/master/generate_zsh_completion) - generate zsh completion
 * [get_ls_colors](https://github.com/trapd00r/utils/blob/master/get_ls_colors) - print all defined LS_COLORS
