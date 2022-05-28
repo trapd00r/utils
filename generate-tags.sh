@@ -10,7 +10,6 @@ ctags -f ~/dev/tags --recurse --totals \
   --exclude=blib --exclude=.svn  --exclude=CLEAN             \
   --exclude=.git --exclude='*~'                              \
   --extras=q                                                 \
-  --languages=Perl,Vim                                       \
+  --languages=Perl                                           \
   --langmap=Perl:+.t                                         \
   ~/dev/
-
