@@ -5,14 +5,21 @@ use strict;
 use File::Tail;
 use Term::ExtendedColor qw(fg bg);
 
-my $log   = shift // "$ENV{HOME}/pi/var/log/access.log";
+use Term::hr {
+  fg   => 240,
+  pre  => 8,
+  size => 72,
+  bold => 1,
+};
+
+my $log   = shift // '/var/log/httpd/access_log';
 
 my $tail = File::Tail->new(
   name        => $log,
   maxinterval => 3,
-  adjustafter => 3,
-  interval    => 0,
-  tail        => 100,
+  adjustafter => 10,
+  interval    => 10,
+  tail        => 10,
 );
 
 my @keywords = qw(
@@ -20,6 +27,7 @@ my @keywords = qw(
   colorcoke
 );
 
+my $previous_ip = 0;
 while(defined( my $line = $tail->read )) {
   my $e = "(.+?)";
   $line =~ /^$e $e $e \[$e:$e $e\] "$e $e $e" $e $e/;
@@ -59,5 +67,8 @@ while(defined( my $line = $tail->read )) {
 
   $size = fg(160, $size) if $size > 5;
   printf("%s %7s %s \e[38;5;215m%s\e[0m \t%-60s\n",
-    $code, $request, $size, $ip, $file) unless $file =~ m/.+\.(?:css|ico)$/
+    $code, $request, $size, $ip, $file) unless $file =~ m/.+\.(?:css|ico)$/;
+
+  printf "%s\n", hr() if $previous_ip ne $ip;
+  $previous_ip = $ip;
 }
