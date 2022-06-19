@@ -1,0 +1,44 @@
+#!/usr/bin/perl
+# abstract: simple scrot wrapper
+use strict;
+use warnings FATAL => 'all';
+
+use utf8;
+use open qw(:std :utf8);
+
+use IPC::Cmd qw(run);
+use File::Basename;
+use Clipboard;
+use Getopt::Long;
+use DDP;
+
+use v5.30;
+
+my $savedir = '/srv/http/vhosts/img/';
+
+my $scrot_options = join(' ', grep { m/^-/ } @ARGV);
+my ($file) = grep { ! m/^-/ } @ARGV;
+
+scrot($file, $scrot_options);
+
+sub scrot {
+  my $filename = shift;
+  my $opt = shift;
+  if(!$filename) {
+    print "enter filename: ";
+    chomp($filename = <>);
+  }
+
+  $filename = sprintf '%s%s.png', $savedir, $filename;
+
+  my $buffer;
+  scalar run(
+    command => "scrot -q 90 $scrot_options $filename",
+    verbose => 3,
+    buffer  => \$buffer,
+    timeout => 0,
+  );
+
+  my $basename = basename($filename);
+  Clipboard->copy_to_all_selections("http://i.japh.se/$basename");
+}

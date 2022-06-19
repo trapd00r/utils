@@ -86,6 +86,7 @@
 * [font_preview](https://github.com/trapd00r/utils/blob/master/font_preview) - preview all fonts in your terminal
 * [ft](https://github.com/trapd00r/utils/blob/master/ft) - show filetype info
 * [fzf-perlsub-githistory](https://github.com/trapd00r/utils/blob/master/fzf-perlsub-githistory) - display a perl subs git history over time
+* [generate-perl-package-completion-for-vim.pl](https://github.com/trapd00r/utils/blob/master/generate-perl-package-completion-for-vim.pl) - generate perl package completion for vim
 * [generate-tags.sh](https://github.com/trapd00r/utils/blob/master/generate-tags.sh) - generate tags for vim
 * [generate_xresources](https://github.com/trapd00r/utils/blob/master/generate_xresources) - generate a hash with colorschemes from X resources
 * [generate_zsh_completion](https://github.com/trapd00r/utils/blob/master/generate_zsh_completion) - generate zsh completion
@@ -195,6 +196,7 @@
 * [shift-insert](https://github.com/trapd00r/utils/blob/master/shift-insert) - shift+insert
 * [shivastream](https://github.com/trapd00r/utils/blob/master/shivastream) - nokia n900 mpd streaming aid
 * [shot](https://github.com/trapd00r/utils/blob/master/shot) - take screenshot and upload to httpd
+* [skrot](https://github.com/trapd00r/utils/blob/master/skrot) - simple scrot wrapper
 * [sr-rename](https://github.com/trapd00r/utils/blob/master/sr-rename) - a little tool to clean up episodes downloaded from Sveriges Radio.
 * [srinfo](https://github.com/trapd00r/utils/blob/master/srinfo) - sveriges radio info fetcher
 * [srnp](https://github.com/trapd00r/utils/blob/master/srnp) - now playing for sveriges radio
