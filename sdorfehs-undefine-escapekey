@@ -1,2 +1,4 @@
 #!/bin/sh
-sdorfehs -c 'escape C-t'
+# to disable/change metakey + F-keys prior to launching a game from steam and restoring the settings when the game finishes:
+# sdorfehs-undefine-escapekey;sdorfehs-undefinekey-tops; %command%; sdorfehs-define-escapekey;sdorfehs-definekey-tops
+sdorfehs -c 'escape C-g'

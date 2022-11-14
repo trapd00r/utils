@@ -1,5 +1,7 @@
 #!/bin/sh
 # abstract: undefine keys for switching workspaces
+# to disable/change metakey + F-keys prior to launching a game from steam and restoring the settings when the game finishes:
+# sdorfehs-undefine-escapekey;sdorfehs-undefinekey-tops; %command%; sdorfehs-define-escapekey;sdorfehs-definekey-tops
 sdorfehs -c 'undefinekey top s-1'
 sdorfehs -c 'undefinekey top s-2'
 sdorfehs -c 'undefinekey top s-3'
