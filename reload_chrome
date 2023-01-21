@@ -1,0 +1,22 @@
+#!/bin/sh
+# abstract: On vim write, reload the current tab in chrome
+# This script is supposed to be used together with a BufWritePost autocommand in vim
+# Useful for web development :-)
+# I use it like this:
+# autocmd! BufWritePost ~/dev/webbhuset/* silent !reload_chrome
+
+# first, save the current window
+current_window=$(xdotool getwindowfocus)
+
+# find the browser window and send ^R to it
+xdotool search --onlyvisible --class Chrome windowfocus key ctrl+r
+
+if [ $(pgrep sdorfehs) ]; then
+  # this restores true focus on the vim window we executed the BufWritePost
+  # autocommand from
+  # hack because of missing EWMH hints in my window manager
+  sdorfehs -c 'inext' -c 'iprev'
+else
+  # a regular wm, this should work
+  xdotool windowactivate --sync $current_window
+fi

@@ -170,6 +170,7 @@
 * [rainbow](https://github.com/trapd00r/utils/blob/master/rainbow) - a rainbow in your shell
 * [ratrepl](https://github.com/trapd00r/utils/blob/master/ratrepl) - ratpoison repl
 * [rel_old](https://github.com/trapd00r/utils/blob/master/rel_old) - flexget parser
+* [reload_chrome](https://github.com/trapd00r/utils/blob/master/reload_chrome) - On vim write, reload the current tab in chrome
 * [rename-tv](https://github.com/trapd00r/utils/blob/master/rename-tv) - rename tv episodes
 * [rename_youtube](https://github.com/trapd00r/utils/blob/master/rename_youtube) - rename files downloaded with clive to something a bit more sensible
 * [rescue_chmod](https://github.com/trapd00r/utils/blob/master/rescue_chmod) - chmod -x /bin/chmod, HELP
