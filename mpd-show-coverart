@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# abstract: display cover art for currently playing albu±:
+# abstract: display cover art for currently playing album:
 
 use strict;
 use warnings;
@@ -14,7 +14,9 @@ my $path = "$ENV{XDG_MUSIC_DIR}/" . $mpd->current->file;
 
 my ($album_path) = $path =~ m{^(.+)/.+[.].+$};
 
+$album_path = quotemeta $album_path;
+
 run(
-  command => "/usr/bin/feh -B black -.  -r '$album_path'",
+  command => "/usr/bin/feh -B black -.  -r $album_path",
   verbose => 0,
 );
