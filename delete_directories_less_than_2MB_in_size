@@ -1,4 +1,42 @@
-#!/bin/sh
-# this is for leftover directories with only a cover.jpg left after a beet import
+#!/usr/bin/perl
 
-find . -type d -exec du -s "{}" \; | awk '$1 <= 2048 {$1=""; gsub(/^[[:space:]]+/, ""); printf "\"%s\"\n", $0}' | xargs rm -rvi
+# delete "almost empty" directories
+
+use strict;
+use warnings;
+use File::Find;
+use File::Path qw(remove_tree);
+use File::LsColor qw(ls_color);
+
+my $threshold = 2048; # 2MB
+
+sub check_dir {
+    return unless -d $_; # Only process directories
+    my $dir_size = 0;
+    find(sub { $dir_size += -s if -f }, $_); # Recursively add up size of all files in directory
+    return unless $dir_size <= $threshold; # Only process directories under threshold
+    # directory
+    printf "├── %s (%d kB)\n", ls_color($_), $dir_size / 1024;
+    opendir my $dh, $_ or die "Cannot open directory $_: $!";
+    my @files = readdir $dh;
+    closedir $dh;
+    foreach my $file (@files) {
+        next if $file eq '.' or $file eq '..';
+        my $path = "$_/$file";
+        printf "    ├── %s\n", ls_color($file);
+    }
+    print "Delete this directory? [y/n] ";
+    my $answer = <STDIN>;
+    chomp $answer;
+    if ($answer =~ /^y/i) {
+        remove_tree($_) or die "Cannot remove directory $_: $!";
+        print "Directory $_ deleted.\n";
+    } else {
+        print "Directory $_ not deleted.\n";
+    }
+}
+
+my $where = $ARGV[0] // '.';
+
+printf "%s\n", ls_color($where);
+find(\&check_dir, $ARGV[0] // '.');
