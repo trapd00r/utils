@@ -1,0 +1,4 @@
+#!/bin/sh
+# this is for leftover directories with only a cover.jpg left after a beet import
+
+find . -type d -exec du -s "{}" \; | awk '$1 <= 2048 {$1=""; gsub(/^[[:space:]]+/, ""); printf "\"%s\"\n", $0}' | xargs rm -rvi
