@@ -16,7 +16,7 @@ mpd_cp_native ${LOVED_DIR}
 yes \
   | beet modify loved=1 "${XDG_MUSIC_DIR}$(mpc current --format %file% | head -1)"
 
-notify-send "$(mpc current --format "%title% by %artist%"| head -1)" -u critical -i /usr/share/icons/Adwaita/32x32/emotes/emote-love-symbolic.symbolic.png
+notify-send "$(mpc current --format "%title% by %artist%"| head -1)" -u critical -i /usr/share/icons/Adwaita/32x32/emotes/emote-love-symbolic.symbolic.png -t 3500
 
 perl /home/scp1/dev/ls--/ls++ --sort=time -r ${LOVED_DIR}
 
