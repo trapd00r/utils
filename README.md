@@ -28,6 +28,7 @@
 * [autorepeat_some](https://github.com/trapd00r/utils/blob/master/autorepeat_some) - turn off autorepeat for all keys but some
 * [bake](https://github.com/trapd00r/utils/blob/master/bake) - build perl stuff
 * [basenamep](https://github.com/trapd00r/utils/blob/master/basenamep) - grab input from stdin and basename it
+* [beet-cleanup-cover-only-directories](https://github.com/trapd00r/utils/blob/master/beet-cleanup-cover-only-directories) - clean up after beet imports that leave only a coverfile after a 'Remove old' action
 * [beet-dupes-in-fs](https://github.com/trapd00r/utils/blob/master/beet-dupes-in-fs) - find dupes created by beets in filesystem
 * [beet-import-singles](https://github.com/trapd00r/utils/blob/master/beet-import-singles) - importing single tracks and placing them where they belong
 * [beet-import-singles-to-label](https://github.com/trapd00r/utils/blob/master/beet-import-singles-to-label) - importing single tracks and placing according to label
@@ -131,10 +132,11 @@
 * [mkdir_extension_and_categorize](https://github.com/trapd00r/utils/blob/master/mkdir_extension_and_categorize) - quickly sort content in dl dir into categories
 * [mkdr](https://github.com/trapd00r/utils/blob/master/mkdr) - given file.ext, mkdir file/ and move file.ext to file/file.ext
 * [mls](https://github.com/trapd00r/utils/blob/master/mls) - list music collection by artist
+* [mpd-copy-coverart](https://github.com/trapd00r/utils/blob/master/mpd-copy-coverart) - update coverart on httpd for playing song in mpd for use in homeassistant
 * [mpd-copy-path-to-clipboard](https://github.com/trapd00r/utils/blob/master/mpd-copy-path-to-clipboard) - copy now playing full path to clipboard
 * [mpd-goto-album-dir](https://github.com/trapd00r/utils/blob/master/mpd-goto-album-dir) - goto now playing album directory
 * [mpd-goto-artist-dir](https://github.com/trapd00r/utils/blob/master/mpd-goto-artist-dir) - goto now playing artist directory
-* [mpd-show-coverart](https://github.com/trapd00r/utils/blob/master/mpd-show-coverart) - display cover art for currently playing albu±:
+* [mpd-show-coverart](https://github.com/trapd00r/utils/blob/master/mpd-show-coverart) - display cover art for currently playing album:
 * [mpd_del](https://github.com/trapd00r/utils/blob/master/mpd_del) - remove songs matching PATTERN from mpd playlist
 * [mpd_del_album](https://github.com/trapd00r/utils/blob/master/mpd_del_album) - remove album from mpd playlist
 * [mpd_fill_mp3player](https://github.com/trapd00r/utils/blob/master/mpd_fill_mp3player) - copy all loved songs from the pimpd2 database to the mp3 player

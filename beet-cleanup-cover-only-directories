@@ -1,0 +1,60 @@
+#!/usr/bin/perl
+# abstract: clean up after beet imports that leave only a coverfile after a 'Remove old' action
+# Also report directories where the content adds up to no more than 2M
+# Write to the console and a logfile than can be examined before being executed
+# as a shell script
+# Paths and special shell characters are quoted properly
+# The shell script will delete itself once executed
+
+use strict;
+use warnings;
+use Cwd qw(abs_path);
+use File::Find;
+use File::LsColor qw(ls_color);
+
+my $start_path = shift // '.';
+my $max_size = 2 * 1024 * 1024;  # 2 MB
+
+my $logfile = 'dirs_with_only_cover_in_them_or_less_than_2M.log';
+
+open(my $fh, '>', $logfile) or die "Can't open $logfile: $!";
+$|++;
+
+sub check_dir {
+  my $dir = $_;
+  return unless -d $dir;
+
+  # Check for only one file, cover.jpg
+  opendir(my $dh, $dir) or die "Can't open directory $dir: $!";
+  my @files = grep { !/^\.\.?$/ } readdir($dh);
+  closedir($dh);
+
+  if (@files == 1 && $files[0] eq "cover.jpg") {
+    my $abspath = abs_path($dir);
+    print sprintf("only cover.jpg: %s\n", ls_color($abspath));
+    print $fh sprintf("rm -r @{[ quotemeta($abspath) ]}\n");
+    return;
+  }
+
+
+  # Check for size less than 2M
+  my $size = 0;
+  find(sub { $size += -s if -f }, $dir);
+
+  # skip check of +tracks/ directory, AND make sure not to output the artist
+  # directory itself if it concists only of this +tracks/ directory
+  if ($size < $max_size and $dir ne '+tracks' and $dir =~ m/^[+]/) {
+    my $abspath = abs_path($dir);
+
+    print sprintf("< 2M %s\n", ls_color($abspath));
+    print $fh sprintf("rm -r @{[ quotemeta($abspath) ]}\n");
+  }
+}
+
+finddepth(\&check_dir, $start_path);
+
+
+
+# remove the generated bash script when it's executed
+print $fh 'rm -v $0';
+close $fh;
