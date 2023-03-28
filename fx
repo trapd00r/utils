@@ -1,0 +1,48 @@
+#!/usr/bin/perl
+# abstract: for some stupid reason I can't open multiple firefox
+# instances using the same profile on different monitors
+# so this script uses a left, middle (default) and right monitor profile
+# to circumvent this issue
+use strict;
+use warnings FATAL => 'all';
+
+use utf8;
+use open qw(:std :utf8);
+use IPC::Cmd qw(run);
+
+use Data::Dumper;
+
+
+## sdorfehs -c sdump
+#   left: DP-0 0 0 0 1080 1920 1
+# middle: DP-2 1 1080 0 1920 1080 0
+#  right: HDMI-0 2 3000 0 1080 1920 0
+
+my $firefox_profile;
+
+my @screens = split(',', `sdorfehs -c sdump`);
+
+my %monitors = (
+  'DP-0'   => 'left',
+  'DP-2'   => 'middle',
+  'HDMI-0' => 'right',
+);
+
+for my $screen(@screens) {
+  my ($monitor) = $screen =~ m/^(\S+)/;
+
+  # active status is 1 or 0, the last char in the string
+  my ($active_status) = $screen =~ m/([01])$/;
+
+  if($active_status) {
+    print "using fx profile $monitors{$monitor}\n";
+    # use the default profile for the middle monitor
+    $firefox_profile = $monitors{$monitor} eq 'middle' ? 'default' : $monitors{$monitor};
+    last;
+  }
+}
+
+run(
+  command => "firefox -P $firefox_profile",
+  verbose => 0,
+);
