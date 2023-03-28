@@ -37,12 +37,12 @@ for my $screen(@screens) {
   if($active_status) {
     print "using fx profile $monitors{$monitor}\n";
     # use the default profile for the middle monitor
-    $firefox_profile = $monitors{$monitor} eq 'middle' ? 'default' : $monitors{$monitor};
+    $firefox_profile = $monitors{$monitor} eq 'middle' ? 'default-release' : $monitors{$monitor};
     last;
   }
 }
 
 run(
-  command => "firefox -P $firefox_profile",
+  command => "firefox -P $firefox_profile @ARGV",
   verbose => 0,
 );
