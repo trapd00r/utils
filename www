@@ -1,32 +1,34 @@
 #!/bin/bash
+# chrome replaced by firefox and tridactyl
+fx
 
-XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-~/.config}
-
-# Allow users to override command-line options
-if [[ -f $XDG_CONFIG_HOME/chrome-flags.conf ]]; then
-   CHROME_USER_FLAGS="$(cat $XDG_CONFIG_HOME/chrome-flags.conf)"
-fi
-
-# smaller ui elements
-#  --high-dpi-support=0 --force-device-scale-factor=0.82
-# Launch
-
-export GTK_THEME=japh
-# env GTK_THEME=japh
-
-if [[ $(hostname) = "sid" ]]; then
-  exec env GTK_THEME=japh /opt/google/chrome/google-chrome $CHROME_USER_FLAGS \
-    --simulate-outdated-no-au='Tue, 31 Dec 2099 23:59:59 GMT' \
-    --high-dpi-support=1 \
-    --force-device-scale-factor=0.82 "$@"
-elif [[ $(hostname) = "fantomen" ]]; then
-  exec env GTK_THEME=japh /usr/bin/google-chrome-stable $CHROME_USER_FLAGS \
-    --simulate-outdated-no-au='Tue, 31 Dec 2099 23:59:59 GMT' \
-    --high-dpi-support=1 \
-    --force-device-scale-factor=0.82 "$@"
-elif [[ $(hostname) = "tp" ]]; then
-  exec /opt/google/chrome/google-chrome $CHROME_USER_FLAGS \
-    --simulate-outdated-no-au='Tue, 31 Dec 2099 23:59:59 GMT' \
-    --high-dpi-support=1 \
-    --force-device-scale-factor=1 "$@"
-fi
+#XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-~/.config}
+#
+## Allow users to override command-line options
+#if [[ -f $XDG_CONFIG_HOME/chrome-flags.conf ]]; then
+#   CHROME_USER_FLAGS="$(cat $XDG_CONFIG_HOME/chrome-flags.conf)"
+#fi
+#
+## smaller ui elements
+##  --high-dpi-support=0 --force-device-scale-factor=0.82
+## Launch
+#
+#export GTK_THEME=japh
+## env GTK_THEME=japh
+#
+#if [[ $(hostname) = "sid" ]]; then
+#  exec env GTK_THEME=japh /opt/google/chrome/google-chrome $CHROME_USER_FLAGS \
+#    --simulate-outdated-no-au='Tue, 31 Dec 2099 23:59:59 GMT' \
+#    --high-dpi-support=1 \
+#    --force-device-scale-factor=0.82 "$@"
+#elif [[ $(hostname) = "fantomen" ]]; then
+#  exec env GTK_THEME=japh /usr/bin/google-chrome-stable $CHROME_USER_FLAGS \
+#    --simulate-outdated-no-au='Tue, 31 Dec 2099 23:59:59 GMT' \
+#    --high-dpi-support=1 \
+#    --force-device-scale-factor=0.82 "$@"
+#elif [[ $(hostname) = "tp" ]]; then
+#  exec /opt/google/chrome/google-chrome $CHROME_USER_FLAGS \
+#    --simulate-outdated-no-au='Tue, 31 Dec 2099 23:59:59 GMT' \
+#    --high-dpi-support=1 \
+#    --force-device-scale-factor=1 "$@"
+#fi
