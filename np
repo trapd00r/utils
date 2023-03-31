@@ -3,9 +3,34 @@
 use strict;
 use Audio::MPD;
 
+use Getopt::Long;
+use File::LsColor qw(ls_color);
+use feature 'say';
+
 binmode STDOUT, ':utf8';
+
+my %opt;
+GetOptions(\%opt,
+  'np'     => scalar @ARGV,
+  'f|file' => \$opt{file},
+  'p|path' => \$opt{path},
+);
+
+
 my $m = Audio::MPD->new;
 my $c = $m->current;
+
+
+my $file = $c->file;
+my ($basedir) = $file =~ m{(.+)/\S+};
+
+# /mnt/music8/+TAGGED//0-9/50 Cent/+albums/50 Cent │2007│ Curtis [CD, FLAC]
+my $abs_dir = sprintf "%s/%s", $ENV{XDG_MUSIC_DIR}, $basedir;
+
+$opt{file} and say $c->file and exit;
+$opt{path} and say ls_color($abs_dir), "\n\ncd ", quotemeta($abs_dir) and exit;
+
+
 my $out;
 if(!$c->artist) {
   $out = sprintf("np> %s (no id3)",$c->file);
@@ -16,5 +41,5 @@ else {
                   $c->genre, $c->date);
               }
 
-print $out, "\n";                
+print $out, "\n";
 system("printf \"$out\"|xclip");
