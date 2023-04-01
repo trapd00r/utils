@@ -14,8 +14,6 @@ use File::LsColor qw(ls_color);
 
 my $start_path = shift // '.';
 my $max_size = 2 * 1024 * 1024;  # 2 MB
-my $tmpdir = './dirs_with_only_cover_in_them_or_less_than_2M';
-system("mkdir -vp $tmpdir");
 
 my $logfile = 'dirs_with_only_cover_in_them_or_less_than_2M.log';
 
@@ -34,8 +32,7 @@ sub check_dir {
   if (@files == 1 && $files[0] eq "cover.jpg") {
     my $abspath = abs_path($dir);
     print sprintf("only cover.jpg: %s\n", ls_color($abspath));
-#    print $fh sprintf("rm -r @{[ quotemeta($abspath) ]}\n");
-    print $fh sprintf("mv @{[ quotemeta($abspath) ]} -t $tmpdir\n");
+    print $fh sprintf("rm -r @{[ quotemeta($abspath) ]}\n");
     return;
   }
 
@@ -50,8 +47,7 @@ sub check_dir {
     my $abspath = abs_path($dir);
 
     print sprintf("< 2M %s\n", ls_color($abspath));
-#    print $fh sprintf("rm -r @{[ quotemeta($abspath) ]}\n");
-    print $fh sprintf("mv @{[ quotemeta($abspath) ]} -t $tmpdir\n");
+    print $fh sprintf("rm -r @{[ quotemeta($abspath) ]}\n");
   }
 }
 
