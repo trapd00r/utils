@@ -32,7 +32,7 @@ sub check_dir {
   if (@files == 1 && $files[0] eq "cover.jpg") {
     my $abspath = abs_path($dir);
     print sprintf("only cover.jpg: %s\n", ls_color($abspath));
-    print $fh sprintf("rm -r @{[ quotemeta($abspath) ]}\n");
+    print $fh sprintf("rm -rv @{[ quotemeta($abspath) ]}\n");
     return;
   }
 
@@ -47,7 +47,7 @@ sub check_dir {
     my $abspath = abs_path($dir);
 
     print sprintf("< 2M %s\n", ls_color($abspath));
-    print $fh sprintf("rm -r @{[ quotemeta($abspath) ]}\n");
+    print $fh sprintf("rm -rv @{[ quotemeta($abspath) ]}\n");
   }
 }
 
