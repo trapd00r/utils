@@ -26,6 +26,7 @@ my %monitors = (
   'DP-0'   => 'left',
   'DP-2'   => 'middle',
   'HDMI-0' => 'right',
+  'DP-5'   => 'above',
 );
 
 for my $screen(@screens) {
@@ -44,5 +45,5 @@ for my $screen(@screens) {
 
 run(
   command => "firefox -P $firefox_profile @ARGV",
-  verbose => 0,
+  verbose => 3,
 );
