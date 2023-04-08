@@ -7,7 +7,6 @@ yt-dlp \
   --audio-quality 192K         \
   --output "%(title)s.%(ext)s" \
   --add-metadata               \
-  # playlist or channel works too
-  --yes-playlist
+  --yes-playlist "$@"
 
 
