@@ -14,7 +14,7 @@ mkdir -p ${LOVED_DIR}
 pimpd2 --love
 mpd_cp_native ${LOVED_DIR}
 
-ssh endie 'MPD_HOST=192.168.1.55 mpc update'
+ssh endie 'MPD_HOST=192.168.1.55 mpc update _fav/'
 
 yes \
   | ${HOME}/dev/beets/beet modify loved=1 "${XDG_MUSIC_DIR}$(mpc current --format %file% | head -1)"
