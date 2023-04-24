@@ -6,18 +6,22 @@
 # $ beet2mpd loved:1
 # https://github.com/trapd00r/beet2mpd
 
-LOVED_DIR=/mnt/music8/_fav/_$(date +%Y)
+#LOVED_DIR=/mnt/music8/_fav/_$(date +%Y)
+LOVED_DIR=/mnt/music8/+TAGGED/_fav/_$(date +%Y)
 
 mkdir -p ${LOVED_DIR}
 
 pimpd2 --love
 mpd_cp_native ${LOVED_DIR}
 
+ssh endie 'MPD_HOST=192.168.1.55 mpc update'
+
 yes \
   | ${HOME}/dev/beets/beet modify loved=1 "${XDG_MUSIC_DIR}$(mpc current --format %file% | head -1)"
 
 
 notify-send "$(mpc current --format "%title% by %artist%"| head -1)" -u critical -i /usr/share/icons/Adwaita/32x32/emotes/emote-love-symbolic.symbolic.png -t 3500
+notify_clock "LOVED"
 
 perl /home/scp1/dev/ls--/ls++ --sort=time -r ${LOVED_DIR}
 
