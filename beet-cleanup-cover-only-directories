@@ -29,9 +29,10 @@ sub check_dir {
   my @files = grep { !/^\.\.?$/ } readdir($dh);
   closedir($dh);
 
-  if (@files == 1 && $files[0] eq "cover.jpg") {
+  if (@files == 1 && $files[0] =~ m/(cover[.](?:jpe?g|png))/i) {
+    my $cover_file = $1;
     my $abspath = abs_path($dir);
-    print sprintf("only cover.jpg: %s\n", ls_color($abspath));
+    print sprintf("only %s: %s\n", ls_color($cover_file), ls_color($abspath));
     print $fh sprintf("rm -rv @{[ quotemeta($abspath) ]}\n");
     return;
   }
