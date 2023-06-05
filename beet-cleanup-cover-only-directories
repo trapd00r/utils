@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 # abstract: clean up after beet imports that leave only a coverfile after a 'Remove old' action
 # Also report directories where the content adds up to no more than 2M
+# Also report directories with only nfo, sfv, m3u files
 # Write to the console and a logfile than can be examined before being executed
 # as a shell script
 # Paths and special shell characters are quoted properly
@@ -36,6 +37,20 @@ sub check_dir {
     print $fh sprintf("rm -rv @{[ quotemeta($abspath) ]}\n");
     return;
   }
+  # handle leftover m3u+nfo+sfv files
+  elsif (scalar @files == scalar grep { /[.](?:m3u|nfo|sfv)$/ } @files) {
+    my $abspath = abs_path($dir);
+    print sprintf("only {nfo,sfv,m3u}: %s\n", ls_color($abspath));
+    print $fh sprintf("rm -rv @{[ quotemeta($abspath) ]}\n");
+    return;
+  }
+  # handle cases with leftover m3u+nfo+sfv + a random cover file
+  elsif (scalar @files == scalar grep { /[.](?:m3u|nfo|sfv|jpg)$/ } @files) {
+    my $abspath = abs_path($dir);
+    print sprintf("only {nfo,sfv,m3u,jpg}: %s\n", ls_color($abspath));
+    print $fh sprintf("rm -rv @{[ quotemeta($abspath) ]}\n");
+    return;
+  }
 
 
   # Check for size less than 2M
@@ -43,7 +58,7 @@ sub check_dir {
   find(sub { $size += -s if -f }, $dir);
 
   # skip check of +tracks/ directory, AND make sure not to output the artist
-  # directory itself if it concists only of this +tracks/ directory
+  # directory itself if it consists only of this +tracks/ directory
   if ($size < $max_size and $dir ne '+tracks' and $dir =~ m/^[+]/) {
     my $abspath = abs_path($dir);
 
