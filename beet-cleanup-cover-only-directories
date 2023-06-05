@@ -21,6 +21,7 @@ my $logfile = 'dirs_with_only_cover_in_them_or_less_than_2M.log';
 open(my $fh, '>', $logfile) or die "Can't open $logfile: $!";
 $|++;
 
+my $to_delete = 0;
 sub check_dir {
   my $dir = $_;
   return unless -d $dir;
@@ -35,6 +36,8 @@ sub check_dir {
     my $abspath = abs_path($dir);
     print sprintf("only %s: %s\n", ls_color($cover_file), ls_color($abspath));
     print $fh sprintf("rm -rv @{[ quotemeta($abspath) ]}\n");
+
+    $to_delete++;
     return;
   }
   # handle leftover m3u+nfo+sfv files
@@ -42,6 +45,8 @@ sub check_dir {
     my $abspath = abs_path($dir);
     print sprintf("only {nfo,sfv,m3u}: %s\n", ls_color($abspath));
     print $fh sprintf("rm -rv @{[ quotemeta($abspath) ]}\n");
+
+    $to_delete++;
     return;
   }
   # handle cases with leftover m3u+nfo+sfv + a random cover file
@@ -49,6 +54,8 @@ sub check_dir {
     my $abspath = abs_path($dir);
     print sprintf("only {nfo,sfv,m3u,jpg}: %s\n", ls_color($abspath));
     print $fh sprintf("rm -rv @{[ quotemeta($abspath) ]}\n");
+
+    $to_delete++;
     return;
   }
 
@@ -64,13 +71,18 @@ sub check_dir {
 
     print sprintf("< 2M %s\n", ls_color($abspath));
     print $fh sprintf("rm -rv @{[ quotemeta($abspath) ]}\n");
+
+    $to_delete++;
   }
 }
 
 finddepth(\&check_dir, $start_path);
 
-
-
 # remove the generated bash script when it's executed
-print $fh 'rm -v $0';
-close $fh;
+if($to_delete) {
+  print $fh 'rm -v $0';
+  close $fh;
+}
+else {
+  unlink $logfile;
+}
