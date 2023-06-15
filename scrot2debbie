@@ -1,0 +1,3 @@
+#!/bin/sh
+
+scp "$@" debbie:/var/www/html/_pix/ && echo "http://i.japh.se/$1" | xclip && echo "http://i.japh.se/$1"
