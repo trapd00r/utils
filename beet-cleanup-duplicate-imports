@@ -1,0 +1,8 @@
+#!/bin/sh
+
+## fixes problems like this that might occur from time to time:
+# rwxrwxrwx ▏<  mon │   21M│ 01 Laleh - Sol Vind Och Vatten.flac
+# rwxrwxrwx ▏<  mon │   21M│ 01 Laleh - Sol Vind Och Vatten.1.flac
+# rwxrwxrwx ▏<  mon │   21M│ 01 Laleh - Sol Vind Och Vatten.2.flac
+
+find . -type f -regextype awk -iregex '.+[.][0-9][.](mp3|flac|jpg)$' | vidir -
