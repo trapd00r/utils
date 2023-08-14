@@ -1,0 +1,2 @@
+#!/bin/sh
+kid3-cli  -c 'fromtag "%{artist} - %{title}" 2'
