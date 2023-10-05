@@ -1,0 +1,2 @@
+#!/bin/sh
+prename 's/(.+)_-_(.+)-AUDiOBOOK.+/$1 - $2/;s/_/ /g;s/oe/ö/g;s/aa/å/g;s/ae/ä/g'
