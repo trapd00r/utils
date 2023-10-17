@@ -1,0 +1,33 @@
+#!/usr/bin/perl
+# vim:ft=perl:
+# abstract: set terminal background differently for each ssh host
+
+#   if [[ $UID != 0 ]]
+#   then
+#     if [ -f "$HOME/.ssh/config" ]
+#     then
+#       for host in $(
+#         perl -ne 'print "$1\n" if /\A[Hh]ost\s+(.+)$/' $HOME/.ssh/config
+#         ); do
+#         alias $host="setbg_sshhosts $host; ssh $host $@"
+#       done
+#     fi
+#   fi
+
+
+my $host = shift;
+
+my %hosts = (
+  fantomen => '161212',
+  debbie   => '121612',
+  dockie   => '121216',
+  x1       => '141414',
+);
+
+bg();
+sub bg {
+  my $background = $hosts{ $host } ? $hosts{ $host } : '361212';
+  print "\e]11;#$background\a";
+  print "\e]10;#ffffff\a";
+}
+
