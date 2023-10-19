@@ -1,6 +1,13 @@
 #!/bin/bash
 # chrome replaced by firefox and tridactyl
-fx
+
+if [[ $(hostname) = "x1" ]]; then
+  fx_vscreen_profiles "$@"
+elif [[ $(hostname) = "fantomen" ]]; then
+  fx_screen_profiles "$@"
+else
+    firefox
+fi
 
 #XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-~/.config}
 #

@@ -1,0 +1,53 @@
+#!/usr/bin/perl
+# abstract: for some stupid reason I can't open multiple firefox
+# instances using the same profile on different vscreens
+# so this script uses a different profile for each vscreen
+# to circumvent this issue
+
+# We must create a profile for each vscreen using firefox -P first, then enable
+# sync so we get all the bookmarks and settings
+
+use strict;
+use warnings FATAL => 'all';
+
+use utf8;
+use open qw(:std :utf8);
+use IPC::Cmd qw(run);
+use v5.32;
+
+use Data::Dumper;
+
+
+# 0-music
+# 1-code
+# 2+db
+### 3*ftp
+# 4-www
+# 5-chat
+# 6-slask1
+# 7-slask2
+# 8-mail
+# 9-sound
+
+
+my $firefox_profile;
+
+my @vscreens = `sdorfehs -c vscreens`;
+
+
+for my $vscreen(@vscreens) {
+  chomp $vscreen;
+  # a * means the current vscreen
+  # a + means the previous vscreen
+
+  next unless $vscreen =~ m/^[0-9]+[*](\S+)$/;
+
+  $firefox_profile = $1;
+  print "using fx profile $firefox_profile\n";
+}
+
+
+run(
+  command => "firefox -P $firefox_profile @ARGV",
+  verbose => 3,
+);
