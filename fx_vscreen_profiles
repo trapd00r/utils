@@ -7,6 +7,8 @@
 # We must create a profile for each vscreen using firefox -P first, then enable
 # sync so we get all the bookmarks and settings
 
+# Related: fx_screen_profiles
+
 use strict;
 use warnings FATAL => 'all';
 
@@ -15,19 +17,16 @@ use open qw(:std :utf8);
 use IPC::Cmd qw(run);
 use v5.32;
 
-use Data::Dumper;
-
-
-# 0-music
-# 1-code
-# 2+db
+### 0-music
+### 1-code
+### 2+db
 ### 3*ftp
-# 4-www
-# 5-chat
-# 6-slask1
-# 7-slask2
-# 8-mail
-# 9-sound
+### 4-www
+### 5-chat
+### 6-slask1
+### 7-slask2
+### 8-mail
+### 9-sound
 
 
 my $firefox_profile;
