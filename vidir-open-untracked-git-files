@@ -1,0 +1,4 @@
+#!/bin/sh
+
+git status --untracked-files=normal --short | awk '{$1="";print}' | vidir -
+
