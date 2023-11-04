@@ -1,5 +1,5 @@
 #!/bin/bash
-# chrome replaced by firefox and tridactyl
+# abstract: browser launcher
 
 if [[ $(hostname) = "x1" ]]; then
   fx_vscreen_profiles "$@"

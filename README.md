@@ -86,6 +86,8 @@
 * [font-atari](https://github.com/trapd00r/utils/blob/master/font-atari) - set terminal font to the Atari 800XL std font
 * [font_preview](https://github.com/trapd00r/utils/blob/master/font_preview) - preview all fonts in your terminal
 * [ft](https://github.com/trapd00r/utils/blob/master/ft) - show filetype info
+* [fx_screen_profiles](https://github.com/trapd00r/utils/blob/master/fx_screen_profiles) - for some stupid reason I can't open multiple firefox
+* [fx_vscreen_profiles](https://github.com/trapd00r/utils/blob/master/fx_vscreen_profiles) - for some stupid reason I can't open multiple firefox
 * [fzf-perlsub-githistory](https://github.com/trapd00r/utils/blob/master/fzf-perlsub-githistory) - display a perl subs git history over time
 * [generate-perl-package-completion-for-vim.pl](https://github.com/trapd00r/utils/blob/master/generate-perl-package-completion-for-vim.pl) - generate perl package completion for vim
 * [generate-tags.sh](https://github.com/trapd00r/utils/blob/master/generate-tags.sh) - generate tags for vim
@@ -194,8 +196,10 @@
 * [sdorfehs-undefinekey-tops](https://github.com/trapd00r/utils/blob/master/sdorfehs-undefinekey-tops) - undefine keys for switching workspaces
 * [sdorfehsrepl](https://github.com/trapd00r/utils/blob/master/sdorfehsrepl) - sdorfehs  repl
 * [seen](https://github.com/trapd00r/utils/blob/master/seen) - abuse sticky bits etc to mark a movie or show as seen
+* [set_album_title_for_lösa_låtar_to_various](https://github.com/trapd00r/utils/blob/master/set_album_title_for_lösa_låtar_to_various) - set album title to "Various" for everything in */+tracks/ for plex{,amp}
 * [setallfonts](https://github.com/trapd00r/utils/blob/master/setallfonts) - set all fonts to ARG
 * [setbg](https://github.com/trapd00r/utils/blob/master/setbg) - set terminal background
+* [setbg_sshhosts](https://github.com/trapd00r/utils/blob/master/setbg_sshhosts) - set terminal background differently for each ssh host
 * [shift-insert](https://github.com/trapd00r/utils/blob/master/shift-insert) - shift+insert
 * [shivastream](https://github.com/trapd00r/utils/blob/master/shivastream) - nokia n900 mpd streaming aid
 * [shot](https://github.com/trapd00r/utils/blob/master/shot) - take screenshot and upload to httpd
@@ -206,7 +210,6 @@
 * [sshc](https://github.com/trapd00r/utils/blob/master/sshc) - change and restore bg/fg colors based on ssh host
 * [stderr](https://github.com/trapd00r/utils/blob/master/stderr) - print input to stderr
 * [strip_esc](https://github.com/trapd00r/utils/blob/master/strip_esc) - strip data from escape sequences
-* [tailf](https://github.com/trapd00r/utils/blob/master/tailf) - color-follow-tail for access.log
 * [term_attr](https://github.com/trapd00r/utils/blob/master/term_attr) - dump all term attributes and visualize various term settings
 * [to_phone](https://github.com/trapd00r/utils/blob/master/to_phone) - scp files to the phone and place it where I want it
 * [today](https://github.com/trapd00r/utils/blob/master/today) - stats on what I did do today
@@ -242,6 +245,7 @@
 * [wgetdarknet](https://github.com/trapd00r/utils/blob/master/wgetdarknet) - rip directory listing on darknet
 * [whatfont](https://github.com/trapd00r/utils/blob/master/whatfont) - query the terminal for the current fonts in use.
 * [whoa-netplay-ripper.pl](https://github.com/trapd00r/utils/blob/master/whoa-netplay-ripper.pl) - download all netplays from whoa.nu
+* [www](https://github.com/trapd00r/utils/blob/master/www) - browser launcher
 * [xdgdirs](https://github.com/trapd00r/utils/blob/master/xdgdirs) - check that XDG_* dirs are defined
 * [xfiles.sh](https://github.com/trapd00r/utils/blob/master/xfiles.sh) - the x-files theme!
 * [youtube2mp3](https://github.com/trapd00r/utils/blob/master/youtube2mp3) - rip audio from youtube
