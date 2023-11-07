@@ -6,6 +6,11 @@ LOGFILE=~/$0.log
 
 IFS=$'\n'
 for dir in $(find ~/mnt/nasse/music -type d -maxdepth 2 -mindepth 1|grep -v '\+'); do
+  # if an artist image already exists, skip it
+  if [ -f "${dir}/artist.jpg" ]; then
+    echo "Artist image already exists for $dir" | tee -a $LOGFILE
+    continue
+  fi
   artist=$(echo $dir|sed 's/.*\///')
   artist_escaped=$(echo $artist|sed 's/ /+/g')
   image=$(curl -s https://www.last.fm/music/${artist_escaped}/+images | url_find | grep freetls|head -1)
