@@ -166,6 +166,7 @@
 * [pimpla](https://github.com/trapd00r/utils/blob/master/pimpla) - perl interface for mplayer using fifos
 * [pkgfont](https://github.com/trapd00r/utils/blob/master/pkgfont) - list packages that includes fonts
 * [playlists_update](https://github.com/trapd00r/utils/blob/master/playlists_update) - update playlists of loved songs (pimpd2 --love)
+* [plex_artist_image_downloader](https://github.com/trapd00r/utils/blob/master/plex_artist_image_downloader) - naively fetches artist images from last.fm for plex
 * [poormansls++](https://github.com/trapd00r/utils/blob/master/poormansls++) - poor mans ls++, demonstrate ls_color from File::LsColor
 * [post](https://github.com/trapd00r/utils/blob/master/post) - tool to aid me in writing a new blog post using jekyll
 * [prename](https://github.com/trapd00r/utils/blob/master/prename) - rename with perl regex
@@ -196,7 +197,7 @@
 * [sdorfehs-undefinekey-tops](https://github.com/trapd00r/utils/blob/master/sdorfehs-undefinekey-tops) - undefine keys for switching workspaces
 * [sdorfehsrepl](https://github.com/trapd00r/utils/blob/master/sdorfehsrepl) - sdorfehs  repl
 * [seen](https://github.com/trapd00r/utils/blob/master/seen) - abuse sticky bits etc to mark a movie or show as seen
-* [set_album_title_for_lösa_låtar_to_various](https://github.com/trapd00r/utils/blob/master/set_album_title_for_lösa_låtar_to_various) - set album title to "Various" for everything in */+tracks/ for plex{,amp}
+* [set_album_title_for_lösa_låtar_to_various](https://github.com/trapd00r/utils/blob/master/set_album_title_for_lösa_låtar_to_various) - set album title to "Various" for everything in */+tracks/ for plex{,amp}. also set year/date to 1337-01-01
 * [setallfonts](https://github.com/trapd00r/utils/blob/master/setallfonts) - set all fonts to ARG
 * [setbg](https://github.com/trapd00r/utils/blob/master/setbg) - set terminal background
 * [setbg_sshhosts](https://github.com/trapd00r/utils/blob/master/setbg_sshhosts) - set terminal background differently for each ssh host

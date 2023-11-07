@@ -1,0 +1,33 @@
+#!/bin/sh
+# abstract: naively fetches artist images from last.fm for plex
+
+ACCUMULATED_ARTIST_IMAGES_DIR=~/artistimages
+LOGFILE=~/$0.log
+
+IFS=$'\n'
+for dir in $(find ~/mnt/nasse/music -type d -maxdepth 2 -mindepth 1|grep -v '\+'); do
+  artist=$(echo $dir|sed 's/.*\///')
+  artist_escaped=$(echo $artist|sed 's/ /+/g')
+  image=$(curl -s https://www.last.fm/music/${artist_escaped}/+images | url_find | grep freetls|head -1)
+
+  cd "$dir" && wget $image -O "artist.jpg" &&
+    echo "Fetched image for $artist: ${dir}/artist.jpg" | tee -a $LOGFILE
+
+  # If the filesize of the image is exactly 3417 bytes, it's a placeholder image
+  # and we should delete it
+  if [ $(stat -c %s "artist.jpg") -eq 3417 ]; then
+    rm -v "artist.jpg"
+    echo "Deleted placeholder image for $artist" | tee -a $LOGFILE
+  else
+    # add a copy to the accumulated artist images dir named after the artist
+    cp -v "${dir}/artist.jpg" "${ACCUMULATED_ARTIST_IMAGES_DIR}/${artist}.jpg"
+  fi
+ done
+
+
+# Fetched image for Artmind: A/Artmind/artist.jpg
+# Fetched image for Artyficial: A/Artyficial/artist.jpg
+# Deleted placeholder image for Artyficial
+# Fetched image for Ascent: A/Ascent/artist.jpg
+# Fetched image for Asia 2001: A/Asia 2001/artist.jpg
+# Fetched image for Asimilon: A/Asimilon/artist.jpg
