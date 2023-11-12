@@ -4,38 +4,22 @@
 if [[ $(hostname) = "x1" ]]; then
   fx_vscreen_profiles "$@"
 elif [[ $(hostname) = "fantomen" ]]; then
-  fx_screen_profiles "$@"
+
+  # current screen number of the active monitor
+  # 2 = middle
+  CURRENT_SCREEN=$(sdorfehs -c sdump|sed -E 's/,/\n/g'|grep -P ' 1$'|awk '{print $2}')
+
+  # if we are on the middle screen we want to use the vscreen profiles on the
+  # other monitors we can use the screen_profiles since vscreens are hardly
+  # used there
+  if [[ $CURRENT_SCREEN == 2 ]]; then
+    echo $CURRENT_SCREEN
+    fx_vscreen_profiles "$@"
+  else
+    fx_screen_profiles "$@"
+  fi
 else
     firefox
 fi
 
-#XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-~/.config}
-#
-## Allow users to override command-line options
-#if [[ -f $XDG_CONFIG_HOME/chrome-flags.conf ]]; then
-#   CHROME_USER_FLAGS="$(cat $XDG_CONFIG_HOME/chrome-flags.conf)"
-#fi
-#
-## smaller ui elements
-##  --high-dpi-support=0 --force-device-scale-factor=0.82
-## Launch
-#
-#export GTK_THEME=japh
-## env GTK_THEME=japh
-#
-#if [[ $(hostname) = "sid" ]]; then
-#  exec env GTK_THEME=japh /opt/google/chrome/google-chrome $CHROME_USER_FLAGS \
-#    --simulate-outdated-no-au='Tue, 31 Dec 2099 23:59:59 GMT' \
-#    --high-dpi-support=1 \
-#    --force-device-scale-factor=0.82 "$@"
-#elif [[ $(hostname) = "fantomen" ]]; then
-#  exec env GTK_THEME=japh /usr/bin/google-chrome-stable $CHROME_USER_FLAGS \
-#    --simulate-outdated-no-au='Tue, 31 Dec 2099 23:59:59 GMT' \
-#    --high-dpi-support=1 \
-#    --force-device-scale-factor=0.82 "$@"
-#elif [[ $(hostname) = "tp" ]]; then
-#  exec /opt/google/chrome/google-chrome $CHROME_USER_FLAGS \
-#    --simulate-outdated-no-au='Tue, 31 Dec 2099 23:59:59 GMT' \
-#    --high-dpi-support=1 \
-#    --force-device-scale-factor=1 "$@"
-#fi
+# remember to execute add_userchrome_to_all_profiles.zsh once done

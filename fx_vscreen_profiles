@@ -7,7 +7,11 @@
 # We must create a profile for each vscreen using firefox -P first, then enable
 # sync so we get all the bookmarks and settings
 
-# Related: fx_screen_profiles 
+# Related:
+# - www
+# - fx_screen_profiles
+# - userChrome.css
+# - add_userchrome_to_all_profiles.zsh once done
 
 use strict;
 use warnings FATAL => 'all';
