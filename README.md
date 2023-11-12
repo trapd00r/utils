@@ -104,6 +104,7 @@
 * [gitdo](https://github.com/trapd00r/utils/blob/master/gitdo) - do various things on git repos
 * [github-referrers](https://github.com/trapd00r/utils/blob/master/github-referrers) - get referrer urls for all github repos
 * [gotoalbum](https://github.com/trapd00r/utils/blob/master/gotoalbum) - goto to root directory of currently playing album
+* [gs](https://github.com/trapd00r/utils/blob/master/gs) - git status with $LS_COLORS
 * [hextermcolors](https://github.com/trapd00r/utils/blob/master/hextermcolors) - display hex values of defined terminal colors in color
 * [hits](https://github.com/trapd00r/utils/blob/master/hits) - show httpd resources with most hits
 * [html2txt](https://github.com/trapd00r/utils/blob/master/html2txt) - turn html into plain text

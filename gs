@@ -1,18 +1,34 @@
-#!/bin/zsh
-# vim: set ft=sh et sw=2:
+#!/usr/bin/perl
+# abstract: git status with $LS_COLORS
+use strict;
+use warnings FATAL => 'all';
+use feature 'say';
 
-#git last
-#git whatthefuckdidido \
-#  | tail -25          \
-#  | perl -pe          \
-#    '
-#      s/^([\s]*-.*)/\e[38;5;196m$1\e[m/,
-#      s/^([\s]*[+].*)/\e[38;5;70m$1\e[m/,
-#      s/^/\t/
-#    '
-#echo
-#git-awesome-status
-#git status --short "$@"
-#builtin print -P ' '${vcs_info_msg_0_}
+use File::LsColor qw(ls_color);
+use Term::ExtendedColor qw(fg);
 
-git status --short --show-stash --column=column
+my @status = split('\n', `git status --short --show-stash --column=column`);
+
+for my $line (@status) {
+  my ($status, $file) = split(' ', $line, 2);
+  printf "%s %s\n", status_color($status), ls_color($file);
+}
+
+
+
+sub status_color {
+  my $status = shift;
+
+  my %colors = (
+    '??' => '240',
+    'A' => '38;5;166;1',
+    'M' => '38;5;178;1',
+    'D' => '197',
+    'R' => '197',
+    'C' => '197',
+    'U' => '197',
+    ' ' => '100',
+  );
+
+  return sprintf "%s", fg($colors{$status}, sprintf("% 2s", $status));
+}
