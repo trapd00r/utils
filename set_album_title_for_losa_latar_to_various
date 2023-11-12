@@ -1,0 +1,9 @@
+#!/bin/sh
+# abstract: set album title to "Various" for everything in */+tracks/ for plex{,amp}. also set year/date to 1337-01-01
+
+# For the entire music collection:
+# for x in ~/mnt/nasse/music/*/**/*+tracks; do cd "$x";  kid3-cli -c pwd -c "select *" -c "set album 'Various'" -c "set date '1337-01-01'" -c ls -c save; done
+
+
+# for current directory:
+kid3-cli -c pwd  -c "select *" -c "set album 'Various'" -c "set date '1337-01-01'"  -c save

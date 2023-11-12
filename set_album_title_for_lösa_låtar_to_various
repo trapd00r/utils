@@ -1,9 +1,0 @@
-#!/bin/sh
-# abstract: set album title to "Various" for everything in */+tracks/ for plex{,amp}
-
-# For the entire music collection:
-# for x in ~/mnt/nasse/music/*/**/*+tracks; do cd "$x";  kid3-cli -c pwd -c "select *" -c "set album 'Various'" -c ls -c save; done
-
-
-# for current directory:
-kid3-cli -c pwd  -c "select *" -c "set album 'Various'" -c save

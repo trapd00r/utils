@@ -199,7 +199,7 @@
 * [sdorfehs-undefinekey-tops](https://github.com/trapd00r/utils/blob/master/sdorfehs-undefinekey-tops) - undefine keys for switching workspaces
 * [sdorfehsrepl](https://github.com/trapd00r/utils/blob/master/sdorfehsrepl) - sdorfehs  repl
 * [seen](https://github.com/trapd00r/utils/blob/master/seen) - abuse sticky bits etc to mark a movie or show as seen
-* [set_album_title_for_lösa_låtar_to_various](https://github.com/trapd00r/utils/blob/master/set_album_title_for_lösa_låtar_to_various) - set album title to "Various" for everything in */+tracks/ for plex{,amp}. also set year/date to 1337-01-01
+* [set_album_title_for_losa_latar_to_various](https://github.com/trapd00r/utils/blob/master/set_album_title_for_losa_latar_to_various) - set album title to "Various" for everything in */+tracks/ for plex{,amp}. also set year/date to 1337-01-01
 * [setallfonts](https://github.com/trapd00r/utils/blob/master/setallfonts) - set all fonts to ARG
 * [setbg](https://github.com/trapd00r/utils/blob/master/setbg) - set terminal background
 * [setbg_sshhosts](https://github.com/trapd00r/utils/blob/master/setbg_sshhosts) - set terminal background differently for each ssh host
