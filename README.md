@@ -37,7 +37,6 @@
 * [beet-ls-albums-by-label](https://github.com/trapd00r/utils/blob/master/beet-ls-albums-by-label) - list albums by artist and show record label, helper for
 * [beet-np-info](https://github.com/trapd00r/utils/blob/master/beet-np-info) - show all available beets info for now playing song in mpd
 * [beet-selfripped](https://github.com/trapd00r/utils/blob/master/beet-selfripped) - list albums I've ripped myself
-* [beet-smart-import.pl](https://github.com/trapd00r/utils/blob/master/beet-smart-import.pl) - auto-specify albumtype if possible on beet import
 * [beet-symlink-query](https://github.com/trapd00r/utils/blob/master/beet-symlink-query) - symlink the results of a beets query
 * [beet-update](https://github.com/trapd00r/utils/blob/master/beet-update) - beet update that will NOT change any tags, neither move files around
 * [bigrand](https://github.com/trapd00r/utils/blob/master/bigrand) - generate n random numbers
