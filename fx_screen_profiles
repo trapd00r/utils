@@ -11,6 +11,7 @@ use open qw(:std :utf8);
 use IPC::Cmd qw(run);
 
 use Data::Dumper;
+use Sys::Hostname;
 
 
 ## sdorfehs -c sdump
@@ -22,12 +23,24 @@ my $firefox_profile;
 
 my @screens = split(',', `sdorfehs -c sdump`);
 
+# fantomen desktop
 my %monitors = (
   'DP-0'   => 'left',
   'DP-2'   => 'middle',
   'HDMI-0' => 'right',
   'DP-5'   => 'above',
 );
+
+if(hostname() eq 'x1') {
+  # x1 thinkpad
+
+  %monitors = (
+    'DP-3-1-6' => 'left',
+    'DP-3-1-5' => 'middle', # 144hz
+    'eDP-1'    => 'right', # internal laptop screen
+    'DP-3-2'   => 'above',
+  );
+}
 
 for my $screen(@screens) {
   my ($monitor) = $screen =~ m/^(\S+)/;

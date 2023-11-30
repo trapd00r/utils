@@ -2,7 +2,15 @@
 # abstract: browser launcher
 
 if [[ $(hostname) = "x1" ]]; then
-  fx_vscreen_profiles "$@"
+  # current screen number of the active monitor
+  active_monitor=$(sdorfehs -c sdump|sed -E 's/,/\n/g'|grep -P ' 1$'|awk '{print $2}')
+
+  if [[ $active_monitor = 1 ]]; then
+    # middle monitor, use vscreen profiles
+    fx_vscreen_profiles "$@"
+  else
+    fx_screen_profiles "$@"
+  fi
 elif [[ $(hostname) = "fantomen" ]]; then
 
   # current screen number of the active monitor
