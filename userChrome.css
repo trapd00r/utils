@@ -2,9 +2,11 @@
   background-color: rgb(232, 232, 231);
 }
 
+/*
 #main-window[sizemode="maximized"] #content-deck {
   padding-top: 8px;
 }
+*/
 
 tabs {
   counter-reset: tab-counter;
@@ -15,6 +17,7 @@ tabs {
   content: counter(tab-counter) " - ";
 }
 
+/* hides navbar etc */
 :root:not([customizing]) #navigator-toolbox:not(:hover):not(:focus-within) #nav-bar {
   max-height: 0;
   min-height: 0!important;
