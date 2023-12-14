@@ -1,0 +1,2 @@
+#!/bin/sh
+google-chrome-stable --new-window meet.google.com
