@@ -1,0 +1,3 @@
+#!/bin/sh
+printf "\033]710;%s\007" "xft:fixed:pixelsize:0" 
+curl -s https://gist.githubusercontent.com/trapd00r/2a405a890605c49a8e65dbd9604dd59f/raw/43180288f24ac44d058b1309be8eb60adbe1283a/mariestad.txt | cat
