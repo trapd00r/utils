@@ -1,23 +1,101 @@
-#navigator-toolbox:not(:hover):not(:focus-within) #toolbar-menubar > * {
-  background-color: rgb(232, 232, 231);
-}
+/*    #navigator-toolbox:not(:hover):not(:focus-within) #toolbar-menubar > * {
+/*      background-color: rgb(232, 232, 231);
+/*    }
+/*    
+/*    /*
+/*    #main-window[sizemode="maximized"] #content-deck {
+/*      padding-top: 8px;
+/*    }
+/*    */
 
-/*
-#main-window[sizemode="maximized"] #content-deck {
-  padding-top: 8px;
-}
+/*    
+/*    tabs {
+/*      counter-reset: tab-counter;
+/*    }
+/*    
+/*    .tab-label::before {
+/*      counter-increment: tab-counter;
+/*      content: counter(tab-counter) " - ";
+/*    }
+/*    
+/*    /* hides navbar etc */
+
+/*    :root:not([customizing]) #navigator-toolbox:not(:hover):not(:focus-within) #nav-bar {
+/*      max-height: 0;
+/*      min-height: 0!important;
+/*      --tridactyl-auto-show-zone: 10px;
+/*      margin-bottom: calc(-1 * var(--tridactyl-auto-show-zone));
+/*      opacity: 0;
+/*    }
+/*    
+/*    #navigator-toolbox::after {
+/*      display: none !important;
+/*    }
+/*    
+/*    #statuspanel {
+/*      right: 0;
+/*      display: inline;
+/*    }
+/*    
+/*    statuspanel[type="overLink"],
+/*    #statuspanel[type="overLink"] {
+/*      display: none !important;
+/*    }
+/*    
+/*    #tabs-newtab-button {
+/*      display: none !important;
+/*    }
+/*    
+/*    .tabbrowser-tab[selected="true"] .tab-background {
+/*      background: #575757 none !important;
+/*    }
+/*    
+/*    #navigator-toolbox {
+/*      --lwt-tabs-border-color: transparent !important;
+/*    }
+/*    
+/*    #tabbrowser-tabs {
+/*      --lwt-tab-line-color: transparent !important;
+/*    }
+/*    
+/*    
+/*    #alltabs-button {
+/*      display: none !important;
+/*    }
 */
 
-tabs {
-  counter-reset: tab-counter;
+/*:root:not([customizing]) #navigator-toolbox:not(:hover):not(:focus-within) #nav-bar {
+/*  max-height: 0;
+/*  min-height: 0!important;
+/*  --tridactyl-auto-show-zone: 10px;
+/*  margin-bottom: calc(-1 * var(--tridactyl-auto-show-zone));
+/*  opacity: 0;
+/*}
+/*
+/*#navigator-toolbox::after {
+/*  display: none !important;
+/*}
+/*
+/*#navigator-toolbox:not(:hover):not(:focus-within) #toolbar-menubar > * {
+/*  background-color: rgb(232, 232, 231);
+/*}
+/*
+/*#main-window[sizemode="maximized"] #content-deck {
+/*  padding-top: 8px;
+/*}
+/*
+/*#statuspanel {
+/*  right: 0;
+/*  display: inline;
+/*}
+*/
+
+statuspanel[type="overLink"],
+#statuspanel[type="overLink"] {
+  right: 0;
+  display: inline;
 }
 
-.tab-label::before {
-  counter-increment: tab-counter;
-  content: counter(tab-counter) " - ";
-}
-
-/* hides navbar etc */
 :root:not([customizing]) #navigator-toolbox:not(:hover):not(:focus-within) #nav-bar {
   max-height: 0;
   min-height: 0!important;
@@ -30,33 +108,27 @@ tabs {
   display: none !important;
 }
 
+#navigator-toolbox:not(:hover):not(:focus-within) #toolbar-menubar > * {
+  background-color: rgb(232, 232, 231);
+}
+
+#main-window[sizemode="maximized"] #content-deck {
+  padding-top: 8px;
+}
+
 #statuspanel {
   right: 0;
   display: inline;
 }
 
-statuspanel[type="overLink"],
-#statuspanel[type="overLink"] {
-  display: none !important;
+/* global font */
+
+* {
+  font-size: 11px !important;
+  font-family: "Bok MonteCarlo" !important;
 }
 
-#tabs-newtab-button {
-  display: none !important;
-}
-
-.tabbrowser-tab[selected="true"] .tab-background {
-  background: #575757 none !important;
-}
-
-#navigator-toolbox {
-  --lwt-tabs-border-color: transparent !important;
-}
-
-#tabbrowser-tabs {
-  --lwt-tab-line-color: transparent !important;
-}
-
-
-#alltabs-button {
-  display: none !important;
+body {
+  font-size: 11px !important;
+  font-family: "Bok MonteCarlo" !important;
 }
