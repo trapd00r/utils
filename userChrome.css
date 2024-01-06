@@ -1,107 +1,13 @@
-/*    #navigator-toolbox:not(:hover):not(:focus-within) #toolbar-menubar > * {
-/*      background-color: rgb(232, 232, 231);
-/*    }
-/*    
-/*    /*
-/*    #main-window[sizemode="maximized"] #content-deck {
-/*      padding-top: 8px;
-/*    }
-/*    */
-
-/*    
-/*    tabs {
-/*      counter-reset: tab-counter;
-/*    }
-/*    
-/*    .tab-label::before {
-/*      counter-increment: tab-counter;
-/*      content: counter(tab-counter) " - ";
-/*    }
-/*    
-/*    /* hides navbar etc */
-
-/*    :root:not([customizing]) #navigator-toolbox:not(:hover):not(:focus-within) #nav-bar {
-/*      max-height: 0;
-/*      min-height: 0!important;
-/*      --tridactyl-auto-show-zone: 10px;
-/*      margin-bottom: calc(-1 * var(--tridactyl-auto-show-zone));
-/*      opacity: 0;
-/*    }
-/*    
-/*    #navigator-toolbox::after {
-/*      display: none !important;
-/*    }
-/*    
-/*    #statuspanel {
-/*      right: 0;
-/*      display: inline;
-/*    }
-/*    
-/*    statuspanel[type="overLink"],
-/*    #statuspanel[type="overLink"] {
-/*      display: none !important;
-/*    }
-/*    
-/*    #tabs-newtab-button {
-/*      display: none !important;
-/*    }
-/*    
-/*    .tabbrowser-tab[selected="true"] .tab-background {
-/*      background: #575757 none !important;
-/*    }
-/*    
-/*    #navigator-toolbox {
-/*      --lwt-tabs-border-color: transparent !important;
-/*    }
-/*    
-/*    #tabbrowser-tabs {
-/*      --lwt-tab-line-color: transparent !important;
-/*    }
-/*    
-/*    
-/*    #alltabs-button {
-/*      display: none !important;
-/*    }
-*/
-
-/*:root:not([customizing]) #navigator-toolbox:not(:hover):not(:focus-within) #nav-bar {
-/*  max-height: 0;
-/*  min-height: 0!important;
-/*  --tridactyl-auto-show-zone: 10px;
-/*  margin-bottom: calc(-1 * var(--tridactyl-auto-show-zone));
-/*  opacity: 0;
-/*}
-/*
-/*#navigator-toolbox::after {
-/*  display: none !important;
-/*}
-/*
-/*#navigator-toolbox:not(:hover):not(:focus-within) #toolbar-menubar > * {
-/*  background-color: rgb(232, 232, 231);
-/*}
-/*
-/*#main-window[sizemode="maximized"] #content-deck {
-/*  padding-top: 8px;
-/*}
-/*
-/*#statuspanel {
-/*  right: 0;
-/*  display: inline;
-/*}
-*/
-
-statuspanel[type="overLink"],
-#statuspanel[type="overLink"] {
-  right: 0;
-  display: inline;
-}
-
 :root:not([customizing]) #navigator-toolbox:not(:hover):not(:focus-within) #nav-bar {
   max-height: 0;
   min-height: 0!important;
   --tridactyl-auto-show-zone: 10px;
   margin-bottom: calc(-1 * var(--tridactyl-auto-show-zone));
   opacity: 0;
+}
+
+#main-window[sizemode="maximized"] #content-deck {
+  padding-top: 8px;
 }
 
 #navigator-toolbox::after {
@@ -112,23 +18,31 @@ statuspanel[type="overLink"],
   background-color: rgb(232, 232, 231);
 }
 
-#main-window[sizemode="maximized"] #content-deck {
-  padding-top: 8px;
+#statuspanel {
+  display: none !important;
 }
 
-#statuspanel {
+statuspanel[type="overLink"],
+#statuspanel[type="overLink"] {
   right: 0;
   display: inline;
 }
 
-/* global font */
+/* remove the new tab button */
 
-* {
-  font-size: 11px !important;
-  font-family: "Bok MonteCarlo" !important;
+#tabs-newtab-button,
+#new-tab-button {
+  display: none !important;
 }
 
-body {
-  font-size: 11px !important;
-  font-family: "Bok MonteCarlo" !important;
+/* remove the close tab button */
+
+.tab-close-button {
+  display: none !important;
+}
+
+/* limit the tab width */
+
+.tabbrowser-tab[fadein]:not([pinned]):not([style*="max-width"]) {
+  max-width: 24px !important;
 }
