@@ -44,5 +44,6 @@ statuspanel[type="overLink"],
 /* limit the tab width */
 
 .tabbrowser-tab[fadein]:not([pinned]):not([style*="max-width"]) {
-  max-width: 24px !important;
+/*  max-width: 98px !important;
+*/
 }
