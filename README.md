@@ -205,6 +205,7 @@
 * [shift-insert](https://github.com/trapd00r/utils/blob/master/shift-insert) - shift+insert
 * [shivastream](https://github.com/trapd00r/utils/blob/master/shivastream) - nokia n900 mpd streaming aid
 * [shot](https://github.com/trapd00r/utils/blob/master/shot) - take screenshot and upload to httpd
+* [shrug](https://github.com/trapd00r/utils/blob/master/shrug) - shift+insert
 * [skrot](https://github.com/trapd00r/utils/blob/master/skrot) - simple scrot wrapper
 * [sr-rename](https://github.com/trapd00r/utils/blob/master/sr-rename) - a little tool to clean up episodes downloaded from Sveriges Radio.
 * [srinfo](https://github.com/trapd00r/utils/blob/master/srinfo) - sveriges radio info fetcher
