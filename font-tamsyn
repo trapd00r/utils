@@ -1,5 +1,9 @@
 #!/bin/sh
 printf "\033]710;%s\007" \
-  -misc-tamsyn-medium-r-normal--14-101-100-100-c-70-iso8859-1 
+  'xft:Misc Tamsyn:style=Regular:antialias=none:hinting=0:pixelsize=16'
 printf "\033]711;%s\007" \
-  -misc-tamsyn-bold-r-normal--14-101-100-100-c-70-iso8859-1
+  'xft:Misc Tamsyn:style=Bold:antialias=none:hinting=0:pixelsize=16'
+printf "\033]712;%s\007" \
+  'xft:Misc Tamsyn:style=Regular=none:hinting=0:pixelsize=14'
+printf "\033]713;%s\007" \
+  'xft:Misc Tamsyn:style=Bold:antialias=none:hinting=0:pixelsize=14'
