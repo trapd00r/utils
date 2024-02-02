@@ -4,6 +4,6 @@ printf "\033]710;%s\007" \
 printf "\033]711;%s\007" \
   'xft:Misc Tamsyn:style=Bold:antialias=none:hinting=0:pixelsize=16'
 printf "\033]712;%s\007" \
-  'xft:Misc Tamsyn:style=Regular=none:hinting=0:pixelsize=14'
+  'xft:Terminus:style=Regular=none:hinting=0:pixelsize=16'
 printf "\033]713;%s\007" \
-  'xft:Misc Tamsyn:style=Bold:antialias=none:hinting=0:pixelsize=14'
+  'xft:Profont:style=Bold:antialias=none:hinting=0:pixelsize=16'
