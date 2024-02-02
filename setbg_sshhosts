@@ -19,7 +19,7 @@ my $host = shift;
 
 my %hosts = (
   fantomen => '161212',
-  debbie   => '121612',
+  debbie   => '000000',
   dockie   => '121216',
   x1       => '141414',
 );
