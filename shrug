@@ -1,0 +1,9 @@
+#!/bin/sh
+# vim:ft=sh:
+# abstract: shift+insert
+# xte is part of the xautomation package
+#
+# insert the string "¯\_(ツ)_/¯"
+
+echo '¯\_(ツ)_/¯' | xclip
+
