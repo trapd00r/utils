@@ -5,6 +5,7 @@
 use strict;
 use Term::ExtendedColor 'fg';
 
+use utf8;
 use open qw(:utf8 :std);
 
 chomp(my $pwd = `pwd`);
