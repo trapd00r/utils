@@ -1,0 +1,9 @@
+#!/bin/sh
+
+font=$1
+
+printf "\033]710;%s\007" "$font:antialias=none:hinting=none"
+printf "\033]711;%s\007" "$font:antialias=none:hinting=none"
+printf "\033]712;%s\007" "$font:antialias=none:hinting=none"
+printf "\033]713;%s\007" "$font:antialias=none:hinting=none"
+
