@@ -22,11 +22,6 @@
   display: none !important;
 }
 
-statuspanel[type="overLink"],
-#statuspanel[type="overLink"] {
-  right: 0;
-  display: inline;
-}
 
 /* remove the new tab button */
 
@@ -40,6 +35,9 @@ statuspanel[type="overLink"],
 .tab-close-button {
   display: none !important;
 }
+
+/* remove the back and forward buttons */
+#back-button, #forward-button { display:none!important; }
 
 /* limit the tab width */
 
