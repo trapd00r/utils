@@ -1,0 +1,15 @@
+#!/bin/sh
+
+function locate_dahbug {
+  if [ -f "$(git rev-parse --show-toplevel)"/../dahbug.log ]; then
+    echo "$(git rev-parse --show-toplevel)"/../dahbug.log
+  elif [ -f "$(git rev-parse --show-toplevel)"/dahbug.log ]; then
+    echo "$(git rev-parse --show-toplevel)"/dahbug.log
+  else
+    echo ""
+  fi
+}
+
+dahbug_path=$(locate_dahbug)
+
+tail -F $dahbug_path
