@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# if the file is an image, display it
+if file -b $1 | grep -q image; then
+    kitten icat $1
+else
+    /home/scp1/dev/vimcat/vimcat $1
+fi
+
