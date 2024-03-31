@@ -35,8 +35,8 @@ use v5.32;
 
 my $firefox_profile;
 
+my $url = shift @ARGV;
 my @vscreens = `sdorfehs -c vscreens`;
-
 
 for my $vscreen(@vscreens) {
   chomp $vscreen;
@@ -51,6 +51,6 @@ for my $vscreen(@vscreens) {
 
 
 run(
-  command => "firefox -P $firefox_profile @ARGV",
+  command => "firefox -P $firefox_profile '$url'",
   verbose => 3,
 );

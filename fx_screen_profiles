@@ -21,6 +21,7 @@ use Sys::Hostname;
 
 my $firefox_profile;
 
+my $url = shift @ARGV;
 my @screens = split(',', `sdorfehs -c sdump`);
 
 # fantomen desktop
@@ -57,6 +58,6 @@ for my $screen(@screens) {
 }
 
 run(
-  command => "firefox -P $firefox_profile @ARGV",
+  command => "firefox -P $firefox_profile '$url'",
   verbose => 3,
 );
