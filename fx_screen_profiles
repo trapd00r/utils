@@ -21,7 +21,7 @@ use Sys::Hostname;
 
 my $firefox_profile;
 
-my $url = shift @ARGV;
+my $url = shift @ARGV || 'http://192.168.1.97:3000';
 my @screens = split(',', `sdorfehs -c sdump`);
 
 # fantomen desktop
