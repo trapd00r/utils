@@ -51,6 +51,6 @@ for my $vscreen(@vscreens) {
 
 
 run(
-  command => "firefox -P $firefox_profile '$url'",
+  command => "firefox --new-window -P $firefox_profile '$url'",
   verbose => 3,
 );
