@@ -1,0 +1,11 @@
+#!/bin/sh
+# show image "fullscreened" inside a fixed geometry window
+
+# protocol file
+# ext jpg,jpeg,png,gif
+# action launch  --title ${FILE} --type=os-window kitty_feh_handler ${FILE_PATH}
+
+xy=$(xdotool getwindowgeometry $(xdotool getwindowfocus) | grep 'Geometry:' | awk '{print $2}')
+
+/usr/bin/feh --scale-down --image-bg black -g $xy $1
+
