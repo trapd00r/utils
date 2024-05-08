@@ -1,0 +1,28 @@
+#!/usr/bin/bash
+STATS_DIR=~/.local/share/Steam/steamapps/compatdata/881100/pfx/drive_c/users/steamuser/AppData/LocalLow/Nolla_Games_Noita/save00/stats/sessions
+NUMLOGS=$1
+declare -i WINSTREAK=0
+ 
+if [[ "$#" -ne 1 ]]; then
+    NUMLOGS=10
+fi
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: $0 [<amount of games to parse, default=10>]"
+    exit 1
+fi
+ 
+pushd ${STATS_DIR} > /dev/null
+    while read a; do
+        OUTP=$(sed -n -E 's/^  <stats.+killed_by="([a-Z| -:$()]+)".* playtime_str="([0-9:]+)".*/killed_by: \1 (\2)/p' $a)
+        if [[ "$OUTP" != "" ]]; then
+            echo "$a: $OUTP";
+            if [[ "$OUTP" =~ "midas" ]]; then
+                WINSTREAK+=1
+            else
+                WINSTREAK=0
+            fi
+        fi
+    done <<< $(ls -t *stats.xml | head -n ${NUMLOGS} | tac)
+ 
+echo "Current winstreak: $WINSTREAK"
+popd > /dev/null
