@@ -1,0 +1,89 @@
+#!/usr/bin/perl
+use strict;
+use warnings FATAL => 'all';
+
+use utf8;
+use open qw(:std :utf8);
+
+use DDP;
+use XML::Simple;
+
+
+my $stats_dir = "$ENV{HOME}/.local/share/Steam/steamapps/compatdata/881100/pfx/drive_c/users/steamuser/AppData/LocalLow/Nolla_Games_Noita/save00/stats/sessions";
+
+opendir(my $dh, $stats_dir) || die "can't opendir $stats_dir: $!";
+my @files = grep { /\.xml$/ } readdir($dh);
+closedir $dh;
+
+my $data = {};
+
+for my $file (sort { $b cmp $a } @files) {
+    my $xml = XMLin("$stats_dir/$file");
+    my $stats = $xml->{stats};
+
+    my $playtime = $stats->{playtime} // 0;
+
+    my $hours = int($playtime / 3600);
+    my $minutes = int(($playtime % 3600) / 60);
+    my $seconds = int($playtime % 60);
+    $playtime = sprintf "%02d:%02d:%02d", $hours, $minutes, $seconds;
+
+
+    $data->{$file} = {
+        killed_by        => "$stats->{killed_by}",
+        killed_by_extra  => "$stats->{killed_by_extra}",
+        playtime         => $playtime,
+        projectiles_shot => $stats->{projectiles_shot},
+        enemies_killed   => $stats->{enemies_killed},
+        dmaage_taken     => $stats->{damage_taken},
+        gold             => $stats->{gold},
+        gold_all         => $stats->{gold_all},
+        gold_infinite    => $stats->{gold_infinite},
+        hp               => $stats->{hp},
+        items            => $stats->{items},
+        streaks          => $stats->{streaks},
+        world_seed       => $stats->{world_seed},
+        heart_containers => $stats->{heart_containers},
+        biomes_visited   => $stats->{biomes_visited}->{E}->{value},
+        places_visited   => $stats->{places_visited},
+        wands_edited     => $stats->{wands_edited},
+        teleports        => $stats->{teleports},
+        healed           => $stats->{healed},
+        dead             => $stats->{dead},
+        death_count      => $stats->{death_count},
+        death_pos => {
+            x            => $stats->{death_pos}->{x},
+            y            => $stats->{death_pos}->{y},
+        },
+
+    };
+
+    $data->{$file}->{death} = 
+      ($data->{$file}->{killed_by} .  $data->{$file}->{killed_by_extra}) =~ s/[|]|//gr;
+
+    my $output = sprintf("%s | Killed by %s | hp: %s | projectiles: %s\n",
+      $data->{$file}->{playtime},
+      $data->{$file}->{death},
+      $data->{$file}->{hp},
+      $data->{$file}->{projectiles_shot}
+    );
+
+    $output =~ s/\s{2,}/ /g;
+    print $output;
+
+    exit;
+}
+
+__DATA__
+<Stats BUILD_NAME="Noita-Build-Apr 30 2024-14:49:50" >
+  <stats biomes_visited_with_wands="1" damage_taken="4.74914" dead="1" death_count="0" death_pos.x="141.589" death_pos.y="238.816" enemies_killed="1" gold="95" gold_all="95" gold_infinite="0" healed="0" heart_containers="0" hp="100" items="5" kicks="2" killed_by="Kiukkumöykky | melee" killed_by_extra="" places_visited="1" playtime="87.9833" playtime_str="0:01:27" projectiles_shot="62" streaks="0" teleports="0" wands_edited="0" world_seed="652923085" >
+  </stats>
+  <biome_baseline biomes_visited_with_wands="0" damage_taken="0" dead="0" death_count="0" death_pos.x="0" death_pos.y="0" enemies_killed="0" gold="0" gold_all="0" gold_infinite="0" healed="0" heart_containers="0" hp="100" items="0" kicks="0" killed_by="" killed_by_extra="" places_visited="0" playtime="0" playtime_str="" projectiles_shot="0" streaks="0" teleports="0" wands_edited="0" world_seed="0" >
+  </biome_baseline>
+  <item_map>
+  </item_map>
+  <biomes_visited>
+    <E key="$biome_excavationsite" value="1" >
+    </E>
+  </biomes_visited>
+</Stats>
