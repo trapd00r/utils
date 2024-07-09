@@ -1,18 +1,27 @@
 #!/bin/bash
 # abstract: browser launcher
 
+firefox_running=$(sdorfehs -c windows | grep -i firefox | perl -pe 's/\d+[+*]//')
+
 if [[ $(hostname) = "x1" ]]; then
   # current screen number of the active monitor
   active_monitor=$(sdorfehs -c sdump|sed -E 's/,/\n/g'|grep -P ' 1$'|awk '{print $2}')
 
   if [[ $active_monitor = 1 ]]; then
     # middle monitor, use vscreen profiles
-    fx_vscreen_profiles "$@"
+    if [[! -z $firefox_running ]]; then
+      fx_vscreen_profiles "$@"
+    else
+      wmctrl -a firefox
+    fi
   else
-    fx_screen_profiles "$@"
+    if [[! -z $firefox_running ]]; then
+      fx_screen_profiles "$@"
+    else
+      wmctrl -a firefox
+    fi
   fi
 elif [[ $(hostname) = "fantomen" ]]; then
-
   # current screen number of the active monitor
   # 2 = middle
   CURRENT_SCREEN=$(sdorfehs -c sdump|sed -E 's/,/\n/g'|grep -P ' 1$'|awk '{print $2}')
@@ -22,9 +31,17 @@ elif [[ $(hostname) = "fantomen" ]]; then
   # used there
   if [[ $CURRENT_SCREEN == 2 ]]; then
     echo $CURRENT_SCREEN
-    fx_vscreen_profiles "$@"
+    if [[! -z $firefox_running ]]; then
+      fx_vscreen_profiles "$@"
+    else
+      wmctrl -a firefox
+    fi
   else
-    fx_screen_profiles "$@"
+    if [[! -z $firefox_running ]]; then
+      fx_screen_profiles "$@"
+    else
+      wmctrl -a firefox
+    fi
   fi
 else
     firefox
