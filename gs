@@ -44,7 +44,7 @@ sub status_color {
     'M' => '38;5;178;1',
     'M ' => '38;5;166;1', # modified, and added
     ' M' => '38;5;178;1', # modified, not added
-    'D' => '197',
+    ' D' => '196',
     'R' => '197',
     'C' => '197',
     'U' => '197',
