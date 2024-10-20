@@ -8,8 +8,7 @@ use XML::Simple;
 use JSON;
 use DDP;
 
-# Plex server details
-my $plex_host = 'http://192.168.1.34:32400';
+my $plex_host = "$ENV{PLEX_HOST}:$ENV{PLEX_PORT}";
 my $artist_section_id = '16';
 
 # Directory to save album summaries

@@ -8,8 +8,7 @@ use XML::Simple;
 use JSON;
 use DDP;
 
-# Plex server details
-my $plex_host = 'http://192.168.1.34:32400';
+my $plex_host = "$ENV{PLEX_HOST}:$ENV{PLEX_PORT}";
 my $artist_section_id = '16';
 
 # Directory to save artist summaries
@@ -34,7 +33,7 @@ foreach my $artist (@{$artists->{Directory}}) {
     # Extract artist information
     my $artist_summary = $artist_data->{Directory}->{summary} || 'No summary available';
     my $artist_genre = $artist_data->{Directory}->{Genre}->{tag} || 'Unknown genre';
-    my $artist_country = $artist_data->{Directory}->{Country} || 'Unknown country';
+    my $artist_country = $artist_data->{Directory}->{Country}->{tag} || 'Unknown country';
     my $years_active = $artist_data->{Directory}->{yearsActive} || 'Unknown years active';
     my $albums_count = $artist_data->{Directory}->{childCount} || 'Unknown album count';
     my $rating = $artist_data->{Directory}->{rating} || 'No rating';
@@ -49,16 +48,13 @@ foreach my $artist (@{$artists->{Directory}}) {
     my $output_data = {
         artist        => $artist_name,
         summary       => $artist_summary,
-        genre         => $artist_genre,
         country       => $artist_country,
-        years_active  => $years_active,
-        albums_count  => $albums_count,
-        track_count   => $track_count,
-        rating        => $rating,
-        similar_artists => [ map { $_->{tag} } @{$similar_artists} ],
-        artist_type   => $artist_type,
-        mood          => $mood,
-        style         => $style,
+        # years_active  => $years_active,
+        # albums_count  => $albums_count,
+        # track_count   => $track_count,
+        # artist_type   => $artist_type,
+        # mood          => $mood,
+        # style         => $style,
         thumb_image   => $thumb_image,
     };
 
