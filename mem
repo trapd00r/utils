@@ -1,178 +1,211 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 # vim: ft=python:sw=4:
-import sys, os, string
+import sys
+import os
 
-#if os.geteuid() != 0:
-#  sys.stderr.write("Values might not be currect, try running me as root.\n");
-##    sys.exit(1)
+# Uncomment to check for root privileges
+# if os.geteuid() != 0:
+#     sys.stderr.write("Values might not be correct, try running me as root.\n")
+#     sys.exit(1)
 
-PAGESIZE=os.sysconf("SC_PAGE_SIZE")/1024 #KiB
-our_pid=os.getpid()
+PAGESIZE = os.sysconf("SC_PAGE_SIZE") // 1024  # KiB
+our_pid = os.getpid()
 
-#(major,minor,release)
+# (major, minor, release)
 def kernel_ver():
     return '3.2.0'
-    #kv=open("/proc/sys/kernel/osrelease").readline().split(".")[:2]
-    #for char in "-_":
-    #    kv[2]=kv[2].split(char)[0]
-    #return (int(kv[0]), int(kv[1]), int(kv[2]))
+    # with open("/proc/sys/kernel/osrelease") as f:
+    #     kv = f.readline().strip().split(".")[:2]
+    # for char in "-_":
+    #     kv[2] = kv[2].split(char)[0]
+    # return (int(kv[0]), int(kv[1]), int(kv[2]))
 
-kv=kernel_ver()
+kv = kernel_ver()
 
-have_pss=0
+have_pss = False
 
-#return Private,Shared
-#Note shared is always a subset of rss (trs is not always)
+# Return Private, Shared
+# Note shared is always a subset of rss (trs is not always)
 def getMemStats(pid):
     global have_pss
-    Private_lines=[]
-    Shared_lines=[]
-    Pss_lines=[]
-    Rss=int(open("/proc/"+str(pid)+"/statm").readline().split()[1])*PAGESIZE
-    if os.path.exists("/proc/"+str(pid)+"/smaps"): #stat
-        for line in open("/proc/"+str(pid)+"/smaps").readlines(): #open
-            if line.startswith("Shared"):
-                Shared_lines.append(line)
-            elif line.startswith("Private"):
-                Private_lines.append(line)
-            elif line.startswith("Pss"):
-                have_pss=1
-                Pss_lines.append(line)
-        Shared=sum([int(line.split()[1]) for line in Shared_lines])
-        Private=sum([int(line.split()[1]) for line in Private_lines])
-        #Note Shared + Private = Rss above
-        #The Rss in smaps includes video card mem etc.
+    Private_lines = []
+    Shared_lines = []
+    Pss_lines = []
+    try:
+        with open(f"/proc/{pid}/statm") as f:
+            Rss = int(f.readline().split()[1]) * PAGESIZE
+    except Exception:
+        return (0, 0)
+    
+    if os.path.exists(f"/proc/{pid}/smaps"):
+        try:
+            with open(f"/proc/{pid}/smaps") as f:
+                for line in f:
+                    if line.startswith("Shared"):
+                        Shared_lines.append(line)
+                    elif line.startswith("Private"):
+                        Private_lines.append(line)
+                    elif line.startswith("Pss"):
+                        have_pss = True
+                        Pss_lines.append(line)
+        except Exception:
+            return (0, 0)
+        
+        Shared = sum(int(line.split()[1]) for line in Shared_lines)
+        Private = sum(int(line.split()[1]) for line in Private_lines)
+        
         if have_pss:
-            pss_adjust=0.5 #add 0.5KiB as this average error due to trunctation
-            Pss=sum([float(line.split()[1])+pss_adjust for line in Pss_lines])
+            pss_adjust = 0.5  # add 0.5KiB as this average error due to truncation
+            Pss = sum(float(line.split()[1]) + pss_adjust for line in Pss_lines)
             Shared = Pss - Private
-    elif (2,6,1) <= kv <= (2,6,9):
-        Shared=0 #lots of overestimation, but what can we do?
+    elif (2, 6, 1) <= tuple(map(int, kv.split('.')[:3])) <= (2, 6, 9):
+        Shared = 0  # lots of overestimation, but what can we do?
         Private = Rss
     else:
-        Shared=int(open("/proc/"+str(pid)+"/statm").readline().split()[2])
-        Shared*=PAGESIZE
-        Private = Rss - Shared
+        try:
+            with open(f"/proc/{pid}/statm") as f:
+                statm = f.readline().split()
+                Shared = int(statm[2]) * PAGESIZE
+                Private = Rss - Shared
+        except Exception:
+            Shared = 0
+            Private = Rss
     return (Private, Shared)
 
 def getCmdName(pid):
-    cmd = file("/proc/%d/status" % pid).readline()[6:-1]
-    exe = os.path.basename(os.path.realpath("/proc/%d/exe" % pid))
-    if exe.startswith(cmd):
-        cmd=exe #show non truncated version
-        #Note because we show the non truncated name
-        #one can have separated programs as follows:
-        #584.0 KiB +   1.0 MiB =   1.6 MiB    mozilla-thunder (exe -> bash)
-        # 56.0 MiB +  22.2 MiB =  78.2 MiB    mozilla-thunderbird-bin
+    try:
+        with open(f"/proc/{pid}/status") as f:
+            for line in f:
+                if line.startswith("Name:"):
+                    cmd = line.split()[1]
+                    break
+            else:
+                cmd = "unknown"
+    except Exception:
+        cmd = "unknown"
+    
+    try:
+        exe_path = f"/proc/{pid}/exe"
+        exe = os.path.basename(os.path.realpath(exe_path))
+        if exe.startswith(cmd):
+            cmd = exe  # show non-truncated version
+    except Exception:
+        pass
     return cmd
 
-cmds={}
-shareds={}
-count={}
+cmds = {}
+shareds = {}
+count = {}
 for pid in os.listdir("/proc/"):
     try:
-        pid = int(pid) #note Thread IDs not listed in /proc/ which is good
-        if pid == our_pid: continue
-    except:
+        pid = int(pid)  # note Thread IDs not listed in /proc/ which is good
+        if pid == our_pid:
+            continue
+    except ValueError:
+        continue
+    except Exception:
         continue
     try:
         cmd = getCmdName(pid)
-    except:
-        #permission denied or
-        #kernel threads don't have exe links or
-        #process gone
+    except Exception:
+        # permission denied or
+        # kernel threads don't have exe links or
+        # process gone
         continue
     try:
         private, shared = getMemStats(pid)
-    except:
-        continue #process gone
-    if shareds.get(cmd):
-        if have_pss: #add shared portion of PSS together
-            shareds[cmd]+=shared
-        elif shareds[cmd] < shared: #just take largest shared val
-            shareds[cmd]=shared
+    except Exception:
+        continue  # process gone
+    if cmd in shareds:
+        if have_pss:  # add shared portion of PSS together
+            shareds[cmd] += shared
+        elif shareds[cmd] < shared:  # just take largest shared val
+            shareds[cmd] = shared
     else:
-        shareds[cmd]=shared
-    cmds[cmd]=cmds.setdefault(cmd,0)+private
-    if count.has_key(cmd):
-       count[cmd] += 1
+        shareds[cmd] = shared
+    cmds[cmd] = cmds.get(cmd, 0) + private
+    if cmd in count:
+        count[cmd] += 1
     else:
-       count[cmd] = 1
+        count[cmd] = 1
 
-#Add shared mem for each program
-total=0
+# Add shared mem for each program
+total = 0
 for cmd in cmds.keys():
-    cmds[cmd]=cmds[cmd]+shareds[cmd]
-    total+=cmds[cmd] #valid if PSS available
+    cmds[cmd] = cmds[cmd] + shareds[cmd]
+    total += cmds[cmd]  # valid if PSS available
 
-sort_list = cmds.items()
-sort_list.sort(lambda x,y:cmp(x[1],y[1]))
-sort_list=filter(lambda x:x[1],sort_list) #get rid of zero sized processes
+# Convert dict_items to list for sorting
+sort_list = list(cmds.items())
+# Sort by memory usage (ascending)
+sort_list.sort(key=lambda x: x[1])
+# Remove zero-sized processes
+sort_list = list(filter(lambda x: x[1], sort_list))
 
-#The following matches "du -h" output
-#see also human.py
+# The following matches "du -h" output
+# see also human.py
 def human(num, power="Ki"):
-    powers=["Ki","Mi","Gi","Ti"]
-    while num >= 1000: #4 digits
+    powers = ["Ki", "Mi", "Gi", "Ti"]
+    while num >= 1000 and powers.index(power) < len(powers) - 1:
         num /= 1024.0
-        power=powers[powers.index(power)+1]
-    return "%.1f %s" % (num,power)
+        power = powers[powers.index(power) + 1]
+    return f"{num:.1f} {power}"
 
-def cmd_with_count(cmd, count):
-    if count>1:
-       return "%s (%u)" % (cmd, count)
+def cmd_with_count(cmd, count_num):
+    if count_num > 1:
+        return f"{cmd} ({count_num})"
     else:
-       return cmd
+        return cmd
 
-print " \n  \033[30;1;3;4mPrivate  +   Shared  =  RAM used    Program\033[m\n"
-for cmd in sort_list:
-    print " %8sB + %8sB = %8sB    %s" % (human(cmd[1]-shareds[cmd[0]]),
-                                      human(shareds[cmd[0]]), human(cmd[1]),
-                                      cmd_with_count(cmd[0], count[cmd[0]]))
+print("\n  \033[30;1;3;4mPrivate  +   Shared  =  RAM used    Program\033[m\n")
+for cmd, mem in sort_list:
+    private = mem - shareds[cmd]
+    print(f" {human(private):>8}B + {human(shareds[cmd]):>8}B = {human(mem):>8}B    {cmd_with_count(cmd, count[cmd])}")
 if have_pss:
-    print " " * 22 + " \033[1m=\033[0;32;3;4m", "%8sB" % human(total)
+    print(" " * 22 + f" \033[1m=\033[0;32;3;4m {human(total):>8}B")
 
-#Warn of possible inaccuracies
-#2 = accurate & can total
-#1 = accurate only considering each process in isolation
-#0 = some shared mem not reported
-#-1= all shared mem not reported
+# Warn of possible inaccuracies
+# 2 = accurate & can total
+# 1 = accurate only considering each process in isolation
+# 0 = some shared mem not reported
+# -1= all shared mem not reported
 def shared_val_accuracy():
     """http://wiki.apache.org/spamassassin/TopSharedMemoryBug"""
-    if kv[:2] == (2,4):
-        if open("/proc/meminfo").read().find("Inact_") == -1:
+    kv_tuple = tuple(map(int, kv.split('.')[:3]))
+    if kv_tuple[:2] == (2, 4):
+        if "Inact_" not in open("/proc/meminfo").read():
             return 1
         return 0
-    elif kv[:2] == (2,6):
-        if os.path.exists("/proc/"+str(os.getpid())+"/smaps"):
-            if open("/proc/"+str(os.getpid())+"/smaps").read().find("Pss:")!=-1:
-                return 2
-            else:
-                return 1
-        if (2,6,1) <= kv <= (2,6,9):
+    elif kv_tuple[:2] == (2, 6):
+        if os.path.exists(f"/proc/{os.getpid()}/smaps"):
+            with open(f"/proc/{os.getpid()}/smaps") as f:
+                if "Pss:" in f.read():
+                    return 2
+                else:
+                    return 1
+        if (2, 6, 1) <= kv_tuple <= (2, 6, 9):
             return -1
         return 0
     else:
         return 1
 
-#vm_accuracy = shared_val_accuracy()
-#if vm_accuracy == -1:
-#    sys.stderr.write(
-#     "Warning: Shared memory is not reported by this system.\n"
-#    )
-#    sys.stderr.write(
-#     "Values reported will be too large, and totals are not reported\n"
-#    )
-#elif vm_accuracy == 0:
-#    sys.stderr.write(
-#     "Warning: Shared memory is not reported accurately by this system.\n"
-#    )
-#    sys.stderr.write(
-#     "Values reported could be too large, and totals are not reported\n"
-#    )
-#elif vm_accuracy == 1:
-#    sys.stderr.write(
-#     "Warning: Shared memory is slightly over-estimated by this system\n"
-#     "for each program, so totals are not reported.\n"
-#    )
-#
+# vm_accuracy = shared_val_accuracy()
+# if vm_accuracy == -1:
+#     sys.stderr.write(
+#         "Warning: Shared memory is not reported by this system.\n"
+#     )
+#     sys.stderr.write(
+#         "Values reported will be too large, and totals are not reported\n"
+#     )
+# elif vm_accuracy == 0:
+#     sys.stderr.write(
+#         "Warning: Shared memory is not reported accurately by this system.\n"
+#     )
+#     sys.stderr.write(
+#         "Values reported could be too large, and totals are not reported\n"
+#     )
+# elif vm_accuracy == 1:
+#     sys.stderr.write(
+#         "Warning: Shared memory is slightly over-estimated by this system\n"
+#         "for each program, so totals are not reported.\n"
+#     )
