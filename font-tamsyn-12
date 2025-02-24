@@ -1,9 +1,9 @@
 #!/bin/sh
 printf "\033]710;%s\007" \
-  'xft:Misc Tamsyn:style=Regular:antialias=none:hinting=0:pixelsize=12'
+  'xft:Misc Tamsyn:style=Regular:antialias=none:hinting=0:pixelsize=14'
 printf "\033]711;%s\007" \
-  'xft:Misc Tamsyn:style=Bold:antialias=none:hinting=0:pixelsize=12'
-printf "\033]712;%s\007" \
-  'xft:Misc Tamsyn:style=Regular=none:hinting=0:pixelsize=11'
+  'xft:Misc Tamsyn:style=Bold:antialias=none:hinting=0:pixelsize=14'
+printf "\033]714;%s\007" \
+  'xft:Misc Tamsyn:style=Regular=none:hinting=0:pixelsize=12'
 printf "\033]713;%s\007" \
-  'xft:Misc Tamsyn:style=Bold:antialias=none:hinting=0:pixelsize=11'
+  'xft:Misc Tamsyn:style=Bold:antialias=none:hinting=0:pixelsize=12'
