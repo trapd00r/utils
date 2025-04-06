@@ -16,7 +16,7 @@ if [ ! -f "Super Mario World (USA).sfc" ]; then
 fi
 
 # Check for required tools
-for tool in curl awk wget 7z flips; do
+for tool in curl awk wget 7z flips perl; do
     if ! command -v "$tool" >/dev/null 2>&1; then
         error "Please install $tool to use this script."
         exit 1
@@ -36,13 +36,14 @@ for page in $(seq 1 50); do
           match($0, /href="([^"]+\.zip)"/, u);
           zipurl = u[1];
           if (hackname && zipurl) {
-              gsub(/[\/:*?"<>|]/, "_", hackname);
-              print zipurl, hackname".zip";
+              print zipurl "|" hackname;
               hackname = zipurl = "";
           }
-      }' | while read -r url filename; do
+      }' | while IFS='|' read -r url hackname; do
+          hackname_clean=$(printf "%s" "$hackname" | perl -MHTML::Entities -pe 'decode_entities($_); s#[/:*?"<>|]#_#g')
+          filename="${hackname_clean}.zip"
           printf "Downloading \033[1;33m%s\033[0m... " "$filename"
-          wget -q "$url" -O "$filename" && success "Done $filename" || error "Failed to download $filename"
+          wget -q "$url" -O "$filename" && success "Done" || error "Failed to download $filename"
       done
 done
 
@@ -64,8 +65,12 @@ count=0
 for patchfile in *.bps; do
     outputfile="$(basename "$patchfile" .bps).sfc"
     printf "Patching \033[1;36m%s\033[0m... " "$outputfile"
-    flips -a "$patchfile" "Super Mario World (USA).sfc" "$outputfile" >/dev/null && success "Patched $outputfile" || error "Failed to patch $outputfile"
-    count=$((count + 1))
+    if flips -a "$patchfile" "Super Mario World (USA).sfc" "$outputfile" >/dev/null; then
+        success "Patched $outputfile"
+        count=$((count + 1))
+    else
+        error "Failed to patch $outputfile"
+    fi
 done
 
 # Cleanup Stage
@@ -74,4 +79,3 @@ rm -f *.zip *.bps
 
 success "All stages completed successfully!"
 info "Total ROM hacks patched: \033[1;35m$count\033[0m"
-
