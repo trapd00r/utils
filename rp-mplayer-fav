@@ -1,6 +1,0 @@
-#!/bin/sh
-# vim: ft=sh:smc&:
-ln -s "$(mplayer_exec -np|uncolor)" /porn1/_ \
-  && ( ratpoison -c "echo Added favorite $(mplayer_exec -np|uncolor)" ;
-       mplayer -volume 70 /usr/share/games/teeworlds/data/audio/wp_hammer_hit-02.wv
-       )
