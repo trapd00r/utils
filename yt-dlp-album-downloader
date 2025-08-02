@@ -3,16 +3,11 @@
 ### Script for downloading albums from Youtube Music ##########
 ### Usage: ./yt-music-album-download.sh <youtube music url> ###
 
-# - Converts to MP3 from the best quality audio feed
-# - Adds track number, album, artist, title, and release year into id3 tags
-# - Adds album art embedded thumbnails
-# - Saves album art as cover.jpg in the album directory
-
 echo "Retrieving album information..."
-# Downloading the json data of the first track only
+# Download JSON of the first track only to fetch initial metadata
 jsondata=$(yt-dlp -j --playlist-items 1 "$1")
 
-# Grabbing the "release_year" and "release_date" and comparing which is lowest integer.
+# Determine year
 jq_release_year_1=$(echo "$jsondata" | jq -r '.release_year')
 jq_release_date=$(echo "$jsondata" | jq -r '.release_date')
 if [ "$jq_release_date" != "null" ]; then
@@ -22,34 +17,58 @@ else
     year=$jq_release_year_1
 fi
 
-# Grabbing the artist then removing any superfluous information after the first comma.
+# Artist (strip extra names after comma)
 jq_artist=$(echo "$jsondata" | jq -r '.artist')
 artist=${jq_artist%%,*}
 
-# Grab album title (needed for cover path)
-jq_album=$(echo "$jsondata" | jq -r '.album')
+echo "Album info retrieved. Starting download..."
 
-echo "Album information retrieved..."
-album_dir="${artist} - ${jq_album}"
-
-# Download album cover art separately and save it as cover.jpg
-cover_url=$(echo "$jsondata" | jq -r '.thumbnails[-1].url')
-mkdir -p "$album_dir"
-wget -q "$cover_url" -O "$album_dir/cover.jpg"
-
-# Pass to yt-dlp and begin downloading all the music
+# Download tracks
 yt-dlp --ignore-errors \
     --format "(bestaudio[acodec^=opus]/bestaudio)/best" \
     --extract-audio \
     --audio-format mp3 \
     --audio-quality 0 \
-    --parse-metadata "playlist_index:%(track_number)s" \
-    --parse-metadata ":(?P<webpage_url>)" \
-    --parse-metadata ":(?P<synopsis>)" \
-    --parse-metadata ":(?P<description>)" \
+    --parse-metadata "track_number:%(track_number)s" \
+    --parse-metadata "playlist_index:%(track_number,playlist_index)s" \
     --add-metadata \
     --postprocessor-args "-metadata date='${year}' -metadata artist=\"${artist}\" -metadata album_artist=\"${artist}\"" \
     --embed-thumbnail \
     --ppa "EmbedThumbnail+ffmpeg_o:-c:v mjpeg -vf crop=\"'if(gt(ih,iw),iw,ih)':'if(gt(iw,ih),ih,iw)'\"" \
-    -o "$album_dir/%(playlist_index)s - %(title)s.%(ext)s" "$1"
+    -o "${artist} - %(album)s/%(track_number,playlist_index)02d - %(title)s.%(ext)s" "$1"
+
+# While songs are downloading, dynamically fetch covers per album
+echo "Fetching cover art dynamically..."
+yt-dlp -j "$1" | jq -r '. | "\(.album)\t\(.artist)\t\(.thumbnails[-1].url)"' | while IFS=$'\t' read -r album art cover_url; do
+    album_dir="${art%%,*} - $album"
+    mkdir -p "$album_dir"
+    if [ ! -f "$album_dir/cover.jpg" ]; then
+        wget -q "$cover_url" -O "$album_dir/cover.jpg" && echo "Saved cover for: $album_dir"
+    fi
+done
+
+wait  # ensure downloads finish
+
+# youtube doesnt seem to expose track no in the data, so we have to be creative
+
+echo "Renumbering tracks based on download time..."
+find . -type d -name "* - *" | while IFS= read -r album_dir; do
+    echo "Processing album: $album_dir"
+    i=1
+    # Sort MP3 files by modification time (download order)
+    find "$album_dir" -maxdepth 1 -type f -name "*.mp3" -printf "%T@ %p\n" \
+        | sort -n \
+        | cut -d' ' -f2- \
+        | while IFS= read -r f; do
+            num=$(printf "%02d" "$i")
+            title=$(basename "$f" | sed -E 's/^[0-9NA]+ - //')  # Strip old numbering/NA
+            newfile="$album_dir/$num - $title"
+            mv "$f" "$newfile"
+            id3v2 --TRCK "$i" "$newfile" >/dev/null 2>&1
+            i=$((i+1))
+        done
+done
+
+
+echo "✅ All tracks downloaded, renumbered, tagged, and covers saved successfully!"
 
