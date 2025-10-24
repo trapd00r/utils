@@ -1,15 +1,29 @@
 #!/bin/sh
 
 function locate_dahbug {
-  if [ -f "$(git rev-parse --show-toplevel)"/../dahbug.log ]; then
-    echo "$(git rev-parse --show-toplevel)"/../dahbug.log
-  elif [ -f "$(git rev-parse --show-toplevel)"/dahbug.log ]; then
-    echo "$(git rev-parse --show-toplevel)"/dahbug.log
-  else
-    echo ""
+  topdir="$(git rev-parse --show-toplevel 2>/dev/null || echo .)"
+
+  if [ -f "$topdir"/../dahbug.log ]; then
+    echo "$topdir"/../dahbug.log
+  elif [ -f "$topdir"/dahbug.log ]; then
+    echo "$topdir"/dahbug.log
+  elif echo "$PWD" | grep -q "maryk"; then
+    echo "/home/scp1/dev/webbhuset/maryk/public-webshop/bin/backend/dahbug"
   fi
 }
 
 dahbug_path=$(locate_dahbug)
 
-tail -F $dahbug_path
+if [ -z "$dahbug_path" ]; then
+  echo "No dahbug log or script found."
+  exit 1
+fi
+
+if echo "$dahbug_path" | grep -q "dahbug$"; then
+  # maryk case – run script
+  exec "$dahbug_path"
+else
+  # normal case – tail log
+  exec tail -F "$dahbug_path"
+fi
+

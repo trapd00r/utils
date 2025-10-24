@@ -2,11 +2,19 @@
 # abstract: browser launcher
 
 
-# if i3 is running, we do not need all the shenanigans with the screen profiles
-#if [[ $(pgrep i3) ]]; then
-  firefox "$@"
+if [[ $(pgrep i3) ]]; then
+  # non-flatpak version
+  # cd ~/dev/qutebrowser
+  # ~/dev/qutebrowser/.venv/bin/python3 -m qutebrowser "$@"
+  # exit
+
+  vivaldi --ignore-certificate-errors --new-window http://192.168.1.97:3000/
   exit
-#fi
+
+  # flatpak version with proprietary codecs
+  # flatpak run org.qutebrowser.qutebrowser "$@"
+  # exit
+fi
 
 # if [[ $(hostname) = "x1" ]]; then
 #   # current screen number of the active monitor

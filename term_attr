@@ -28,6 +28,9 @@ my $attr = {
   reverse       => 7,
   conceal       => 8,
   lookup        => 9,
+  double_underline => 21,
+  overline      => 53,
+  strikethrough => 9,
 };
 
 select STDOUT;
@@ -38,15 +41,10 @@ print $hr;
 for my $t( sort { $attr->{$a} cmp $attr->{$b} } keys(%{ $attr })) {
   $t =~ /^blink/ and printf("%s\t\t\t    \e[48;5;196;38;5;233;1;3mSKIPPING: SHOULD NEVER HAVE BEEN IMPLEMENTED\e[m\n", sprintf("%-10s", $t)), next;
 
-# visually show if the colorUL property of urxvt is being abused for
-# underlining URLs.
-# https://www.japh.se/2019/01/23/color-urls-in-urxvt-without-abusing-underline-property.html
-
   if($t eq 'underline') {
     printf("\e[$attr->{$t}m$t\e[m\n%s\n", 'https://nounderlineonlinks.se');
   }
   elsif($t eq 'undercurl') {
-    # https://gitlab.com/gnachman/iterm2/-/issues/6382
     printf("\e[4:3mundercurl\e[m\n");
     printf("\e[4;58:5:197;4:3mundercurl, colored\e[m\n");
   }
@@ -55,9 +53,6 @@ for my $t( sort { $attr->{$a} cmp $attr->{$b} } keys(%{ $attr })) {
   }
 }
 
-
-# in case we're abusing LD_PRELOAD
-# https://github.com/trapd00r/stderred
 print "stdout\n";
 select STDERR;
 print "stderr\n";
@@ -68,7 +63,6 @@ for my $unicode(qw(🌎)) {
   printf "\033[38;5;225m%s\033[m\033[38;5;39m%s\033[m\n",$unicode, $unicode;
 }
 print "\n";
-
 
 printf "%s\n",   fg(10, '$File::LsColor::COLORIZE_PATH') . ' = ' . fg(33, 1);
 printf "→ %s\n",   ls_color('/usr/share/perl5/core_perl/Symbol.pm');

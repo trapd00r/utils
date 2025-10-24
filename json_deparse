@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 
-use open qw(:utf8);
+use open qw(:std :utf8);
 use utf8;
 
 use Data::Dumper;

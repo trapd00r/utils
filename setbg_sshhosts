@@ -26,7 +26,14 @@ my %hosts = (
 
 bg();
 sub bg {
-  my $background = $hosts{ $host } ? $hosts{ $host } : '361212';
+  my $background = $hosts{ $host } ? $hosts{ $host } : '000000';
+
+  if($host =~ m/-stage/) {
+    $background = 'green';
+  }
+  elsif($host =~ m/-web/) {
+    $background = 'red';
+  }
   print "\e]11;#$background\a";
   print "\e]10;#ffffff\a";
 }

@@ -39,12 +39,14 @@ sub status_color {
   my $status = shift;
 
   my %colors = (
-    '??' => '240',
+    '??' => '240',        # untracked
     'A' => '38;5;082;1',
     'M' => '38;5;178;1',
-    'M ' => '38;5;166;1', # modified, and added
-    ' M' => '38;5;178;1', # modified, not added
+        'M ' => '38;5;166;1', # modified, and added
+                 ' M' => '38;5;178;1', # modified, not added
     ' D' => '196',
+    'D ' => '196', # deleted
+    'A ' => '070', # new file, added
     'R' => '197',
     'C' => '197',
     'U' => '197',
