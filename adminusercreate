@@ -1,0 +1,62 @@
+#!/usr/bin/zsh
+
+m2 () {
+	webbhuset_root=${HOME}/dev/webbhuset/ 
+	magento_root=$(git rev-parse --show-toplevel 2>/dev/null) 
+	if [[ -z $magento_root ]]
+	then
+		echo "Not in a git repo"
+		return 1
+	fi
+	client=$(echo $magento_root | perl -pe "s{^$webbhuset_root}{}; s{/.*}{};") 
+	if [[ $magento_root != *magento* ]]
+	then
+		client_root=${webbhuset_root}${client} 
+		printf "\033[38;5;228m \033[m Not in a magento repo\n"
+		printf "\033[38;5;208m \033[m Trying to locate magento root for client: \033[38;5;208;1m${client}\033[m\n"
+		if [[ -d $client_root/magento ]]
+		then
+			magento_root=$client_root/magento 
+			printf "\033[38;5;142m \033[m Found magento root:\n   \033[38;5;30m${magento_root}\033[m\n"
+		elif [[ -d $client_root/magento/magento ]]
+		then
+			magento_root=$client_root/magento/magento 
+			printf "\033[38;5;142m \033[m Found magento root:\n   \033[38;5;30m${magento_root}\033[m\n"
+		fi
+	fi
+	if [[ -d $magento_root/vendor ]]
+	then
+		magento_root=$magento_root 
+	elif [[ -d $magento_root/magento/vendor ]]
+	then
+		magento_root=$magento_root/magento 
+	else
+		printf "\033[38;5;196m \033[m No vendor directory found in \033[38;5;30m${magento_root}\033[m\n"
+		return 1
+	fi
+	bin_dir=${magento_root}/bin 
+	echo $bin_dir
+	if [[ $client == "himla" ]]
+	then
+		bin_dir_docker=$(echo ${bin_dir} | perl -pe 's{.+((?:magento/)?magento/bin)}{magento/$1}') 
+	elif [[ $client == "dermalogica" ]]
+	then
+		bin_dir_docker="magento/bin" 
+	else
+		bin_dir_docker=$(echo ${bin_dir} | perl -pe 's{.+((?:magento/)?magento/bin)}{$1}') 
+	fi
+	if [[ ! -f $magento_root/bin/magerun ]]
+	then
+		/bin/cp $(which magerun) ${bin_dir}
+		if [[ $? -ne 0 ]]
+		then
+			printf "\033[38;5;196m \033[m Could not copy magerun to \033[38;5;30m${bin_dir}\033[m\n"
+			return 1
+		fi
+		printf "\033[38;5;208m \033[m Copied magerun to \033[38;5;30m${bin_dir}\033[m\n"
+	fi
+	docker-compose exec -u $USER php php -d memory_limit=-1 /srv/$bin_dir_docker/magerun "$@"
+}
+
+
+m2 admin:user:create --admin-user magnus --admin-password $MAGENTO_ADMIN_PASSWORD --admin-email magnus.woldrich'@webbhuset.se' --admin-firstname magnus --admin-lastname woldrich
