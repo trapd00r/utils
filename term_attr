@@ -72,3 +72,26 @@ $File::LsColor::COLORIZE_PATH = 0;
 printf "→ %s\n",   ls_color('/usr/share/perl5/core_perl/Symbol.pm');
 printf "→ %s\n",   ls_color('/a/path/and/file/without/extension/README');
 print $hr;
+
+bright();
+
+
+sub bright {
+  my $bright = {
+    bright_black   => 90,
+    bright_red     => 91,
+    bright_green   => 92,
+    bright_yellow  => 93,
+    bright_blue    => 94,
+    bright_magenta => 95,
+    bright_cyan    => 96,
+    bright_white   => 97,
+  };
+
+  for my $t( sort { $bright->{$a} cmp $bright->{$b} } keys(%{ $bright })) {
+    my $normal_osc = $bright->{$t} =~ s/9/3/r;
+    my $normal_name = $t =~ s/bright_//r;
+
+    printf("\e[%sm%-15s\e[m\e[1;%sm%-15s\e[m\e[1;%sm%-15s\e[m\n", $normal_osc, $normal_name, $normal_osc, "bold " . $normal_name, $bright->{$t}, $t);
+  }
+}

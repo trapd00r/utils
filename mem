@@ -10,6 +10,8 @@ import os
 
 PAGESIZE = os.sysconf("SC_PAGE_SIZE") // 1024  # KiB
 our_pid = os.getpid()
+ram_installed = os.sysconf("SC_PHYS_PAGES") * PAGESIZE  # KiB
+
 
 # (major, minor, release)
 def kernel_ver():
@@ -209,3 +211,11 @@ def shared_val_accuracy():
 #         "Warning: Shared memory is slightly over-estimated by this system\n"
 #         "for each program, so totals are not reported.\n"
 #     )
+
+
+def ram_installed_human():
+    return human(ram_installed, power="Ki")
+
+# print ram installedable in human readable format
+print(f"RAM installed: {ram_installed_human()}")
+

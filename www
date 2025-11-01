@@ -1,6 +1,8 @@
 #!/bin/bash
 # abstract: browser launcher
 
+# qutebrowser "$@"
+# exit
 
 if [[ $(pgrep i3) ]]; then
   # non-flatpak version
@@ -15,6 +17,19 @@ if [[ $(pgrep i3) ]]; then
   # flatpak run org.qutebrowser.qutebrowser "$@"
   # exit
 fi
+# if i3 is running, we do not need all the shenanigans with the screen profiles
+#if [[ $(pgrep i3) ]]; then
+#  firefox "$@"
+#  exit
+
+# export GTK_THEME=japh
+# export GTK_FONT_NAME="Monospace 10"
+# export GTK_FILE_CHOOSER_DEFAULT_SIZE="900x600"
+
+
+# vivaldi --new-window http://192.168.1.97:3000/ "$@"
+# exit
+#fi
 
 # if [[ $(hostname) = "x1" ]]; then
 #   # current screen number of the active monitor
@@ -45,4 +60,4 @@ fi
 #     firefox
 # fi
 #
-# # remember to execute add_userchrome_to_all_profiles.zsh once done
+# remember to execute add_userchrome_to_all_profiles.zsh once done
