@@ -21,6 +21,7 @@ use Term::hr {
   width     => 54,    # total width of the hr
 };
 
+@ARGV = (@ARGV) ? @ARGV : ('.');
 
 my @status = split('\n', `git status --short --show-stash --column=column @ARGV`);
 
