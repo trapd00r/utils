@@ -22,7 +22,7 @@ use Term::hr {
 };
 
 
-my @status = split('\n', `git status --short --show-stash --column=column`);
+my @status = split('\n', `git status --short --show-stash --column=column @ARGV`);
 
 exit unless scalar @status;
 
